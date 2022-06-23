@@ -1,0 +1,5 @@
+services:
+  helfi_gredi_image.client_factory:
+    class: Drupal\helfi_gredi_image\GrediClientFactory
+    arguments: [ '@http_client' ]
+
