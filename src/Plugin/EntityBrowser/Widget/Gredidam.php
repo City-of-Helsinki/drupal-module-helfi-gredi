@@ -4,6 +4,7 @@ namespace Drupal\helfi_gredi_image\Plugin\EntityBrowser\Widget;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\entity_browser\WidgetBase;
+use Drupal\helfi_gredi_image\GredidamInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -30,6 +31,13 @@ use Drupal\Core\Link;
  * )
  */
 class Gredidam extends WidgetBase {
+
+  /**
+   * The dam interface.
+   *
+   * @var \Drupal\helfi_gredi_image\GredidamInterface
+   */
+  protected $gredidam;
 
   /**
    * The current user account.
@@ -85,8 +93,9 @@ class Gredidam extends WidgetBase {
    *
    * {@inheritdoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, WidgetValidationManager $validation_manager, AccountInterface $account, LanguageManagerInterface $languageManager, ModuleHandlerInterface $moduleHandler, MediaSourceManager $sourceManager, UserDataInterface $userData, RequestStack $requestStack, ConfigFactoryInterface $config) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, WidgetValidationManager $validation_manager, GredidamInterface $gredidam, AccountInterface $account, LanguageManagerInterface $languageManager, ModuleHandlerInterface $moduleHandler, MediaSourceManager $sourceManager, UserDataInterface $userData, RequestStack $requestStack, ConfigFactoryInterface $config) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $event_dispatcher, $entity_type_manager, $validation_manager);
+    $this->gredidam = $gredidam;
     $this->user = $account;
     $this->languageManager = $languageManager;
     $this->moduleHandler = $moduleHandler;
@@ -101,7 +110,7 @@ class Gredidam extends WidgetBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($configuration, $plugin_id, $plugin_definition, $container->get('event_dispatcher'), $container->get('entity_type.manager'), $container->get('entity_field.manager'), $container->get('plugin.manager.entity_browser.widget_validation'), $container->get('current_user'), $container->get('language_manager'), $container->get('module_handler'), $container->get('plugin.manager.media.source'), $container->get('user.data'), $container->get('request_stack'), $container->get('config.factory'));
+    return new static($configuration, $plugin_id, $plugin_definition, $container->get('event_dispatcher'), $container->get('entity_type.manager'), $container->get('entity_field.manager'), $container->get('plugin.manager.entity_browser.widget_validation'), $container->get('helfi_gredi_image.gredidam_user_creds'), $container->get('current_user'), $container->get('language_manager'), $container->get('module_handler'), $container->get('plugin.manager.media.source'), $container->get('user.data'), $container->get('request_stack'), $container->get('config.factory'));
   }
 
   /**
@@ -114,8 +123,7 @@ class Gredidam extends WidgetBase {
 
     $media_type_options = [];
     $media_types = $this->entityTypeManager->getStorage('media_type')
-      ->loadByProperties(['source' => 'gredi_image']);
-
+      ->loadByProperties(['source' => 'image']);
     foreach ($media_types as $media_type) {
       $media_type_options[$media_type->id()] = $media_type->label();
     }
@@ -153,12 +161,12 @@ class Gredidam extends WidgetBase {
    */
   public function getForm(array &$original_form, FormStateInterface $form_state, array $additional_widget_parameters) {
     $media_type_storage = $this->entityTypeManager->getStorage('media_type');
-
     /** @var \Drupal\media\MediaTypeInterface $media_type */
     if (!$this->configuration['media_type'] || !($media_type = $media_type_storage->load($this->configuration['media_type']))) {
       return ['#markup' => $this->t('The media type is not configured correctly.')];
     }
-    elseif ($media_type->getSource()->getPluginId() != 'gredi_image') {
+    elseif ($media_type->id() != 'gredi_image') {
+
       return ['#markup' => $this->t('The configured media type is not using the gredi_image plugin.')];
     }
     // If this is not the current entity browser widget being rendered.
@@ -167,6 +175,7 @@ class Gredidam extends WidgetBase {
       return [];
     }
 
+    dump($this->gredidam->getCustomerContent(6));
   }
 
     /**

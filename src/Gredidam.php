@@ -2,8 +2,10 @@
 
 namespace Drupal\helfi_gredi_image;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use GuzzleHttp\Cookie\CookieJar;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -28,6 +30,11 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
   protected $grediDamClient;
 
   /**
+   * TODO.
+   */
+  protected $client_factory;
+
+  /**
    * Media: Gredi DAM logging service.
    *
    * @var \Drupal\Core\Logger\LoggerChannelInterface
@@ -45,7 +52,7 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
    *   The Drupal LoggerChannelFactory service.
    */
   public function __construct(GrediClientFactory $client_factory, LoggerChannelFactoryInterface $loggerChannelFactory) {
-    $this->grediDamClient = $client_factory->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx');
+    $this->client_factory = $client_factory;
     $this->loggerChannel = $loggerChannelFactory->get('helfi_gredi_image');
   }
 
@@ -59,15 +66,21 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
     );
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function __call($name, array $arguments) {
+    $method_variable = [$this->grediDamClient, $name];
+    return is_callable($method_variable) ?
+      call_user_func_array($method_variable, $arguments) : NULL;
+  }
+
  /**
   * {@inheritdoc}
   */
  public function getCustomerContent($customer) {
-
+    return $this->client_factory->getCustomerContent(6);
  }
 
-  public function __call($name, array $arguments)
-  {
-    // TODO: Implement __call() method.
-  }
+
 }
