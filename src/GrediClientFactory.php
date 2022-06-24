@@ -53,7 +53,7 @@ class GrediClientFactory implements ContainerInjectionInterface {
    * @param string $password
    *   The password to authenticate with.
    *
-   * @return \Drupal\helfi_gredi_image\Client
+   * @return CookieJar
    *   The Gredi DAM client.
    */
   public function getWithCredentials($customer, $username, $password) {
@@ -65,18 +65,33 @@ class GrediClientFactory implements ContainerInjectionInterface {
           'Content-Type' => 'application/json'
         ],
         'body' => '{
-        "customer": "'. $customer . '",
-        "username": "'. $username . '",
-        "password": "'. $password . '"
+        "customer": "' . $customer . '",
+        "username": "' . $username . '",
+        "password": "' . $password . '"
       }'
       ];
     }
+
     try {
       $response = $this->guzzleClient->request(
         "POST",
         $url,
         $data
       );
+
+      if ($response->getStatusCode() == 200 && $response->getReasonPhrase() == 'OK') {
+        $getCookie = $response->getHeader('Set-Cookie')[0];
+        $subtring_start = strpos($getCookie, '=');
+        $subtring_start += strlen('=');
+        $size = strpos($getCookie, ';', $subtring_start) - $subtring_start;
+        $result =  substr($getCookie, $subtring_start, $size);
+
+        $cookieJar = CookieJar::fromArray([
+          'JSESSIONID' => $result
+        ], 'api4.materialbank.net');
+        return $cookieJar;
+
+      }
     }
     catch (ClientException $e) {
       // For bad auth, the WebDAM API has been observed to return either
@@ -102,28 +117,14 @@ class GrediClientFactory implements ContainerInjectionInterface {
         );
       }
     }
-    return $response;
   }
 
   public function getCustomerContent($customer) {
-    $loginSession = $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx');
-
-    if ($loginSession->getStatusCode() == 200 && $loginSession->getReasonPhrase() == 'OK') {
-      $getCookie = $loginSession->getHeader('Set-Cookie')[0];
-      $subtring_start = strpos($getCookie, '=');
-      $subtring_start += strlen('=');
-      $size = strpos($getCookie, ';', $subtring_start) - $subtring_start;
-      $result =  substr($getCookie, $subtring_start, $size);
-
-      $cookieJar = CookieJar::fromArray([
-        'JSESSIONID' => $result
-      ], 'api4.materialbank.net');
-
       $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/customers/6/contents', [
         'headers' => [
           'Content-Type' => 'application/json',
         ],
-        'cookies' => $cookieJar
+        'cookies' => $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx')
       ]);
       $posts = $userContent->getBody()->getContents();
       $content = [];
@@ -132,9 +133,8 @@ class GrediClientFactory implements ContainerInjectionInterface {
           $content[] = $post;
         }
       }
-      return $content;
-    }
-    return false;
+      return Json::decode($posts);
+
   }
 
 }

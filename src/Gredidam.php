@@ -30,9 +30,11 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
   protected $grediDamClient;
 
   /**
-   * TODO.
+   * The Gredi DAM client service.
+   *
+   * @var \Drupal\helfi_gredi_image\GrediClientFactory
    */
-  protected $client_factory;
+  protected $grediDamClientFactory;
 
   /**
    * Media: Gredi DAM logging service.
@@ -44,15 +46,16 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
   /**
    * Gredidam constructor.
    *
-   * @param \Drupal\helfi_gredi_image\GrediClientFactory $client_factory
+   * @param \Drupal\helfi_gredi_image\Client $grediDamClient
    *   An instance of ClientFactory that we can get a webdam client from.
-   * @param string $credential_type
-   *   The type of credentials to use.
+   * @param string \Drupal\helfi_gredi_image\GrediClientFactory
+   *   An instance of GrediClientFactory.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
    *   The Drupal LoggerChannelFactory service.
    */
-  public function __construct(GrediClientFactory $client_factory, LoggerChannelFactoryInterface $loggerChannelFactory) {
-    $this->client_factory = $client_factory;
+  public function __construct(Client $grediDamClient, GrediClientFactory $grediDamClientFactory, LoggerChannelFactoryInterface $loggerChannelFactory) {
+    $this->grediDamClient = $grediDamClient;
+    $this->grediDamClientFactory = $grediDamClientFactory;
     $this->loggerChannel = $loggerChannelFactory->get('helfi_gredi_image');
   }
 
@@ -61,6 +64,7 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
    */
   public static function create(ContainerInterface $container) {
     return new static(
+      $container->get('helfi_gredi_image.client'),
       $container->get('helfi_gredi_image.client_factory'),
       $container->get('logger.factory')
     );
@@ -79,7 +83,7 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
   * {@inheritdoc}
   */
  public function getCustomerContent($customer) {
-    return $this->client_factory->getCustomerContent(6);
+    return $this->grediDamClientFactory->getCustomerContent($customer);
  }
 
 

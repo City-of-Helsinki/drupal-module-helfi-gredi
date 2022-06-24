@@ -4,6 +4,7 @@ services:
     arguments: [ '@http_client' ]
   helfi_gredi_image.client:
     class: Drupal\helfi_gredi_image\Client
+    arguments: ['@http_client', '@helfi_gredi_image.client_factory', '@request_stack']
   helfi_gredi_image.gredidam_user_creds:
     class: Drupal\helfi_gredi_image\Gredidam
-    arguments: [ '@helfi_gredi_image.client_factory', '@logger.factory' ]
+    arguments: [ '@helfi_gredi_image.client', '@helfi_gredi_image.client_factory', '@logger.factory' ]
