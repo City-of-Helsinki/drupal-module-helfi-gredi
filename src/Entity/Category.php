@@ -52,6 +52,20 @@ class Category implements EntityInterface, \JsonSerializable {
   public $modified;
 
   /**
+   * An array of sub categories.
+   *
+   * @var Category[]
+   */
+  public $categories;
+
+  /**
+   * Parts information, useful in rendering breadcrumbs.
+   *
+   * @var array
+   */
+  public $parts = [];
+
+  /**
    * Get category object.
    *
    * @param mixed $json
@@ -60,7 +74,7 @@ class Category implements EntityInterface, \JsonSerializable {
    * @return object
    *   Category data.
    */
-  public static function fromJson($json) {
+  public static function fromJson($json, $folder_id = NULL) {
     if (is_string($json)) {
       $json = json_decode($json);
     }
@@ -106,7 +120,9 @@ class Category implements EntityInterface, \JsonSerializable {
   public function jsonSerialize() {
     $properties = [
       'id' => $this->id,
+      'name' => $this->name,
       'description' => 'category',
+      'parts' => $this->parts,
       'apiContentLink' => $this->apiContentLink,
       'created' => $this->created,
       'modified' => $this->modified,

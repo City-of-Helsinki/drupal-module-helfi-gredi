@@ -19,7 +19,7 @@ class Client {
   protected $client;
 
   /**
-   * The base URL of the v DAM API.
+   * The base URL of the Gredi DAM API.
    *
    * @var string
    */
@@ -45,6 +45,13 @@ class Client {
    * @var \Drupal\helfi_gredi_image\GrediClientFactory
    */
   protected $grediDamClientFactory;
+
+  /**
+   * Datastore for the specific metadata fields.
+   *
+   * @var array
+   */
+  protected $specificMetadataFields;
 
   /**
    * Client constructor.
@@ -102,5 +109,55 @@ class Client {
     return $category;
   }
 
+  /**
+   * Get a list of metadata.
+   *
+   * @return array
+   *   A list of metadata fields.
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
+  public function getSpecificMetadataFields(): array {
+    $fields = [
+      'external_id' => [
+        'label' => 'External ID',
+        'type' => 'string'
+      ],
+      'name' => [
+        'label' => 'Filename',
+        'type' => 'string'
+      ],
+      'width' => [
+        'label' => 'Width',
+        'type' => 'string'
+      ],
+      'height' => [
+        'label' => 'Height',
+        'type' => 'string'
+      ],
+      'resolution' => [
+        'label' => 'Resolution',
+        'type' => 'string'
+      ],
+      'keywords' => [
+        'label' => 'Keywords',
+        'type' => 'text_long'
+      ],
+      'alt_text' => [
+        'label' => 'Alt text',
+        'type' => 'string'
+      ],
+      'size' => [
+        'label' => 'Filesize (kb)',
+        'type' => 'string'
+      ],
+    ];
+
+    $this->specificMetadataFields = [];
+    foreach ($fields as $key => $field) {
+      $this->specificMetadataFields[$key] = $field;
+    }
+    return $this->specificMetadataFields;
+  }
 
 }

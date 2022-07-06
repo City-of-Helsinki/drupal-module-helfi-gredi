@@ -17,3 +17,11 @@ helfi_gredi_image.fetch_data:
     _permission: 'access content'
   options:
     _admin_route: TRUE
+
+helfi_gredi_image.config:
+  path: '/admin/config/gredi-dam'
+  defaults:
+    _form: '\Drupal\helfi_gredi_image\Form\GrediDamConfigForm'
+    _title: 'Gredi DAM Configuration'
+  requirements:
+    _permission: 'administer site configuration'

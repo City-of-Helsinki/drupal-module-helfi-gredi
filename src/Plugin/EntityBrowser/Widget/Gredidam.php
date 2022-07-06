@@ -2,12 +2,16 @@
 
 namespace Drupal\helfi_gredi_image\Plugin\EntityBrowser\Widget;
 
-use cweagans\webdam\Entity\Folder;
+use Drupal\Component\Utility\Random;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Pager\PagerManagerInterface;
 use Drupal\entity_browser\WidgetBase;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
+use Drupal\helfi_gredi_image\Form\GrediDamConfigForm;
+use Drupal\helfi_gredi_image\GrediClientFactory;
 use Drupal\helfi_gredi_image\GredidamInterface;
+use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -21,7 +25,8 @@ use Drupal\user\UserDataInterface;
 use Drupal\media\MediaSourceManager;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Url;
-use Drupal\Core\Link;
+use GuzzleHttp\Psr7\Utils;
+use Drupal\file\Entity\File;
 
 /**
  * Uses a view to provide entity listing in a browser's widget.
@@ -41,6 +46,13 @@ class Gredidam extends WidgetBase {
    * @var \Drupal\helfi_gredi_image\GredidamInterface
    */
   protected $gredidam;
+
+  /**
+   * The dam interface.
+   *
+   * @var \Drupal\helfi_gredi_image\GrediClientFactory
+   */
+  protected $grediClientFactory;
 
   /**
    * The current user account.
@@ -92,13 +104,31 @@ class Gredidam extends WidgetBase {
   protected $requestStack;
 
   /**
+   * A fully-configured Guzzle client to pass to the dam client.
+   *
+   * @var \GuzzleHttp\ClientInterface
+   */
+  protected $guzzleClient;
+
+  /**
+   * The pager manager.
+   *
+   * @var \Drupal\Core\Pager\PagerManagerInterface
+   */
+  protected $pagerManager;
+
+  protected $assets;
+  protected $currentCategory;
+
+  /**
    * Gredidam constructor.
    *
    * {@inheritdoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, WidgetValidationManager $validation_manager, GredidamInterface $gredidam, AccountInterface $account, LanguageManagerInterface $languageManager, ModuleHandlerInterface $moduleHandler, MediaSourceManager $sourceManager, UserDataInterface $userData, RequestStack $requestStack, ConfigFactoryInterface $config) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, WidgetValidationManager $validation_manager, GredidamInterface $gredidam, GrediClientFactory $grediClientFactory, AccountInterface $account, LanguageManagerInterface $languageManager, ModuleHandlerInterface $moduleHandler, MediaSourceManager $sourceManager, UserDataInterface $userData, RequestStack $requestStack, ConfigFactoryInterface $config, ClientInterface $guzzleClient, PagerManagerInterface $pagerManager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $event_dispatcher, $entity_type_manager, $validation_manager);
     $this->gredidam = $gredidam;
+    $this->grediClientFactory = $grediClientFactory;
     $this->user = $account;
     $this->languageManager = $languageManager;
     $this->moduleHandler = $moduleHandler;
@@ -107,26 +137,28 @@ class Gredidam extends WidgetBase {
     $this->userData = $userData;
     $this->requestStack = $requestStack;
     $this->config = $config;
+    $this->guzzleClient = $guzzleClient;
+    $this->pagerManager = $pagerManager;
   }
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($configuration, $plugin_id, $plugin_definition, $container->get('event_dispatcher'), $container->get('entity_type.manager'), $container->get('entity_field.manager'), $container->get('plugin.manager.entity_browser.widget_validation'), $container->get('helfi_gredi_image.gredidam_user_creds'), $container->get('current_user'), $container->get('language_manager'), $container->get('module_handler'), $container->get('plugin.manager.media.source'), $container->get('user.data'), $container->get('request_stack'), $container->get('config.factory'));
+    return new static($configuration, $plugin_id, $plugin_definition, $container->get('event_dispatcher'), $container->get('entity_type.manager'), $container->get('entity_field.manager'), $container->get('plugin.manager.entity_browser.widget_validation'), $container->get('helfi_gredi_image.gredidam'), $container->get('helfi_gredi_image.client_factory'), $container->get('current_user'), $container->get('language_manager'), $container->get('module_handler'), $container->get('plugin.manager.media.source'), $container->get('user.data'), $container->get('request_stack'), $container->get('config.factory'), $container->get('http_client'), $container->get('pager.manager'));
   }
 
   /**
    * {@inheritdoc}
    *
-   * @todo Add more settings for configuring this widget.
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
 
     $media_type_options = [];
     $media_types = $this->entityTypeManager->getStorage('media_type')
-      ->loadByProperties(['source' => 'image']);
+      ->loadByProperties(['source' => 'gredidam_asset']);
+
     foreach ($media_types as $media_type) {
       $media_type_options[$media_type->id()] = $media_type->label();
     }
@@ -168,7 +200,7 @@ class Gredidam extends WidgetBase {
     if (!$this->configuration['media_type'] || !($media_type = $media_type_storage->load($this->configuration['media_type']))) {
       return ['#markup' => $this->t('The media type is not configured correctly.')];
     }
-    elseif ($media_type->id() != 'gredi_image') {
+    elseif ($media_type->id() != 'gredi_dam_assets') {
 
       return ['#markup' => $this->t('The configured media type is not using the gredi_image plugin.')];
     }
@@ -178,45 +210,32 @@ class Gredidam extends WidgetBase {
       return [];
     }
 
-    dump($this->gredidam->getCustomerContent(6));
-
     $form = parent::getForm($original_form, $form_state, $additional_widget_parameters);
+    $config = $this->config->get('gredi_dam.settings');
 
+    $modulePath = $this->moduleHandler->getModule('helfi_gredi_image')->getPath();
     // Attach the modal library.
     $form['#attached']['library'][] = 'core/drupal.dialog.ajax';
-    // This form is submitted and rebuilt when a category is clicked.
-    // The triggering element identifies which category button was clicked.
     $trigger_elem = $form_state->getTriggeringElement();
-
-    // Initialize current_category.
-    $current_category = new Category();
+    $this->currentCategory = new Category();
     // Default current category name to NULL which will act as root category.
-    $current_category->name = NULL;
-    $current_category->parts = [];
-    // Default current page to first page.
-    $page = 0;
-    // Number of assets to show per page.
-    $num_per_page = 5;
-    // Total number of assets.
-    $total_asset = 0;
-    // If the form state contains the widget AND the reset button hadn't been
-    // clicked then pull values for the current form state.
+    $this->currentCategory->id = NULL;
+    $this->currentCategory->name = NULL;
+    $this->currentCategory->parts = [];
+
+    $num_per_page = $config->get('num_assets_per_page') ?? GrediDamConfigForm::NUM_ASSETS_PER_PAGE;
     if (isset($form_state->getCompleteForm()['widget']) && isset($trigger_elem) && $trigger_elem['#name'] != 'filter_sort_reset') {
       // Assign $widget for convenience.
       $widget = $form_state->getCompleteForm()['widget'];
-      if (isset($widget['pager-container']) && is_numeric($widget['pager-container']['#page'])) {
-        // Set the page number to the value stored in the form state.
-        $page = intval($widget['pager-container']['#page']);
-      }
+
       if (isset($widget['asset-container']) && isset($widget['asset-container']['#gredidam_category'])) {
         // Set current category to the value stored in the form state.
-        $current_category->name = $widget['asset-container']['#gredidam_category']['name'];
-        $current_category->parts = $widget['asset-container']['#gredidam_category']['parts'];
-        $current_category->links = $widget['asset-container']['#gredidam_category']['links'];
-        $current_category->categories = $widget['asset-container']['#gredidam_category']['categories'];
+        $this->currentCategory->id = $widget['asset-container']['#gredidam_category']['id'];
+        $this->currentCategory->parts = $widget['asset-container']['#gredidam_category']['parts'];
       }
       if ($form_state->getValue('assets')) {
         $current_selections = $form_state->getValue('current_selections', []) + array_filter($form_state->getValue('assets', []));
+
         $form['current_selections'] = [
           '#type' => 'value',
           '#value' => $current_selections,
@@ -224,185 +243,168 @@ class Gredidam extends WidgetBase {
       }
     }
 
-    // Use "listing" for category view or "search" for search view.
-    $page_type = "listing";
-
-    // If the form has been submitted.
     if (isset($trigger_elem)) {
-      // If a category button has been clicked.
       if ($trigger_elem['#name'] === 'gredidam_category') {
         // Update the required information of selected category.
-        $current_category->name = $trigger_elem['#gredidam_category']['name'];
-        $current_category->parts = $trigger_elem['#gredidam_category']['parts'];
-        $current_category->links = $trigger_elem['#gredidam_category']['links'];
-        // Reset page to zero if we have navigated to a new category.
-        $page = 0;
+        $this->currentCategory->id = $trigger_elem['#gredidam_category']['id'];
+        $this->currentCategory->name = $trigger_elem['#gredidam_category']['name'];
+        $this->currentCategory->parts = ['name' => $trigger_elem['#gredidam_category']['name']];
+
       }
-      // Set the parts value from the breadcrumb button, so selected category
-      // can be loaded.
+
       if ($trigger_elem['#name'] === 'breadcrumb') {
-        $current_category->name = $trigger_elem["#category_name"];
-        $current_category->parts = $trigger_elem["#parts"];
+        $this->currentCategory->name = $trigger_elem["#category_name"];
+        $this->currentCategory->parts = $trigger_elem["#parts"];
       }
-      // If a pager button has been clicked.
-      if ($trigger_elem['#name'] === 'gredidam_pager') {
-        $page_type = $trigger_elem['#page_type'];
-        $current_category->name = $trigger_elem['#current_category']->name ?? NULL;
-        $current_category->parts = $trigger_elem['#current_category']->parts ?? [];
-        // Set the current category id to the id of the category, was clicked.
-        $page = intval($trigger_elem['gredidam_page']);
-      }
-      // If the filter/sort submit button has been clicked.
-      if ($trigger_elem['#name'] === 'filter_sort_submit') {
-        $page_type = "search";
-        // Reset page to zero.
-        $page = 0;
-      }
-      // If the reset submit button has been clicked.
-      if ($trigger_elem['#name'] === 'filter_sort_reset') {
-        // Fetch the user input.
-        $user_input = $form_state->getUserInput();
-        // Fetch clean values keys (system related, not user input).
-        $clean_val_key = $form_state->getCleanValueKeys();
-        // Loop through user inputs.
-        foreach ($user_input as $key => $item) {
-          // Unset only the User Input values.
-          if (!in_array($key, $clean_val_key)) {
-            unset($user_input[$key]);
-          }
-        }
-        // Reset the user input.
-        $form_state->setUserInput($user_input);
-        // Set values to user input.
-        $form_state->setValues($user_input);
-        // Rebuild the form state values.
-        $form_state->setRebuild();
-        // Get back to first page.
-        $page = 0;
-      }
+
+      $form_state->setRebuild();
+
     }
-    // Offset used for pager.
-    $offset = $num_per_page * $page;
-    // Sort By field along with sort order.
-    $sort_by = ($form_state->getValue('sortdir') == 'desc') ? '-' . $form_state->getValue('sortby') : $form_state->getValue('sortby');
-    // Filter By asset type.
-    $filter_type = $form_state->getValue('format_type') ? 'ft:' . $form_state->getValue('format_type') : '';
-    // Search keyword.
-    $keyword = $form_state->getValue('query');
-    // Generate search query based on search keyword and search filter.
-    $search_query = trim($keyword . ' ' . $filter_type);
-    // Parameters for searching, sorting, and filtering.
-    $params = [
-      'limit' => $num_per_page,
-      'offset' => $offset,
-      'sort' => $sort_by,
-      'query' => $search_query,
-      'expand' => 'thumbnails',
-    ];
-    // Load search results if filter is clicked.
-    if ($page_type == "search") {
-      $search_results = $this->gredidam->searchAssets($params);
-      $items = $search_results['assets'] ?? [];
-      // Total number of assets.
-      $total_asset = $search_results['total_count'] ?? 0;
-    }
-    // Load categories data.
-    else {
-      $category_name = '';
-      $categories = $this->gredidam->getCategoryData($current_category);
-      // Total number of categories.
-      $total_asset = $total_category = count($categories);
-      // Update offset value if category contains both sub category and asset.
-      if ($total_category <= $offset) {
-        $params['offset'] = $offset - $total_category;
-      }
-      // Update Limit value if sub categories number is less than the number
-      // of items per page.
-      if ($total_category < $num_per_page) {
-        $params['limit'] = $num_per_page - $total_category;
-      }
-      // Reset limit value after all the categories are already displayed
-      // in previous page.
-      if ($offset > $total_category) {
-        $params['limit'] = $num_per_page;
-      }
-      if (count($current_category->parts) > 0) {
-        $category_name = implode('/', $current_category->parts);
-      }
-      $category_assets = $this->gredidam->getAssetsByCategory($category_name, $params);
-      if ($total_category == 0 || $total_category <= $offset || $total_category < $num_per_page) {
-        $items = $category_assets['assets'] ?? [];
-      }
-      // Total asset conatins both asset and subcategory(if any).
-      $total_asset += $category_assets['total_count'] ?? 0;
-    }
+
+    $form += $this->getBreadcrumb($this->currentCategory);
 
     // Add the filter and sort options to the form.
     $form += $this->getFilterSort();
-    // Add the breadcrumb to the form.
-    $form += $this->getBreadcrumb($current_category);
-    // Add container for assets (and category buttons)
+
+
+    $folders_content = $this->gredidam->getCustomerFolders(6);
+
+    $contents = [];
     $form['asset-container'] = [
       '#type' => 'container',
       // Store the current category id in the form so it can be retrieved
       // from the form state.
-      '#gredidam_category_id' => $current_category->id,
+      '#gredidam_category_id' => $this->currentCategory->id,
       '#attributes' => [
-        'class' => ['gredidam-asset-browser'],
+        'class' => ['gredidam-asset-browser row'],
       ],
     ];
 
-    // Get module path to create URL for background images.
-    $modulePath = $this->moduleHandler->getModule('helfi_gredi_image')->getPath();
+    if ($this->currentCategory->id == NULL) {
+      foreach ($folders_content as $folder) {
+        $contents[] = $this->gredidam->getFolderContent($folder->id);
+      }
+      $this->getCategoryFormElements($folders_content, $modulePath, $form);
+    }
+    else {
+      $contents[] = $this->gredidam->getFolderContent($this->currentCategory->id);
+    }
 
-    // If no search terms, display Gredi DAM Categories.
-    if (!empty($categories) && ($offset < count($categories))) {
-      $initial = 0;
-      if ($page != 0) {
-        $offset = $num_per_page * $page;
-        $categories = array_slice($categories, $offset);
+    foreach ($contents as $content) {
+      if (empty($content)) {
+        continue;
       }
-      // Add category buttons to form.
-      foreach ($categories as $category) {
-        if ($initial < $num_per_page) {
-          $this->getCategoryFormElements($category, $modulePath, $form);
-          $initial++;
-        }
+      foreach ($content as $cont) {
+        $this->assets[$cont->id] = $this->layoutMediaEntity($cont);
       }
     }
-    // Assets are rendered as #options for a checkboxes element.
-    // Start with an empty array.
-    $assets = [];
-    // Add to the assets array.
-    if (isset($items)) {
-      foreach ($items as $category_item) {
-        $assets[$category_item->id] = $this->layoutMediaEntity($category_item);
-      }
-    }
-    // Add assets to form.
-    // IMPORTANT: Do not add #title or #description properties.
-    // This will wrap elements in a fieldset and will cause styling problems.
-    // See: \core\lib\Drupal\Core\Render\Element\CompositeFormElementTrait.php.
+
+    $this->assets = $this->pagerArray($this->assets, $num_per_page);
+
+
+    $form['pager'] = [
+      '#type' => 'pager',
+    ];
+
     $form['asset-container']['assets'] = [
       '#type' => 'checkboxes',
       '#theme_wrappers' => ['checkboxes__gredidam_assets'],
       '#title_display' => 'invisible',
-      '#options' => $assets,
+      '#options' => $this->assets,
       '#attached' => [
         'library' => [
           'helfi_gredi_image/asset_browser',
         ],
       ],
     ];
-    // If the number of assets in the current category is greater than
-    // the number of assets to show per page.
-    if ($total_asset > $num_per_page) {
-      // Add the pager to the form.
-      $form['actions'] += $this->getPager($total_asset, $page, $num_per_page, $page_type, $current_category);
-    }
 
     return $form;
 
+  }
+
+  /**
+   * Returns pager array.
+   */
+  public function pagerArray($items, $itemsPerPage) {
+    // Get total items count.
+    $total = count($items);
+    // Get the number of the current page.
+    $currentPage = $this->pagerManager->createPager($total, $itemsPerPage)->getCurrentPage();
+
+    // Split an array into chunks.
+    $chunks = array_chunk($items, $itemsPerPage);
+    // Return current group item.
+    return $chunks[$currentPage];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validate(array &$form, FormStateInterface $form_state) {
+    if (!empty($form_state->getTriggeringElement()['#eb_widget_main_submit'])) {
+      $media_bundle = $this->entityTypeManager->getStorage('media_type')
+        ->load('gredi_dam_assets');
+
+      // Load the file settings to validate against.
+      $field_map = $media_bundle->getFieldMap();
+
+      if (!isset($field_map['media_image'])) {
+        $message = $this->t('Missing file mapping. Check your media configuration.');
+        $form_state->setError($form['widget']['asset-container']['assets'], $message);
+        return;
+      }
+
+      // The form input uses checkboxes which returns zero for unchecked assets.
+      // Remove these unchecked assets.
+      $assets = array_filter($form_state->getValue('assets'));
+
+      // Get the cardinality for the media field that is being populated.
+      $field_cardinality = $form_state->get([
+        'entity_browser',
+        'validators',
+        'cardinality',
+        'cardinality',
+      ]);
+      if (!count($assets)) {
+        $form_state->setError($form['widget']['asset-container'], $this->t('Please select an asset.'));
+      }
+
+      // If the field cardinality is limited and the number of assets selected
+      // is greater than the field cardinality.
+      if ($field_cardinality > 0 && count($assets) > $field_cardinality) {
+        $message = $this->formatPlural($field_cardinality, 'You can not select more than 1 entity.', 'You can not select more than @count entities.');
+        $form_state->setError($form['widget']['asset-container']['assets'], $message);
+      }
+
+      // Get information about the file field used to handle the asset file.
+      $field_definitions = $this->entityFieldManager->getFieldDefinitions('media', $media_bundle->id());
+      $field_definition = $field_definitions[$field_map['media_image']]->getItemDefinition();
+
+      // Invoke the API to get all the information about the selected assets.
+      $dam_assets = $this->gredidam->getMultipleAsset($assets, ['meta', 'attachments']);
+
+      // If the media is only referencing images, we only validate that
+      // referenced assets are images. We don't check the extension as we are
+      // downloading the png version anyway.
+        // Get the list of allowed extensions for this media bundle.
+        $file_extensions = $field_definition->getSetting('file_extensions');
+        $supported_extensions = explode(',', preg_replace('/,?\s/', ',', $file_extensions));
+
+        // Browse the selected assets to validate the extensions are allowed.
+        foreach ($dam_assets as $asset) {
+          $filetype = pathinfo($asset->name, PATHINFO_EXTENSION);
+          $type_is_supported = in_array(strtolower($filetype), $supported_extensions);
+
+          if (!$type_is_supported) {
+            $message = $this->t('Please make another selection. The "@filetype" file type is not one of the supported file types (@supported_types).', [
+              '@filetype' => $filetype,
+              '@supported_types' => implode(', ', $supported_extensions),
+            ]);
+            $form_state->setError($form['widget']['asset-container']['assets'], $message);
+          }
+        }
+
+    }
   }
 
   /**
@@ -439,12 +441,12 @@ class Gredidam extends WidgetBase {
       '#default_value' => 'asc',
     ];
     // Add dropdown for filtering on asset type.
-    $form['filter-sort-container']['format_type'] = [
-      '#type' => 'select',
-      '#title' => 'File format',
-      '#options' => Asset::getFileFormats(),
-      '#default_value' => 0,
-    ];
+//    $form['filter-sort-container']['format_type'] = [
+//      '#type' => 'select',
+//      '#title' => 'File format',
+//      '#options' => Asset::getFileFormats(),
+//      '#default_value' => 0,
+//    ];
     // Add textfield for keyword search.
     $form['filter-sort-container']['query'] = [
       '#type' => 'textfield',
@@ -495,6 +497,7 @@ class Gredidam extends WidgetBase {
     ];
     // Add the breadcrumb buttons to the form.
     foreach ($category->parts as $key => $category_name) {
+
       $level[] = $category_name;
       // Increment it so doesn't overwrite the home.
       $key++;
@@ -518,28 +521,31 @@ class Gredidam extends WidgetBase {
   /**
    * {@inheritDoc}
    */
-  public function getCategoryFormElements($category, $modulePath, &$form) {
-    $form['asset-container']['categories'][$category->name] = [
-      '#type' => 'container',
-      '#attributes' => [
-        'class' => ['gredidam-browser-category-link'],
-        'style' => 'background-image:url("/' . $modulePath . '/images/category.png")',
-      ],
-    ];
-    $form['asset-container']['categories'][$category->name][$category->id] = [
-      '#type' => 'button',
-      '#value' => $category->name,
-      '#name' => 'gredidam_category',
-      '#gredidam_category' => $category->jsonSerialize(),
-      '#attributes' => [
-        'class' => ['gredidam-category-link-button'],
-      ],
-    ];
-    $form['asset-container']['categories'][$category->name]['title'] = [
-      '#type' => 'html_tag',
-      '#tag' => 'p',
-      '#value' => $category->name,
-    ];
+  public function getCategoryFormElements($categories, $modulePath, &$form) {
+    foreach ($categories as $category) {
+      $form['asset-container']['categories'][$category->name] = [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['gredidam-browser-category-link'],
+          'style' => 'background-image:url("/' . $modulePath . '/images/category.png")',
+        ],
+      ];
+      $form['asset-container']['categories'][$category->name][$category->id] = [
+        '#type' => 'button',
+        '#value' => $category->name,
+        '#name' => 'gredidam_category',
+        '#gredidam_category' => $category->jsonSerialize(),
+        '#attributes' => [
+          'class' => ['gredidam-category-link-button'],
+        ],
+      ];
+      $form['asset-container']['categories'][$category->name]['title'] = [
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#value' => $category->name,
+      ];
+    }
+    return $form;
   }
 
   /**
@@ -548,123 +554,136 @@ class Gredidam extends WidgetBase {
    * @return string
    *   Element HTML markup.
    *
-   * @var \Drupal\helfi_gredi_image\Entity\Asset $gredidamAsset
+   * @var string $gredidamAsset
    */
   public function layoutMediaEntity(Asset $gredidamAsset) {
     $modulePath = $this->moduleHandler->getModule('helfi_gredi_image')->getPath();
 
-    $assetName = $gredidamAsset->filename;
-    if (!empty($gredidamAsset->thumbnails)) {
-      $thumbnail = '<div class="gredidam-asset-thumb"><img src="' . $gredidamAsset->thumbnails->{"300px"}->url . '" alt="' . $assetName . '" /></div>';
+//    $gredidamAsset = Asset::fromJson($gredidamAsset);
+
+    $assetName = $gredidamAsset->name;
+    if (!empty($gredidamAsset->attachments)) {
+
+      $thumbnail = '<div class="gredidam-asset-thumb"><img src="' . $gredidamAsset->attachments . '" width="150px" height="150px" /></div>';
     }
     else {
       $thumbnail = '<span class="gredidam-browser-empty">No preview available.</span>';
     }
-    $element = '<div class="gredidam-asset-checkbox">' . $thumbnail . '<div class="gredidam-asset-details"><a href="/gredidam/asset/' . $gredidamAsset->id . '" class="use-ajax" data-dialog-type="modal"><img src="/' . $modulePath . '/img/ext-link.png" alt="category link" class="gredidam-asset-browser-icon" /></a><p class="gredidam-asset-filename">' . $assetName . '</p></div></div>';
+    $element = '<div class="gredidam-asset-checkbox">' . $thumbnail . '<div class="gredidam-asset-details"><p class="gredidam-asset-filename">' . $assetName . '</p></div></div>';
     return $element;
   }
 
 
   /**
    * {@inheritdoc}
-   *
-   * Create a custom pager.
    */
-  public function getPager($total_count, $page, $num_per_page, $page_type = "listing", Category $category = NULL) {
-    // Add container for pager.
-    $form['pager-container'] = [
-      '#type' => 'container',
-      // Store page number in container so it can be retrieved from form state.
-      '#page' => $page,
-      '#attributes' => [
-        'class' => ['gredidam-asset-browser-pager'],
-      ],
-    ];
-    // If not on the first page.
-    if ($page > 0) {
-      // Add a button to go to the first page.
-      $form['pager-container']['first'] = [
-        '#type' => 'button',
-        '#value' => '<<',
-        '#name' => 'gredidam_pager',
-        '#page_type' => $page_type,
-        '#current_category' => $category,
-        '#gredidam_page' => 0,
-        '#attributes' => [
-          'class' => ['page-button', 'page-first'],
-        ],
-      ];
-      // Add a button to go to the previous page.
-      $form['pager-container']['previous'] = [
-        '#type' => 'button',
-        '#value' => '<',
-        '#name' => 'gredidam_pager',
-        '#page_type' => $page_type,
-        '#gredidam_page' => $page - 1,
-        '#current_category' => $category,
-        '#attributes' => [
-          'class' => ['page-button', 'page-previous'],
-        ],
-      ];
+  public function submit(array &$element, array &$form, FormStateInterface $form_state) {
+    $assets = [];
+    if (!empty($form_state->getTriggeringElement()['#eb_widget_main_submit'])) {
+      $assets = $this->prepareEntities($form, $form_state);
     }
-    // Last available page based on number of assets in category
-    // divided by number of assets to show per page.
-    $last_page = floor(($total_count - 1) / $num_per_page);
-    // First page to show in the pager.
-    // Try to put the button for the current page in the middle by starting at
-    // the current page number minus 4.
-    $start_page = max(0, $page - 4);
-    // Last page to show in the pager.  Don't go beyond the last available page.
-    $end_page = min($start_page + 9, $last_page);
-    // Create buttons for pages from start to end.
-    for ($i = $start_page; $i <= $end_page; $i++) {
-      $form['pager-container']['page_' . $i] = [
-        '#type' => 'button',
-        '#value' => $i + 1,
-        '#name' => 'gredidam_pager',
-        '#page_type' => $page_type,
-        '#gredidam_page' => $i,
-        '#current_category' => $category,
-        '#attributes' => [
-          'class' => [($i == $page ? 'page-current' : ''), 'page-button'],
-        ],
-      ];
-    }
-    // If not on the last page.
-    if ($end_page > $page) {
-      // Add a button to go to the next page.
-      $form['pager-container']['next'] = [
-        '#type' => 'button',
-        '#value' => '>',
-        '#name' => 'gredidam_pager',
-        '#current_category' => $category,
-        '#page_type' => $page_type,
-        '#gredidam_page' => $page + 1,
-        '#attributes' => [
-          'class' => ['page-button', 'page-next'],
-        ],
-      ];
-      // Add a button to go to the last page.
-      $form['pager-container']['last'] = [
-        '#type' => 'button',
-        '#value' => '>>',
-        '#name' => 'gredidam_pager',
-        '#current_category' => $category,
-        '#gredidam_page' => $last_page,
-        '#page_type' => $page_type,
-        '#attributes' => [
-          'class' => ['page-button', 'page-last'],
-        ],
-      ];
-    }
-    return $form;
+    $this->selectEntities($assets, $form_state);
   }
 
-    /**
-   * {@inheritdoc}
-   */
   protected function prepareEntities(array $form, FormStateInterface $form_state) {
-    return TRUE;
+    // Get asset id's from form state.
+    $asset_ids = $form_state->getValue('current_selections', []) + array_filter($form_state->getValue('assets', []));
+
+    /** @var \Drupal\media\MediaTypeInterface $media_type */
+    $media_type = $this->entityTypeManager->getStorage('media_type')
+      ->load($this->configuration['media_type']);
+
+    // Get the source field for this type which stores the asset id.
+    $source_field = $media_type->getSource()
+      ->getSourceFieldDefinition($media_type)
+      ->getName();
+
+
+    // Query for existing entities.
+    $existing_ids = $this->entityTypeManager->getStorage('media')
+      ->getQuery()
+      ->condition('bundle', $media_type->id())
+      ->condition($source_field, $asset_ids, 'IN')
+      ->execute();
+    $entities = $this->entityTypeManager->getStorage('media')
+      ->loadMultiple($existing_ids);
+
+    // We remove the existing media from the asset_ids array, so they do not
+    // get fetched and created as duplicates.
+    foreach ($entities as $entity) {
+      $asset_id = $entity->get($source_field)->value;
+
+      if (in_array($asset_id, $asset_ids)) {
+        unset($asset_ids[$asset_id]);
+      }
+    }
+
+    $assets = $this->gredidam->getMultipleAsset($asset_ids, ['meta', 'attachments']);
+
+    $directory = "public://media";
+    foreach ($assets as $asset) {
+//      $file = system_retrieve_file($asset->attachments, NULL, TRUE);
+//      $file_temp = file_get_contents($this->gredidam->getFileUrl($asset->id));
+//      $file = file_save_data(base64_decode($this->gredidam->getFileUrl($asset->id)), 'public://media/' . $asset->name, FileSystemInterface::EXISTS_REPLACE);
+      //$file_temp = file_save_data($file_temp, 'public://', FileSystemInterface::EXISTS_RENAME);
+      $random = new Random();
+      $image_name = $random->name(8, TRUE) . '.' . $this->getExtension($asset->metadata['mimeType']);
+      $image_uri = 'public://gredidam/' . $image_name;
+      $resource = fopen($image_uri, 'w');
+      $stream = Utils::streamFor($resource);
+      $this->guzzleClient->request('GET', $asset->attachments, ['save_to' => $stream]);
+
+      $file = File::create([
+        'uid' => $this->user->id(),
+        'filename' => $image_name,
+        'uri' => $image_uri,
+        'status' => 1,
+      ]);
+      $file->save();
+
+      $entity_values = [
+        'bundle' => $media_type->id(),
+        'uid' => $this->user->id(),
+        'langcode' => $this->languageManager->getCurrentLanguage()->getId(),
+        // @todo Find out if we can use status from Gredi Dam.
+        'status' => 1,
+        'name' => $asset->name,
+        'field_media_image' => [
+          'target_id' => $file->id(),
+        ],
+        $source_field => [
+          'asset_id' => $asset->id
+          ],
+        'created' => strtotime($asset->created),
+        'changed' => strtotime($asset->modified),
+      ];
+
+      // Create a new entity to represent the asset.
+      $entity = $this->entityTypeManager->getStorage('media')
+        ->create($entity_values);
+      $entity->save();
+
+      // Reload the entity to make sure we have everything populated properly.
+      $entity = $this->entityTypeManager->getStorage('media')
+        ->load($entity->id());
+
+      // Add the new entity to the array of returned entities.
+      $entities[] = $entity;
+    }
+
+    return $entities;
   }
 
+  public function getExtension ($mime_type){
+
+    $extensions = array('image/jpeg' => 'jpg',
+      'image/jpg' => 'jpg',
+      'image/png' => 'png'
+    );
+
+    // Add as many other Mime Types / File Extensions as you like
+
+    return $extensions[$mime_type];
+
+  }
 }

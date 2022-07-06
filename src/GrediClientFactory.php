@@ -5,6 +5,8 @@ namespace Drupal\helfi_gredi_image;
 use cweagans\webdam\Exception\InvalidCredentialsException;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\helfi_gredi_image\Entity\Asset;
+use Drupal\helfi_gredi_image\Entity\Category;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
@@ -85,7 +87,7 @@ class GrediClientFactory implements ContainerInjectionInterface {
         $subtring_start += strlen('=');
         $size = strpos($getCookie, ';', $subtring_start) - $subtring_start;
         $result =  substr($getCookie, $subtring_start, $size);
-
+        setcookie("JSESSIONID", $result, '', 'api4.materialbank.net');
         $cookieJar = CookieJar::fromArray([
           'JSESSIONID' => $result
         ], 'api4.materialbank.net');
@@ -120,7 +122,7 @@ class GrediClientFactory implements ContainerInjectionInterface {
   }
 
   public function getCustomerContent($customer) {
-      $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/customers/6/contents', [
+      $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/customers/' . $customer . '/contents', [
         'headers' => [
           'Content-Type' => 'application/json',
         ],
@@ -133,8 +135,145 @@ class GrediClientFactory implements ContainerInjectionInterface {
           $content[] = $post;
         }
       }
-      return Json::decode($posts);
+      return $content;
+  }
 
+  public function getFolderContent($folder_id, $params = []) {
+    $parameters = '';
+    if (!empty($params)) {
+      foreach ($params as $key => $param) {
+        $parameters .= '&' . $key . '=' . $param;
+      }
+    }
+    $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/folders/' . $folder_id . '/files/?include=attachments' . $parameters, [
+      'headers' => [
+        'Content-Type' => 'application/json',
+      ],
+      'cookies' => $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx')
+    ]);
+    $posts = $userContent->getBody()->getContents();
+    $contents = [];
+
+    foreach (Json::decode($posts) as $post) {
+      if ($post['folder'] == FALSE) {
+
+        $contents[] = Asset::fromJson($post, $folder_id);
+      }
+    }
+    return $contents;
+  }
+
+  public function getCustomerFolders($customer) {
+    $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/customers/' . $customer . '/contents', [
+      'headers' => [
+        'Content-Type' => 'application/json',
+      ],
+      'cookies' => $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx')
+    ]);
+    $posts = $userContent->getBody()->getContents();
+    $content = [];
+
+    foreach (Json::decode($posts) as $post) {
+      if ($post['fileType'] == 'folder') {
+        $content[] = Category::fromJson($post);
+      }
+    }
+
+    return $content;
+
+  }
+
+  public function getFileUrl($file_id) {
+    $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/files/' . $file_id . '/contents/original', [
+      'headers' => [
+        'Content-Type' => 'image/jpeg',
+      ],
+      'cookies' => $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx')
+    ]);
+    $posts = $userContent->getBody()->getContents();
+    return $posts;
+  }
+
+  /**
+   * Get a list of Assets given an array of Asset ID's.
+   *
+   * @param array $ids
+   *   The Gredi DAM Asset ID's.
+   * @param array $expand
+   *   A list of dta items to expand on the result set.
+   *
+   * @return array
+   *   A list of assets.
+   */
+  public function getMultipleAsset($ids, $expand = []) : array {
+    if (empty($ids)) {
+      return [];
+    }
+
+    $assets = [];
+    foreach ($ids as $id) {
+      $assets[] = $this->getAsset($id, $expand);
+    }
+
+
+    return $assets;
+  }
+
+  /**
+   * Get an Asset given an Asset ID.
+   *
+   * @param string $id
+   *   The Gredi DAM Asset ID.
+   * @param array $expands
+   *   The additional properties to be included.
+   *
+   * @return \Drupal\helfi_gredi_image\Entity\Asset
+   *   The asset entity.
+   *
+   * @throws \GuzzleHttp\Exception\RequestException
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
+  public function getAsset(string $id, array $expands = []): Asset {
+    $required_expands = Asset::getRequiredExpands();
+    $allowed_expands = Asset::getAllowedExpands();
+    $expands = array_intersect(array_unique($expands + $required_expands), $allowed_expands);
+
+    $response = $this->guzzleClient->request(
+      "GET",
+      'https://api4.materialbank.net/api/v1/files/' . $id . '?include=' . implode('%2C', $expands),
+      [
+        'headers' => [
+          'Content-Type' => 'application/json',
+        ],
+        'cookies' => $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx')
+      ]
+    );
+    return Asset::fromJson($response->getBody()->getContents());
+  }
+
+  /**
+   * Get a list of Assets given a Category ID.
+   *
+   * @param string $category_name
+   *   Category name.
+   *
+   * @param array $params
+   *   Parameters.
+   *
+   * @return array
+   *   Contains the following keys:
+   *     - total_count: The total number of assets in the result set across all
+   *       pages.
+   *     - assets: an array of Asset objects.
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
+  public function getAssetsByCategory(string $category_id, array $params = []): array {
+
+    // Fetch all assets of current category.
+    $assets = $this->getFolderContent($category_id, $params);
+
+    return $assets;
   }
 
 }
