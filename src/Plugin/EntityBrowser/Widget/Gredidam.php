@@ -212,7 +212,7 @@ class Gredidam extends WidgetBase {
 
     $form = parent::getForm($original_form, $form_state, $additional_widget_parameters);
     $config = $this->config->get('gredi_dam.settings');
-
+    $page = 0;
     $modulePath = $this->moduleHandler->getModule('helfi_gredi_image')->getPath();
     // Attach the modal library.
     $form['#attached']['library'][] = 'core/drupal.dialog.ajax';
@@ -227,6 +227,10 @@ class Gredidam extends WidgetBase {
     if (isset($form_state->getCompleteForm()['widget']) && isset($trigger_elem) && $trigger_elem['#name'] != 'filter_sort_reset') {
       // Assign $widget for convenience.
       $widget = $form_state->getCompleteForm()['widget'];
+      if (isset($widget['pager-container']) && is_numeric($widget['pager-container']['#page'])) {
+        // Set the page number to the value stored in the form state.
+        $page = intval($widget['pager-container']['#page']);
+      }
 
       if (isset($widget['asset-container']) && isset($widget['asset-container']['#gredidam_category'])) {
         // Set current category to the value stored in the form state.
@@ -257,6 +261,16 @@ class Gredidam extends WidgetBase {
         $this->currentCategory->parts = $trigger_elem["#parts"];
       }
 
+      // If a pager button has been clicked.
+      if ($trigger_elem['#name'] === 'gredidam_pager') {
+
+        $this->currentCategory->name = $trigger_elem['#current_category']->name ?? NULL;
+        $this->currentCategory->parts = $trigger_elem['#current_category']->parts ?? [];
+        // Set the current category id to the id of the category, was clicked.
+
+        $page = intval($trigger_elem['#gredidam_page']);
+      }
+
       $form_state->setRebuild();
 
     }
@@ -265,7 +279,6 @@ class Gredidam extends WidgetBase {
 
     // Add the filter and sort options to the form.
     $form += $this->getFilterSort();
-
 
     $folders_content = $this->gredidam->getCustomerFolders(6);
 
@@ -299,12 +312,25 @@ class Gredidam extends WidgetBase {
       }
     }
 
-    $this->assets = $this->pagerArray($this->assets, $num_per_page);
+    $this->assets = $this->pagerArray($this->assets, $num_per_page, $this->currentCategory);
 
 
     $form['pager'] = [
       '#type' => 'pager',
     ];
+
+    // Assets are rendered as #options for a checkboxes element.
+    // Start with an empty array.
+    $assets = [];
+    // Add to the assets array.
+
+    if (isset($items)) {
+      foreach ($items as $category_item) {
+
+        $this->assets[$category_item->id] = $this->layoutMediaEntity($category_item);
+      }
+    }
+
 
     $form['asset-container']['assets'] = [
       '#type' => 'checkboxes',
@@ -325,7 +351,7 @@ class Gredidam extends WidgetBase {
   /**
    * Returns pager array.
    */
-  public function pagerArray($items, $itemsPerPage) {
+  public function pagerArray($items, $itemsPerPage, $current_category) {
     // Get total items count.
     $total = count($items);
     // Get the number of the current page.
@@ -333,6 +359,7 @@ class Gredidam extends WidgetBase {
 
     // Split an array into chunks.
     $chunks = array_chunk($items, $itemsPerPage);
+    $this->currentCategory = $current_category;
     // Return current group item.
     return $chunks[$currentPage];
   }
@@ -522,6 +549,7 @@ class Gredidam extends WidgetBase {
    * {@inheritDoc}
    */
   public function getCategoryFormElements($categories, $modulePath, &$form) {
+
     foreach ($categories as $category) {
       $form['asset-container']['categories'][$category->name] = [
         '#type' => 'container',

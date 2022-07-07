@@ -121,8 +121,12 @@ class GrediClientFactory implements ContainerInjectionInterface {
     }
   }
 
-  public function getCustomerContent($customer) {
-      $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/customers/' . $customer . '/contents', [
+  public function getCustomerContent($customer, $params = []): array {
+    $parameters = '';
+    if (!empty($params)) {
+      $parameters .= '&offset=' . $params['offset'] . '&limit=' . $params['limit'];
+    }
+      $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/customers/' . $customer . '/contents?include=attachments' . $parameters, [
         'headers' => [
           'Content-Type' => 'application/json',
         ],
@@ -132,18 +136,19 @@ class GrediClientFactory implements ContainerInjectionInterface {
       $content = [];
       foreach (Json::decode($posts) as $post) {
         if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
-          $content[] = $post;
+
+          $content[] = $this->getAsset($post['id'], ['meta', 'attachments'], $post['parentId']);
         }
       }
+
       return $content;
   }
 
   public function getFolderContent($folder_id, $params = []) {
+    if (empty($folder_id)) return;
     $parameters = '';
     if (!empty($params)) {
-      foreach ($params as $key => $param) {
-        $parameters .= '&' . $key . '=' . $param;
-      }
+        $parameters .= '?offset=' . $params['offset'] . '&limit=' . $params['limit'];
     }
     $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/folders/' . $folder_id . '/files/?include=attachments' . $parameters, [
       'headers' => [
@@ -161,6 +166,25 @@ class GrediClientFactory implements ContainerInjectionInterface {
       }
     }
     return $contents;
+  }
+
+  public function getCustomerContentTotal($customer) {
+    $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/customers/' . $customer . '/contents?include=attachments', [
+      'headers' => [
+        'Content-Type' => 'application/json',
+      ],
+      'cookies' => $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx')
+    ]);
+    $posts = $userContent->getBody()->getContents();
+    $content = [];
+    foreach (Json::decode($posts) as $post) {
+      if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
+
+        $content[] = Asset::fromJson($post, $post['parentId']);;
+      }
+    }
+
+    return $content;
   }
 
   public function getCustomerFolders($customer) {
@@ -226,6 +250,8 @@ class GrediClientFactory implements ContainerInjectionInterface {
    *   The Gredi DAM Asset ID.
    * @param array $expands
    *   The additional properties to be included.
+   * @param string $folder_id
+   *   Folder id.
    *
    * @return \Drupal\helfi_gredi_image\Entity\Asset
    *   The asset entity.
@@ -233,7 +259,7 @@ class GrediClientFactory implements ContainerInjectionInterface {
    * @throws \GuzzleHttp\Exception\RequestException
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function getAsset(string $id, array $expands = []): Asset {
+  public function getAsset(string $id, array $expands = [], string $folder_id = NULL): Asset {
     $required_expands = Asset::getRequiredExpands();
     $allowed_expands = Asset::getAllowedExpands();
     $expands = array_intersect(array_unique($expands + $required_expands), $allowed_expands);
@@ -248,7 +274,8 @@ class GrediClientFactory implements ContainerInjectionInterface {
         'cookies' => $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx')
       ]
     );
-    return Asset::fromJson($response->getBody()->getContents());
+
+    return Asset::fromJson($response->getBody()->getContents(), $folder_id);
   }
 
   /**

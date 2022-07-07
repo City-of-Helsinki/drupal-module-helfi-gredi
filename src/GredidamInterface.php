@@ -27,11 +27,13 @@ interface GredidamInterface {
    *
    * @param int $customer
    *   Customer id.
+   * @param array $params
+   *   Get params.
    *
    * @return array
    *   Return the customer content.
    */
-  public function getCustomerContent($customer);
+  public function getCustomerContent($customer, $params = []);
 
 }
 

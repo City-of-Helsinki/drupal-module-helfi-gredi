@@ -82,9 +82,16 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
    /**
     * {@inheritdoc}
     */
-   public function getCustomerContent($customer) {
-      return $this->grediDamClientFactory->getCustomerContent($customer);
+   public function getCustomerContent($customer, $params = []) {
+      return $this->grediDamClientFactory->getCustomerContent($customer, $params);
    }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getCustomerContentTotal($customer) {
+    return $this->grediDamClientFactory->getCustomerContentTotal($customer);
+  }
 
   /**
    * {@inheritdoc}
@@ -99,6 +106,7 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
   public function getCustomerFolders($customer) {
     return $this->grediDamClientFactory->getCustomerFolders($customer);
   }
+
 
   /**
    * {@inheritdoc}
