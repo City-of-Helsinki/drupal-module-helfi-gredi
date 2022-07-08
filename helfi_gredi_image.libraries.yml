@@ -9,3 +9,13 @@ asset_browser:
     - core/jquery
     - core/drupal.dialog.ajax
     - core/jquery.form
+
+pager:
+  version: 1.x
+  js:
+    js/pager.js: {}
+    js/pagination.min.js: {}
+  dependencies:
+    - core/drupal
+    - core/jquery
+    - core/once

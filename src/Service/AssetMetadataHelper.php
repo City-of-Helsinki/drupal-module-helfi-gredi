@@ -116,7 +116,7 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
       'height' => $this->t('Height'),
       'resolution' => $this->t('Resolution'),
       'keywords' => $this->t('Keywords'),
-      'alt-text' => $this->t('Alt text'),
+      'alt_text' => $this->t('Alt text'),
       'media_image' => $this->t('Image'),
       'size' => $this->t('Filesize (kb)'),
     ];
@@ -145,42 +145,21 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
    *   Result will vary based on the metadata item.
    */
   public function getMetadataFromAsset(Asset $asset, $name) {
-    $specificMetadataFields = $this->getSpecificMetadataFields();
-    if (array_key_exists($name, $specificMetadataFields)) {
-      if (is_array($asset->metadata[$name]) && !empty($asset->metadata[$name])) {
-        return reset($asset->metadata[$name]);
-      }
-
-      return !empty($asset->metadata[$name]) ? $asset->metadata[$name] : NULL;
-    }
-
     switch ($name) {
       case 'height':
-        return $asset->metadata['height'] ?? NULL;
+        return $asset->height;
       case 'width':
-        return $asset->metadata['width'] ?? NULL;
-      case 'resoluion':
-        return $asset->metadata['resolution'] ?? NULL;
+        return $asset->width;
+      case 'resolution':
+        return $asset->resolution;
       case 'keywords':
-        return $asset->metadata['keywords'] ?? NULL;
+        return $asset->keywords;
       case 'alt-text':
-        return $asset->metadata['alt-text'] ?? NULL;
+        return $asset->alt_text;
       case 'size':
-        return $asset->metadata['size'] ?? NULL;
-
-
-
-      default:
-        // The key should be the local property name and the value should be the
-        // DAM provided property name.
-        $property_name_mapping = [
-          'external_id' => 'id',
-          'name' => 'name',
-        ];
-        if (array_key_exists($name, $property_name_mapping)) {
-          $property_name = $property_name_mapping[$name];
-          return $asset->{$property_name} ?? NULL;
-        }
+        return $asset->size;
+      case 'external_id':
+        return $asset->external_id;
     }
 
     return NULL;

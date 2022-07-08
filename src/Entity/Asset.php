@@ -19,6 +19,13 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $id;
 
   /**
+   * The ID of the asset.
+   *
+   * @var string
+   */
+  public $external_id;
+
+  /**
    * The Folder ID of the asset.
    *
    * @var string
@@ -87,6 +94,55 @@ class Asset implements EntityInterface, \JsonSerializable {
    * @var array
    */
   public $metadata;
+
+  /**
+   * The asset's width.
+   *
+   * @var string
+   */
+  public $width;
+
+  /**
+   * The asset's height.
+   *
+   * @var string
+   */
+  public $height;
+
+  /**
+   * The asset's resoluion.
+   *
+   * @var string
+   */
+  public $resolution;
+
+  /**
+   * The asset's keywords.
+   *
+   * @var string
+   */
+  public $keywords;
+
+  /**
+   * The asset's alt_text.
+   *
+   * @var string
+   */
+  public $alt_text;
+
+  /**
+   * The asset's size.
+   *
+   * @var string
+   */
+  public $size;
+
+  /**
+   * The asset's mimeType.
+   *
+   * @var string
+   */
+  public $mimeType;
 
   /**
    * A list of allowed values for the "expand" query attribute.
@@ -159,19 +215,20 @@ class Asset implements EntityInterface, \JsonSerializable {
     foreach ($properties as $property) {
       if (isset($json[$property])) {
         if ($property === 'attachments') {
-          $asset->metadata = [
-            'width' => $json['attachments'][0]['propertiesById']['nibo:image-width'],
-            'height' => $json['attachments'][0]['propertiesById']['nibo:image-height'],
-            'resoluion' => $json['attachments'][0]['propertiesById']['nibo:image-resolution'],
-            'keywords' => NULL,
-            'alt-text' => NULL,
-            'size' => $json['attachments'][0]['propertiesById']['nibo:file-size'],
-            'mimeType' => $json['attachments'][0]['propertiesById']['nibo:mime-type'],
-          ];
+          $asset->width =  $json['attachments'][0]['propertiesById']['nibo:image-width'];
+          $asset->height = $json['attachments'][0]['propertiesById']['nibo:image-height'];
+          $asset->resolution = $json['attachments'][0]['propertiesById']['nibo:image-resolution'];
+          $asset->keywords = NULL;
+          $asset->alt_text = NULL;
+          $asset->size = $json['attachments'][0]['propertiesById']['nibo:file-size'];
+          $asset->mimeType = $json['attachments'][0]['propertiesById']['nibo:mime-type'];
 
           $asset->attachments = "https://api4.materialbank.net" . $json['attachments'][0]['publicLink'];
         } elseif ($property === 'folderId') {
           $asset->folderId = $folder_id;
+        } elseif ($property == 'id') {
+          $asset->id = $json['id'];
+          $asset->external_id = $json['id'];
         }
         else {
           $asset->{$property} = $json[$property];

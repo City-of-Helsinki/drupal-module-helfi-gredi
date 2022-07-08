@@ -19,3 +19,10 @@ function media_gredidam_theme($existing, $type, $theme, $path) {
   ];
 }
 
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function helfi_gredi_image_form_entity_browser_gredi_dam_form_alter(&$form, FormStateInterface $form_state)
+{
+//  dump($form);
+}

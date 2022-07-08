@@ -249,7 +249,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
 
     $this->loggerChannel->warning(
       'Unable to save file for asset ID @asset_id.', [
-        '@asset_id' => $asset->id,
+        '@asset_id' => $asset->external_id,
       ]
     );
 
@@ -281,7 +281,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
       if (empty($download_url)) {
         $this->loggerChannel->warning(
           'Unable to save file for asset ID @asset_id. Thumbnail for request size (@size px) has not been found.', [
-            '@asset_id' => $asset->id,
+            '@asset_id' => $asset->external_id,
             '@size' => $size_limit,
           ]
         );
@@ -306,7 +306,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
       if ($size === NULL || $size === 0) {
         $this->loggerChannel->error('Unable to download contents for asset ID @asset_id. Received zero-byte response for download URL @url with redirects to @history',
         [
-          '@asset_id' => $asset->id,
+          '@asset_id' => $asset->external_id,
           '@url' => $download_url,
           '@history' => $response->getHeaderLine('X-Guzzle-Redirect-History'),
         ]);
@@ -324,7 +324,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     catch (RequestException $exception) {
       $message = 'Unable to download contents for asset ID @asset_id: %message. Attempted download URL @url with redirects to @history';
       $context = [
-        '@asset_id' => $asset->id,
+        '@asset_id' => $asset->external_id,
         '%message' => $exception->getMessage(),
         '@url' => $download_url,
         '@history' => '[empty request, cannot determine redirects]',

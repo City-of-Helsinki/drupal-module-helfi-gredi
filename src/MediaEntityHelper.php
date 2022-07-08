@@ -102,7 +102,7 @@ class MediaEntityHelper {
         $file = $this->assetFileHelper->createNewFile($asset, $destination_folder);
 
         if ($file) {
-          $this->assetData->set($asset->id, 'file_upload_date', strtotime($asset->file_upload_date));
+          $this->assetData->set($asset->external_id, 'file_upload_date', strtotime($asset->file_upload_date));
         }
       }
     }
@@ -219,6 +219,7 @@ class MediaEntityHelper {
     if ($this->mediaEntity->hasField($fieldName)) {
       /** @var \Drupal\Core\Field\FieldItemInterface $item */
       $item = $this->mediaEntity->{$fieldName}->first();
+
       if (!empty($item)) {
         return $item->{$opt};
       }
