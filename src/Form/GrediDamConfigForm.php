@@ -82,8 +82,6 @@ class GrediDamConfigForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
-
-    if ($config->get('domain')) {
       $form['drupal_auth'] = [
         '#type' => 'fieldset',
         '#title' => $this->t('Drupal authentication'),
@@ -104,9 +102,7 @@ class GrediDamConfigForm extends ConfigFormBase {
         '#description' => $this->t('passexample'),
         '#required' => TRUE,
       ];
-    }
 
-    if ($config->get('domain') && $config->get('user') && $config->get('pass'))
     $form['entity_browser'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Gredi DAM entity browser settings'),
