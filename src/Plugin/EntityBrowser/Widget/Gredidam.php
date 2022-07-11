@@ -333,7 +333,7 @@ class Gredidam extends WidgetBase {
         continue;
       }
       foreach ($content as $cont) {
-        $this->assets[] = $this->layoutMediaEntity($cont, $initial_key);
+        $this->assets[$cont->id] = $this->layoutMediaEntity($cont, $initial_key);
         $initial_key++;
       }
     }

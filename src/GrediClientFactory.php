@@ -196,6 +196,9 @@ class GrediClientFactory implements ContainerInjectionInterface {
 
     $assets = [];
     foreach ($ids as $id) {
+      if ($id == NULL) {
+        continue;
+      }
       $assets[] = $this->getAsset($id, $expand);
     }
 
