@@ -119,7 +119,7 @@ class GredidamAsset extends MediaSourceBase {
    */
   public function defaultConfiguration() {
     return [
-      'source_field' => 'field_gredidam_asset_id',
+      'source_field' => 'field_external_id',
     ];
   }
 

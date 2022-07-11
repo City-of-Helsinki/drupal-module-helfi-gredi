@@ -89,24 +89,9 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getCustomerContentTotal($customer) {
-    return $this->grediDamClientFactory->getCustomerContentTotal($customer);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getFolderContent($folder_id, $params = []) {
     return $this->grediDamClientFactory->getFolderContent($folder_id, $params);
   }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getCustomerFolders($customer) {
-    return $this->grediDamClientFactory->getCustomerFolders($customer);
-  }
-
 
   /**
    * {@inheritdoc}
@@ -118,23 +103,8 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getFileUrl($file_id) {
-    return $this->grediDamClientFactory->getFileUrl($file_id);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getAsset($assetId, $expands = ['meta', 'attachments']) {
     return $this->grediDamClientFactory->getAsset($assetId, $expands);
   }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getAssetsByCategory($category_id, $params) {
-    return $this->grediDamClientFactory->getAssetsByCategory($category_id, $params);
-  }
-
 
 }
