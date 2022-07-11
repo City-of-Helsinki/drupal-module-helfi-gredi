@@ -66,9 +66,9 @@ class ManualFetch extends ControllerBase {
    * @return array
    *   Return array.
    */
-
   public function fetchData() {
-  $loginSession = $this->sessionLoginAPI('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx');
+  $loginSession = $this
+    ->sessionLoginAPI('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx');
 
   if ($loginSession->getStatusCode() == 200 && $loginSession->getReasonPhrase() == 'OK') {
     $getCookie = $loginSession->getHeader('Set-Cookie')[0];
@@ -114,7 +114,8 @@ class ManualFetch extends ControllerBase {
    *   Return response.
    */
   public function sessionLoginAPI($customer, $username, $password) {
-    return $this->httpClient->request('POST', 'https://api4.materialbank.net/api/v1/sessions/', [
+    return $this->httpClient
+      ->request('POST', 'https://api4.materialbank.net/api/v1/sessions/', [
       'headers' => [
         'Content-Type' => 'application/json'
       ],

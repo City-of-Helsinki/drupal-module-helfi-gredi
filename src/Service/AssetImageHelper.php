@@ -130,6 +130,7 @@ class AssetImageHelper implements ContainerInjectionInterface {
     }
 
     $image_properties = $asset->file_properties->image_properties ?? NULL;
+
     if (!$image_properties) {
       $query = [];
     }
@@ -142,7 +143,6 @@ class AssetImageHelper implements ContainerInjectionInterface {
         $dimension = 'h';
         $size = $image_properties->height;
       }
-
       $scaled_size = min($thumbnailSize, $size);
       $query = [
         $dimension => $scaled_size,

@@ -127,10 +127,12 @@ class GredidamAsset extends MediaSourceBase {
    * {@inheritdoc}
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
+
     $submitted_config = array_intersect_key(
       $form_state->getValues(),
       $this->configuration
     );
+
     foreach ($submitted_config as $config_key => $config_value) {
       $this->configuration[$config_key] = $config_value;
     }
@@ -214,10 +216,8 @@ class GredidamAsset extends MediaSourceBase {
     if ($this->currentAsset === NULL) {
       return NULL;
     }
-    return $this->assetMetadataHelper->getMetadataFromAsset(
-      $this->currentAsset,
-      $name
-    );
+
+    return $this->assetMetadataHelper->getMetadataFromAsset($this->currentAsset, $name);
   }
 
 }
