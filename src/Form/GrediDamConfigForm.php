@@ -80,11 +80,28 @@ class GrediDamConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('domain'),
       '#description' => $this->t('example: demo.gredidam.fi'),
       '#required' => TRUE,
+      '#ajax' => [
+        'callback' => '::yearSelectCallback',
+        'disable-refocus' => FALSE, // Or TRUE to prevent re-focusing on the triggering element.
+        'event' => 'change',
+        'wrapper' => 'drupal-auth-output', // This element is updated with this AJAX callback.
+        'progress' => [
+          'type' => 'throbber',
+          'message' => $this->t('Verifying entry...'),
+        ],
+      ]
     ];
 
       $form['drupal_auth'] = [
         '#type' => 'fieldset',
         '#title' => $this->t('Drupal authentication'),
+        '#prefix' => '<div id="drupal-auth-output">',
+        '#suffix' => '</div>',
+        '#states' => [
+          'visible' => [
+            ':input[name="domain_value"]' => ['filled' => TRUE],
+          ],
+        ],
       ];
 
       $form['drupal_auth']['drupal_gredidam_user'] = [
@@ -132,6 +149,11 @@ class GrediDamConfigForm extends ConfigFormBase {
     return $form;
   }
 
+  public function yearSelectCallback(array $form, FormStateInterface $form_state) {
+    return $form['drupal_auth'];
+  }
+
+
   /**
    * Validate that the provided values are valid or nor.
    *
@@ -167,12 +189,8 @@ class GrediDamConfigForm extends ConfigFormBase {
         'drupal_gredidam_password',
         $this->t('Provided password is not valid.')
       );
-
       return;
     }
-
-    $this->validateDomain($form_state);
-
   }
 
   /**
@@ -181,34 +199,39 @@ class GrediDamConfigForm extends ConfigFormBase {
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   Form state instance.
    */
-  private function validateDomain(FormStateInterface $form_state): void {
-    $domain = $form_state->getValue('domain_value');
-    $user = $form_state->getValue('drupal_gredidam_user');
-    $pass = $form_state->getValue('drupal_gredidam_password');
+  public function validateDomain(FormStateInterface $form_state) {
+    if ($form_state->getValue('domain_value')
+      && $form_state->getValue('drupal_gredidam_user')
+      && $form_state->getValue('drupal_gredidam_password')) {
 
-    $response = $this->httpClient->request("POST", $domain, [
-      'headers' => [
-        'Content-Type' => 'application/json'
-      ],
-      'body' => '{
+      try{
+        $response = $this->httpClient->request("POST", $form_state->getValue('domain_value'), [
+          'headers' => [
+            'Content-Type' => 'application/json'
+          ],
+          'body' => '{
       "customer": "helsinki",
-      "username": "' . $user . '",
-      "password": "' . $pass . '"
+      "username": "' . $form_state->getValue('drupal_gredidam_user') . '",
+      "password": "' . $form_state->getValue('drupal_gredidam_password') . '"
     }'
-    ]);
+        ]);
 
-    $status = $response->getStatusCode();
+        $status = $response->getStatusCode();
 
-    if ($status == '200') {
-      $this->messenger()->addStatus($this->t('Validating domain: OK!'));
+        if ($status == '200') {
+          $this->messenger()->addStatus($this->t('Validating domain: OK!'));
+        }
+        else {
+          $this->messenger()->addError($this->t('Validating domain: ' . $status));
+        }
+      }
+      catch (\ErrorException $e) {
+        $this->messenger()->addError($e);
+      }
+
+
+
     }
-    else {
-      // If failed, display an error message.
-      $form_state->setErrorByName('domain', $this->t('Validating domain: @status', [
-        '@status' => $status,
-      ]));
-    }
-
   }
 
   /**

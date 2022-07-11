@@ -1,0 +1,19 @@
+uuid: 60dcccc7-501e-4db4-a1fa-6a22e38bf78e
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_width
+    - media.type.gredi_dam_assets
+id: media.gredi_dam_assets.field_width
+field_name: field_width
+entity_type: media
+bundle: gredi_dam_assets
+label: Width
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string
