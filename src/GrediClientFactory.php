@@ -26,6 +26,8 @@ class GrediClientFactory implements ContainerInjectionInterface {
    */
   protected $guzzleClient;
 
+  protected $cookieJar;
+
   /**
    * ClientFactory constructor.
    *
@@ -34,6 +36,8 @@ class GrediClientFactory implements ContainerInjectionInterface {
    */
   public function __construct(ClientInterface $guzzleClient) {
     $this->guzzleClient = $guzzleClient;
+
+    $this->cookieJar = $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx');
   }
 
   /**
@@ -123,6 +127,7 @@ class GrediClientFactory implements ContainerInjectionInterface {
 
   public function getCustomerContent($customer, $params = []): array {
     $parameters = '';
+
     if (!empty($params)) {
       $parameters .= '&offset=' . $params['offset'] . '&limit=' . $params['limit'];
     }
@@ -130,14 +135,17 @@ class GrediClientFactory implements ContainerInjectionInterface {
         'headers' => [
           'Content-Type' => 'application/json',
         ],
-        'cookies' => $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx')
+        'cookies' => $this->cookieJar
       ]);
       $posts = $userContent->getBody()->getContents();
       $content = [];
       foreach (Json::decode($posts) as $post) {
         if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
 
-          $content[] = $this->getAsset($post['id'], ['meta', 'attachments'], $post['parentId']);
+          $content['assets'][] = $this->getAsset($post['id'], ['meta', 'attachments'], $post['parentId']);
+        }
+        elseif ($post['fileType'] == 'folder') {
+          $content['folders'][] = Category::fromJson($post);
         }
       }
 
@@ -154,68 +162,20 @@ class GrediClientFactory implements ContainerInjectionInterface {
       'headers' => [
         'Content-Type' => 'application/json',
       ],
-      'cookies' => $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx')
+      'cookies' => $this->cookieJar
     ]);
     $posts = $userContent->getBody()->getContents();
     $contents = [];
 
     foreach (Json::decode($posts) as $post) {
       if ($post['folder'] == FALSE) {
-
-        $contents[] = Asset::fromJson($post, $folder_id);
+        $contents['assets'][] = Asset::fromJson($post, $folder_id);
+      }
+      else {
+        $contents['folders'][] = Category::fromJson($post);
       }
     }
     return $contents;
-  }
-
-  public function getCustomerContentTotal($customer) {
-    $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/customers/' . $customer . '/contents?include=attachments', [
-      'headers' => [
-        'Content-Type' => 'application/json',
-      ],
-      'cookies' => $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx')
-    ]);
-    $posts = $userContent->getBody()->getContents();
-    $content = [];
-    foreach (Json::decode($posts) as $post) {
-      if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
-
-        $content[] = Asset::fromJson($post, $post['parentId']);;
-      }
-    }
-
-    return $content;
-  }
-
-  public function getCustomerFolders($customer) {
-    $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/customers/' . $customer . '/contents', [
-      'headers' => [
-        'Content-Type' => 'application/json',
-      ],
-      'cookies' => $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx')
-    ]);
-    $posts = $userContent->getBody()->getContents();
-    $content = [];
-
-    foreach (Json::decode($posts) as $post) {
-      if ($post['fileType'] == 'folder') {
-        $content[] = Category::fromJson($post);
-      }
-    }
-
-    return $content;
-
-  }
-
-  public function getFileUrl($file_id) {
-    $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/files/' . $file_id . '/contents/original', [
-      'headers' => [
-        'Content-Type' => 'image/jpeg',
-      ],
-      'cookies' => $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx')
-    ]);
-    $posts = $userContent->getBody()->getContents();
-    return $posts;
   }
 
   /**
@@ -271,36 +231,11 @@ class GrediClientFactory implements ContainerInjectionInterface {
         'headers' => [
           'Content-Type' => 'application/json',
         ],
-        'cookies' => $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx')
+        'cookies' => $this->cookieJar
       ]
     );
 
     return Asset::fromJson($response->getBody()->getContents(), $folder_id);
-  }
-
-  /**
-   * Get a list of Assets given a Category ID.
-   *
-   * @param string $category_name
-   *   Category name.
-   *
-   * @param array $params
-   *   Parameters.
-   *
-   * @return array
-   *   Contains the following keys:
-   *     - total_count: The total number of assets in the result set across all
-   *       pages.
-   *     - assets: an array of Asset objects.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
-   */
-  public function getAssetsByCategory(string $category_id, array $params = []): array {
-
-    // Fetch all assets of current category.
-    $assets = $this->getFolderContent($category_id, $params);
-
-    return $assets;
   }
 
 }

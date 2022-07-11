@@ -118,7 +118,18 @@ class Gredidam extends WidgetBase {
    */
   protected $pagerManager;
 
+  /**
+   * Asset var.
+   *
+   * @var \Drupal\helfi_gredi_image\Entity\Asset
+   */
   protected $assets;
+
+  /**
+   * Category var.
+   *
+   * @var \Drupal\helfi_gredi_image\Entity\Category
+   */
   protected $currentCategory;
 
   /**
@@ -224,15 +235,24 @@ class Gredidam extends WidgetBase {
     $this->currentCategory->name = NULL;
     $this->currentCategory->parts = [];
 
+    $page = 0;
+    $offset = 0;
+
     $num_per_page = $config->get('num_assets_per_page') ?? GrediDamConfigForm::NUM_ASSETS_PER_PAGE;
     if (isset($form_state->getCompleteForm()['widget']) && isset($trigger_elem) && $trigger_elem['#name'] != 'filter_sort_reset') {
       // Assign $widget for convenience.
       $widget = $form_state->getCompleteForm()['widget'];
 
+      if (isset($widget['actions']['pager-container']) && is_numeric($widget['actions']['pager-container']['#page'])) {
+        // Set the page number to the value stored in the form state.
+        $page = intval($widget['actions']['pager-container']['#page']);
+      }
+
       if (isset($widget['asset-container']) && isset($widget['asset-container']['#gredidam_category'])) {
         // Set current category to the value stored in the form state.
         $this->currentCategory->id = $widget['asset-container']['#gredidam_category']['id'];
-        $this->currentCategory->parts = $widget['asset-container']['#gredidam_category']['parts'];
+        $this->currentCategory->parts[] = $trigger_elem['#gredidam_category']['name'];
+
       }
       if ($form_state->getValue('assets')) {
         $current_selections = $form_state->getValue('current_selections', []) + array_filter($form_state->getValue('assets', []));
@@ -245,21 +265,27 @@ class Gredidam extends WidgetBase {
     }
 
     if (isset($trigger_elem)) {
+
       if ($trigger_elem['#name'] === 'gredidam_category') {
         // Update the required information of selected category.
         $this->currentCategory->id = $trigger_elem['#gredidam_category']['id'];
         $this->currentCategory->name = $trigger_elem['#gredidam_category']['name'];
-        $this->currentCategory->parts = ['name' => $trigger_elem['#gredidam_category']['name']];
+        $this->currentCategory->parts[] = $trigger_elem['#gredidam_category']['name'];
+      }
 
+      if ($trigger_elem['#name'] === 'gredidam_pager') {
+        $this->currentCategory->name = $trigger_elem['#current_category']->name ?? NULL;
+        $this->currentCategory->parts[] = $trigger_elem['#gredidam_category']['name'];
+
+        // Set the current category id to the id of the category, was clicked.
+        $page = intval($trigger_elem['#gredidam_page']);
+        $offset = $num_per_page * $page;
       }
 
       if ($trigger_elem['#name'] === 'breadcrumb') {
         $this->currentCategory->name = $trigger_elem["#category_name"];
-        $this->currentCategory->parts = $trigger_elem["#parts"];
+        $this->currentCategory->parts[] = $trigger_elem['#gredidam_category']['name'];
       }
-
-      $form_state->setRebuild();
-
     }
 
     $form += $this->getBreadcrumb($this->currentCategory);
@@ -267,7 +293,7 @@ class Gredidam extends WidgetBase {
     // Add the filter and sort options to the form.
     $form += $this->getFilterSort();
 
-    $folders_content = $this->gredidam->getCustomerFolders(6);
+    $folders_content = $this->gredidam->getCustomerContent(6)['folders'];
 
     $contents = [];
     $form['asset-container'] = [
@@ -280,16 +306,28 @@ class Gredidam extends WidgetBase {
       ],
     ];
 
+    $params = [
+      'limit' => $num_per_page,
+      'offset' => $offset,
+    ];
+
+
     if ($this->currentCategory->id == NULL) {
-      foreach ($folders_content as $folder) {
-        $contents[] = $this->gredidam->getFolderContent($folder->id);
-      }
+      $contents[] = $this->gredidam->getCustomerContent(6, $params)['assets'];
+
       $this->getCategoryFormElements($folders_content, $modulePath, $form);
     }
     else {
-      $contents[] = $this->gredidam->getFolderContent($this->currentCategory->id);
+      if (isset($this->gredidam->getFolderContent($this->currentCategory->id, $params)['assets']))
+      $contents[] = $this->gredidam->getFolderContent($this->currentCategory->id, $params)['assets'];
+
+      if (isset($this->gredidam->getFolderContent($this->currentCategory->id)['folders'])) {
+        $this->getCategoryFormElements($this->gredidam->getFolderContent($this->currentCategory->id)['folders'], $modulePath, $form);
+      }
     }
+
     $initial_key = 0;
+    $this->assets = [];
     foreach ($contents as $content) {
       if (empty($content)) {
         continue;
@@ -300,13 +338,6 @@ class Gredidam extends WidgetBase {
       }
     }
 
-//    $this->assets = $this->pagerArray($this->assets, $num_per_page, $this->currentCategory);
-//
-//
-//    $form['pager'] = [
-//      '#type' => 'pager',
-//    ];
-
     if (isset($items)) {
       $initial_key = 0;
       foreach ($items as $category_item) {
@@ -315,48 +346,118 @@ class Gredidam extends WidgetBase {
       }
     }
 
-    $form['asset-container']['#attached']['library'][] = 'helfi_gredi_image/asset_browser';
-    $form['asset-container']['#attached']['library'][] = 'helfi_gredi_image/pager';
-    $form['#attached']['drupalSettings']['helfi_gredi_image']['numPerPage'] = $num_per_page;
-    $form['#attached']['drupalSettings']['helfi_gredi_image']['dataAssets'] = $this->assets;
+    $form['asset-container']['assets'] = [
+      '#type' => 'checkboxes',
+      '#theme_wrappers' => ['checkboxes__gredidam_assets'],
+      '#title_display' => 'invisible',
+      '#options' => $this->assets,
 
-//    $form['asset-container']['assets'] = [
-//      '#type' => 'checkboxes',
-//      '#theme_wrappers' => ['checkboxes__gredidam_assets'],
-//      '#title_display' => 'invisible',
-//      '#options' => $this->assets,
-//
-//      '#attached' => [
-//        'library' => [
-//          'helfi_gredi_image/asset_browser',
-//        ],
-//      ],
-//    ];
-    $form['pager'] = [
-      '#type' => 'markup',
-      '#markup' => '
-<div class="data-container"></div>
-        <div id="pagination-demo2"></div>'
+      '#attached' => [
+        'library' => [
+          'helfi_gredi_image/asset_browser',
+        ],
+      ],
     ];
+
+    if (isset($this->currentCategory->id)) $totalAssets = count($this->gredidam->getFolderContent($this->currentCategory->id));
+    else $totalAssets = count($this->gredidam->getCustomerContent(6)['assets']);
+    if ($totalAssets > $num_per_page) {
+      // Add the pager to the form.
+      $form['actions'] += $this->getPager($totalAssets, $page, $num_per_page, 'listing', $this->currentCategory);
+    }
 
     return $form;
 
   }
 
-  /**
-   * Returns pager array.
-   */
-  public function pagerArray($items, $itemsPerPage, $current_category) {
-    // Get total items count.
-    $total = count($items);
-    // Get the number of the current page.
-    $currentPage = $this->pagerManager->createPager($total, $itemsPerPage)->getCurrentPage();
-
-    // Split an array into chunks.
-    $chunks = array_chunk($items, $itemsPerPage);
-    $this->currentCategory = $current_category;
-    // Return current group item.
-    return $chunks[$currentPage];
+  public function getPager($total_count, $page, $num_per_page, $page_type = "listing", Category $category = NULL) {
+    // Add container for pager.
+    $form['pager-container'] = [
+      '#type' => 'container',
+      // Store page number in container so it can be retrieved from form state.
+      '#page' => $page,
+      '#attributes' => [
+        'class' => ['gredidam-asset-browser-pager'],
+      ],
+    ];
+    // If not on the first page.
+    if ($page > 0) {
+      // Add a button to go to the first page.
+      $form['pager-container']['first'] = [
+        '#type' => 'button',
+        '#value' => '<<',
+        '#name' => 'gredidam_pager',
+        '#page_type' => $page_type,
+        '#current_category' => $category,
+        '#gredidam_page' => 0,
+        '#attributes' => [
+          'class' => ['page-button', 'page-first'],
+        ],
+      ];
+      // Add a button to go to the previous page.
+      $form['pager-container']['previous'] = [
+        '#type' => 'button',
+        '#value' => '<',
+        '#name' => 'gredidam_pager',
+        '#page_type' => $page_type,
+        '#gredidam_page' => $page - 1,
+        '#current_category' => $category,
+        '#attributes' => [
+          'class' => ['page-button', 'page-previous'],
+        ],
+      ];
+    }
+    // Last available page based on number of assets in category
+    // divided by number of assets to show per page.
+    $last_page = floor(($total_count - 1) / $num_per_page);
+    // First page to show in the pager.
+    // Try to put the button for the current page in the middle by starting at
+    // the current page number minus 4.
+    $start_page = max(0, $page - 4);
+    // Last page to show in the pager.  Don't go beyond the last available page.
+    $end_page = min($start_page + 9, $last_page);
+    // Create buttons for pages from start to end.
+    for ($i = $start_page; $i <= $end_page; $i++) {
+      $form['pager-container']['page_' . $i] = [
+        '#type' => 'button',
+        '#value' => $i + 1,
+        '#name' => 'gredidam_pager',
+        '#page_type' => $page_type,
+        '#gredidam_page' => $i,
+        '#current_category' => $category,
+        '#attributes' => [
+          'class' => [($i == $page ? 'page-current' : ''), 'page-button'],
+        ],
+      ];
+    }
+    // If not on the last page.
+    if ($end_page > $page) {
+      // Add a button to go to the next page.
+      $form['pager-container']['next'] = [
+        '#type' => 'button',
+        '#value' => '>',
+        '#name' => 'gredidam_pager',
+        '#current_category' => $category,
+        '#page_type' => $page_type,
+        '#gredidam_page' => $page + 1,
+        '#attributes' => [
+          'class' => ['page-button', 'page-next'],
+        ],
+      ];
+      // Add a button to go to the last page.
+      $form['pager-container']['last'] = [
+        '#type' => 'button',
+        '#value' => '>>',
+        '#name' => 'gredidam_pager',
+        '#current_category' => $category,
+        '#gredidam_page' => $last_page,
+        '#page_type' => $page_type,
+        '#attributes' => [
+          'class' => ['page-button', 'page-last'],
+        ],
+      ];
+    }
+    return $form;
   }
 
   /**
@@ -524,6 +625,7 @@ class Gredidam extends WidgetBase {
         'class' => ['gredidam-browser-breadcrumb'],
       ],
     ];
+
     // Add the breadcrumb buttons to the form.
     foreach ($category->parts as $key => $category_name) {
 
@@ -553,6 +655,7 @@ class Gredidam extends WidgetBase {
   public function getCategoryFormElements($categories, $modulePath, &$form) {
 
     foreach ($categories as $category) {
+
       $form['asset-container']['categories'][$category->name] = [
         '#type' => 'container',
         '#attributes' => [
@@ -587,10 +690,6 @@ class Gredidam extends WidgetBase {
    * @var string $gredidamAsset
    */
   public function layoutMediaEntity(Asset $gredidamAsset, $key) {
-    $modulePath = $this->moduleHandler->getModule('helfi_gredi_image')->getPath();
-
-//    $gredidamAsset = Asset::fromJson($gredidamAsset);
-
     $assetName = $gredidamAsset->name;
     if (!empty($gredidamAsset->attachments)) {
 
@@ -641,24 +740,9 @@ class Gredidam extends WidgetBase {
     $entities = $this->entityTypeManager->getStorage('media')
       ->loadMultiple($existing_ids);
 
-//    // We remove the existing media from the asset_ids array, so they do not
-//    // get fetched and created as duplicates.
-//    foreach ($entities as $entity) {
-//      $asset_id = $entity->get($source_field)->value;
-//
-//      if ($asset_id == $asset_ids) {
-//        unset($asset_ids[$asset_id]);
-//      }
-//    }
-
     $assets = $this->gredidam->getMultipleAsset($asset_ids, ['meta', 'attachments']);
 
-    $directory = "public://media";
     foreach ($assets as $asset) {
-//      $file = system_retrieve_file($asset->attachments, NULL, TRUE);
-//      $file_temp = file_get_contents($this->gredidam->getFileUrl($asset->id));
-//      $file = file_save_data(base64_decode($this->gredidam->getFileUrl($asset->id)), 'public://media/' . $asset->name, FileSystemInterface::EXISTS_REPLACE);
-      //$file_temp = file_save_data($file_temp, 'public://', FileSystemInterface::EXISTS_RENAME);
       $random = new Random();
       $image_name = $random->name(8, TRUE) . '.' . $this->getExtension($asset->mimeType);
       $image_uri = 'public://gredidam/' . $image_name;
