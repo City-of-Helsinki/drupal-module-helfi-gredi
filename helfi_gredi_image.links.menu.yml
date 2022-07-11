@@ -1,7 +1,6 @@
 helfi_gredi_image.settings:
-  title: 'Gredi DAM Settings'
-  description: 'Gredi DAM Settings.'
-  parent: system.admin_config_media
+  title: 'Gredi DAM'
+  description: 'Configure Gredi DAM access credentials.'
   route_name: helfi_gredi_image.config
-  weight: 20
-
+  menu_name: admin
+  parent: system.admin_config_media

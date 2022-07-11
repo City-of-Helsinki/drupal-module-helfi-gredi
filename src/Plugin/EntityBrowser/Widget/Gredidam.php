@@ -389,6 +389,12 @@ class Gredidam extends WidgetBase {
       ]);
       if (!count($assets)) {
         $form_state->setError($form['widget']['asset-container'], $this->t('Please select an asset.'));
+        return;
+      }
+
+      if (count($assets) != 1) {
+        $form_state->setError($form['widget']['asset-container'], $this->t('You can select maximum 1 asset.'));
+        return;
       }
 
       // If the field cardinality is limited and the number of assets selected
@@ -396,6 +402,7 @@ class Gredidam extends WidgetBase {
       if ($field_cardinality > 0 && count($assets) > $field_cardinality) {
         $message = $this->formatPlural($field_cardinality, 'You can not select more than 1 entity.', 'You can not select more than @count entities.');
         $form_state->setError($form['widget']['asset-container']['assets'], $message);
+        return;
       }
 
       // Get information about the file field used to handle the asset file.
