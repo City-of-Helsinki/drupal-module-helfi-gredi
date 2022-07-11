@@ -117,6 +117,15 @@ class GredidamAsset extends MediaSourceBase {
   /**
    * {@inheritdoc}
    */
+  public function defaultConfiguration() {
+    return [
+      'source_field' => 'field_external_id',
+    ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     $submitted_config = array_intersect_key(
       $form_state->getValues(),
