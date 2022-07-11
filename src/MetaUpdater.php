@@ -2,6 +2,7 @@
 
 namespace Drupal\helfi_gredi_image;
 
+use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Queue\QueueInterface;
 use Drupal\media\Entity\Media;
@@ -47,4 +48,14 @@ class MetaUpdater {
     return $results;
   }
 
+  private function performUpdate() {
+    /** @var ImmutableConfig $config */
+    $config = \Drupal::config('media.type.gredi_dam_assets');
+    /** @var array $original_data */
+    $original_data = $config->getOriginal();
+    foreach ($original_data['field_map'] as $gredi_field => $drupal_field) {
+      echo $gredi_field;
+      echo $drupal_field;
+    }
+  }
 }
