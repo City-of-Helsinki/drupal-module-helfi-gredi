@@ -12,6 +12,15 @@
     },
     "require-dev": {
         "drupal/coder": "^8.3",
-        "phpunit/phpunit":"^9.1"
+        "phpunit/phpunit":"^9.1",
+        "phpstan/phpstan": "1.8.x-dev"
+    },
+    "extra": {
+        "enable-patching": true
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     }
 }

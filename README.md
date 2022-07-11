@@ -51,6 +51,20 @@ Testing
 
 PHP code is tested by creating PHPUnit tests.
 
+SNYK testing can be done with npm.
+- You got to have npm(nodejs) installed to your local computer.
+- npm install
+- npm_modules created by install is included in .gitignore -file
+- Run
+```
+   npm run snyk
+```
+
+PHPStan can be used to analyse php code.
+```
+vendor/bin/phpstan analyse src tests
+```
+
 Future development:
 -------------------
 
