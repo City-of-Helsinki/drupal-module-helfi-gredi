@@ -114,10 +114,10 @@ class Category implements EntityInterface, \JsonSerializable {
   /**
    * Serialize the category data.
    *
-   * @return array
-   *   Array contain category properties.
+   * @return mixed
+   *   Mixed data which can be serialized by json_encode() containing category properties.
    */
-  public function jsonSerialize() {
+  public function jsonSerialize(): mixed {
     $properties = [
       'id' => $this->id,
       'name' => $this->name,

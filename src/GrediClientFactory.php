@@ -87,7 +87,7 @@ class GrediClientFactory implements ContainerInjectionInterface {
         $subtring_start += strlen('=');
         $size = strpos($getCookie, ';', $subtring_start) - $subtring_start;
         $result =  substr($getCookie, $subtring_start, $size);
-        setcookie("JSESSIONID", $result, '', 'api4.materialbank.net');
+        setcookie("JSESSIONID", $result, time() + 60 * 60 * 24, 'api4.materialbank.net');
         $cookieJar = CookieJar::fromArray([
           'JSESSIONID' => $result
         ], 'api4.materialbank.net');
