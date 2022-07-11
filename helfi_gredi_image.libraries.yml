@@ -1,0 +1,21 @@
+asset_browser:
+  version: 1.x
+  css:
+    theme:
+      css/asset-browser.css: {}
+  js:
+    js/asset-browser.js: { }
+  dependencies:
+    - core/jquery
+    - core/drupal.dialog.ajax
+    - core/jquery.form
+
+pager:
+  version: 1.x
+  js:
+    js/pager.js: {}
+    js/pagination.min.js: {}
+  dependencies:
+    - core/drupal
+    - core/jquery
+    - core/once
