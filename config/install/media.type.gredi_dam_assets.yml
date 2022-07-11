@@ -10,8 +10,6 @@ description: ''
 source: gredidam_asset
 queue_thumbnail_downloads: false
 new_revision: false
-source_configuration:
-  source_field: field_gredidam_asset_id
 field_map:
   external_id: field_external_id
   name: field_name
