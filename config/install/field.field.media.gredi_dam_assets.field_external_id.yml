@@ -1,0 +1,19 @@
+uuid: 4806266a-5f99-4fec-b78b-2490d0b2ed35
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_external_id
+    - media.type.gredi_dam_assets
+id: media.gredi_dam_assets.field_external_id
+field_name: field_external_id
+entity_type: media
+bundle: gredi_dam_assets
+label: 'External Id'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string
