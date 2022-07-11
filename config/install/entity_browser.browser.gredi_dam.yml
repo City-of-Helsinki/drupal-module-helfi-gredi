@@ -1,0 +1,27 @@
+uuid: 5cc7251f-9e23-487a-9851-0a79750245ae
+langcode: en
+status: true
+dependencies:
+  module:
+    - helfi_gredi_image
+name: gredi_dam
+label: 'Gredi DAM Entity Browser'
+display: modal
+display_configuration:
+  width: '650'
+  height: '500'
+  link_text: 'Select entities'
+  auto_open: false
+selection_display: no_display
+selection_display_configuration: {  }
+widget_selector: tabs
+widget_selector_configuration: {  }
+widgets:
+  dfa4d36f-818c-4b89-8320-c86ea912a2f8:
+    id: gredidam
+    uuid: dfa4d36f-818c-4b89-8320-c86ea912a2f8
+    label: gredidam
+    weight: 1
+    settings:
+      media_type: gredi_dam_assets
+      submit_text: 'Select assets'
