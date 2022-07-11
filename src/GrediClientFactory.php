@@ -126,7 +126,7 @@ class GrediClientFactory implements ContainerInjectionInterface {
   }
 
   /**
-   *
+   * Get folders and assets from Customer id.
    *
    * @param $customer
    * @param $params
@@ -160,6 +160,14 @@ class GrediClientFactory implements ContainerInjectionInterface {
       return $content;
   }
 
+  /**
+   * Get assets and sub-folders from folders.
+   *
+   * @param $folder_id
+   * @param $params
+   * @return array|void
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
   public function getFolderContent($folder_id, $params = []) {
     if (empty($folder_id)) return;
     $parameters = '';
@@ -183,6 +191,7 @@ class GrediClientFactory implements ContainerInjectionInterface {
         $contents['folders'][] = Category::fromJson($post);
       }
     }
+
     return $contents;
   }
 
@@ -209,7 +218,6 @@ class GrediClientFactory implements ContainerInjectionInterface {
       }
       $assets[] = $this->getAsset($id, $expand);
     }
-
 
     return $assets;
   }
