@@ -60,6 +60,11 @@ SNYK testing can be done with npm.
    npm run snyk
 ```
 
+PHPStan can be used to analyse php code.
+```
+vendor/bin/phpstan analyse src tests
+```
+
 Future development:
 -------------------
 
