@@ -3,6 +3,9 @@
 namespace Drupal\helfi_gredi_image\Plugin\QueueWorker;
 
 use Drupal\Core\Queue\QueueWorkerBase;
+use Drupal\media\Entity\Media;
+use Drupal\helfi_gredi_image\GrediClientFactory;
+use GuzzleHttp\Client;
 
 /**
  * A worker that updates metadata for every image.
@@ -14,35 +17,23 @@ use Drupal\Core\Queue\QueueWorkerBase;
  */
 class MetaUpdate extends QueueWorkerBase {
 
+  /** @var GrediClientFactory */
+  private $grediClientFactory;
+
+  public function __construct(array $configuration, $plugin_id, $plugin_definition) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
+
+    $guzzle_http_client = new Client();
+    $this->grediClientFactory = new GrediClientFactory($guzzle_http_client);
+  }
   /**
    * {@inheritdoc}
    */
   public function processItem($data) {
-    $fields = [
-      'to' => $data->email,
-      'h:Reply-To' => self::MAILGUN_REPLYTO,
-      'subject' => $data->subject,
-      'text' => $data->text_content,
-      'html' => $data->html_content,
-    ];
+    $external_gredi_asset = $this->grediClientFactory->getAsset($data->external_id);
+    $internal_gredi_asset = Media::load($data->media_id);
 
-    $ch = curl_init();
-
-    curl_setopt($ch, CURLOPT_URL, self::MAILGUN_URL);
-    curl_setopt($ch, CURLOPT_USERPWD, 'api:' . self::MAILGUN_KEY);
-    curl_setopt($ch, CURLOPT_POST, TRUE);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-
-    curl_exec($ch);
-    if (curl_errno($ch)) {
-      echo 'Error:' . curl_error($ch);
-      C24Logger::DEBUG(curl_error($ch), static::class);
-    }
-    curl_close($ch);
-
-    \Drupal::logger('GrediMetaData')->notice('Metadata for Gredi image with id  ' . $data->id);
+    \Drupal::logger('GrediMetaData')->notice('Metadata for Gredi asset with id  ' . $data->id);
   }
 
 }

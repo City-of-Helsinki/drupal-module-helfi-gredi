@@ -4,6 +4,7 @@ namespace Drupal\helfi_gredi_image\Commands;
 
 use Drush\Commands\DrushCommands;
 use Drupal\Core\Queue\SuspendQueueException;
+use Drupal\helfi_gredi_image\MetaUpdater;
 
 /**
  * A Drush command file.
@@ -25,6 +26,9 @@ class MetaUpdaterCommands extends DrushCommands {
    * @aliases update_gredi_meta
    */
   public function updateGrediMeta() {
+    /** @var MetaUpdater $meta_updater */
+    $meta_updater = new MetaUpdater();
+    $meta_updater->populateMetaUpdateQueue();
     /* @var \Drupal\Core\Queue\QueueInterface $queue */
     $queue = \Drupal::service('queue')->get('meta_update');
     /* @var \Drupal\Core\Queue\QueueWorkerInterface $queue_worker */

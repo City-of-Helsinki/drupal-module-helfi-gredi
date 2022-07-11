@@ -2,6 +2,8 @@
 
 namespace Drupal\helfi_gredi_image;
 
+use Drupal\Core\Entity\Query\QueryInterface;
+use Drupal\Core\Queue\QueueInterface;
 use Drupal\media\Entity\Media;
 
 /**
@@ -10,19 +12,21 @@ use Drupal\media\Entity\Media;
 class MetaUpdater {
 
   /**
-   * Function to send notifications by e-mail.
-   *
-   * @param \Drupal\media\Entity\Media $media
-   *   News Alert node.
+   * Function to populate meta_update queue with items to update.
    */
-  public function populateMetaUpdateQueue(Media $media) {
-    $result = $this->getAssetsToUpdate();
+  public function populateMetaUpdateQueue(): void {
+    /** @var array $results */
+    $results = $this->getAssetsToUpdate();
 
-    /* @var \Drupal\Core\Queue\QueueInterface $queue */
+    /* @var QueueInterface $queue */
     $queue = \Drupal::service('queue')->get('meta_update');
-    while ($row = $result->fetchAssoc()) {
+    foreach ($results as $key => $value) {
+      /** @var Media $gredi_asset */
+      $gredi_asset = Media::load($value);
+      /** @var \stdClass $item */
       $item = new \stdClass();
-      $item->id = $row->get('field_gredidam_asset_id')->getValue();
+      $item->media_id = $value;
+      $item->external_id = $gredi_asset->get('field_external_id')->getString();
       $queue->createItem($item);
     }
   }
@@ -30,12 +34,14 @@ class MetaUpdater {
   /**
    * Function to get list of Gredi DAM Assets to update.
    *
-   * @return \Drupal\Core\Database\StatementInterface
+   * @return array
    *   List of Gredi DAM Assets.
    */
-  private function getAssetsToUpdate() {
+  private function getAssetsToUpdate(): array {
+    /** @var QueryInterface $query */
     $query = \Drupal::entityQuery('media')
-      ->condition('type', 'gredi_dam_assets');
+      ->condition('bundle', 'gredi_dam_assets');
+    /** @var array $results */
     $results = $query->execute();
 
     return $results;
