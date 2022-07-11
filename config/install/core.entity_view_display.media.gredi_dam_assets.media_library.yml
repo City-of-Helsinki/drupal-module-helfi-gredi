@@ -1,0 +1,50 @@
+uuid: 2d07d322-158d-4f8e-9b7c-4a2d62db7ad8
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.media.media_library
+    - field.field.media.gredi_dam_assets.field_alt_text
+    - field.field.media.gredi_dam_assets.field_external_id
+    - field.field.media.gredi_dam_assets.field_gredidam_asset_id
+    - field.field.media.gredi_dam_assets.field_height
+    - field.field.media.gredi_dam_assets.field_keywords
+    - field.field.media.gredi_dam_assets.field_media_image
+    - field.field.media.gredi_dam_assets.field_name
+    - field.field.media.gredi_dam_assets.field_resolution
+    - field.field.media.gredi_dam_assets.field_size
+    - field.field.media.gredi_dam_assets.field_width
+    - image.style.medium
+    - media.type.gredi_dam_assets
+  module:
+    - image
+id: media.gredi_dam_assets.media_library
+targetEntityType: media
+bundle: gredi_dam_assets
+mode: media_library
+content:
+  thumbnail:
+    type: image
+    label: hidden
+    settings:
+      image_link: ''
+      image_style: medium
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: 0
+    region: content
+hidden:
+  created: true
+  field_alt_text: true
+  field_external_id: true
+  field_gredidam_asset_id: true
+  field_height: true
+  field_keywords: true
+  field_media_image: true
+  field_name: true
+  field_resolution: true
+  field_size: true
+  field_width: true
+  name: true
+  uid: true

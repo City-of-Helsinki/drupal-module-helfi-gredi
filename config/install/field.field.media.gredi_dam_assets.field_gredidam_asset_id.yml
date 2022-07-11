@@ -1,0 +1,19 @@
+uuid: b2d621be-3bf4-4cad-8b58-30d7caa1bf5a
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_gredidam_asset_id
+    - media.type.gredi_dam_assets
+id: media.gredi_dam_assets.field_gredidam_asset_id
+field_name: field_gredidam_asset_id
+entity_type: media
+bundle: gredi_dam_assets
+label: 'Gredi DAM asset'
+description: ''
+required: true
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string
