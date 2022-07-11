@@ -162,7 +162,6 @@ class Gredidam extends WidgetBase {
 
   /**
    * {@inheritdoc}
-   *
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
@@ -209,11 +208,11 @@ class Gredidam extends WidgetBase {
   public function getForm(array &$original_form, FormStateInterface $form_state, array $additional_widget_parameters) {
     $media_type_storage = $this->entityTypeManager->getStorage('media_type');
     /** @var \Drupal\media\MediaTypeInterface $media_type */
-    if (!$this->configuration['media_type'] || !($media_type = $media_type_storage->load($this->configuration['media_type']))) {
+    if (!$this->configuration['media_type']
+      || !($media_type = $media_type_storage->load($this->configuration['media_type']))) {
       return ['#markup' => $this->t('The media type is not configured correctly.')];
     }
     elseif ($media_type->id() != 'gredi_dam_assets') {
-
       return ['#markup' => $this->t('The configured media type is not using the gredi_image plugin.')];
     }
     // If this is not the current entity browser widget being rendered.
@@ -235,15 +234,18 @@ class Gredidam extends WidgetBase {
     $this->currentCategory->name = NULL;
     $this->currentCategory->parts = [];
 
+    // Initialize pagination variables.
     $page = 0;
     $offset = 0;
 
     $num_per_page = $config->get('num_assets_per_page') ?? GrediDamConfigForm::NUM_ASSETS_PER_PAGE;
-    if (isset($form_state->getCompleteForm()['widget']) && isset($trigger_elem) && $trigger_elem['#name'] != 'filter_sort_reset') {
+    if (isset($form_state->getCompleteForm()['widget'])
+      && isset($trigger_elem) && $trigger_elem['#name'] != 'filter_sort_reset') {
       // Assign $widget for convenience.
       $widget = $form_state->getCompleteForm()['widget'];
 
-      if (isset($widget['actions']['pager-container']) && is_numeric($widget['actions']['pager-container']['#page'])) {
+      if (isset($widget['actions']['pager-container'])
+        && is_numeric($widget['actions']['pager-container']['#page'])) {
         // Set the page number to the value stored in the form state.
         $page = intval($widget['actions']['pager-container']['#page']);
       }
@@ -255,7 +257,8 @@ class Gredidam extends WidgetBase {
 
       }
       if ($form_state->getValue('assets')) {
-        $current_selections = $form_state->getValue('current_selections', []) + array_filter($form_state->getValue('assets', []));
+        $current_selections = $form_state
+            ->getValue('current_selections', []) + array_filter($form_state->getValue('assets', []));
 
         $form['current_selections'] = [
           '#type' => 'value',
@@ -265,7 +268,6 @@ class Gredidam extends WidgetBase {
     }
 
     if (isset($trigger_elem)) {
-
       if ($trigger_elem['#name'] === 'gredidam_category') {
         // Update the required information of selected category.
         $this->currentCategory->id = $trigger_elem['#gredidam_category']['id'];
@@ -288,14 +290,17 @@ class Gredidam extends WidgetBase {
       }
     }
 
+    // Get breadcrumb.
     $form += $this->getBreadcrumb($this->currentCategory);
 
     // Add the filter and sort options to the form.
     $form += $this->getFilterSort();
 
+    // Get folders content from customer id.
     $folders_content = $this->gredidam->getCustomerContent(6)['folders'];
 
     $contents = [];
+
     $form['asset-container'] = [
       '#type' => 'container',
       // Store the current category id in the form so it can be retrieved
@@ -306,11 +311,11 @@ class Gredidam extends WidgetBase {
       ],
     ];
 
+    // Parameters for pagination.
     $params = [
       'limit' => $num_per_page,
       'offset' => $offset,
     ];
-
 
     if ($this->currentCategory->id == NULL) {
       $contents[] = $this->gredidam->getCustomerContent(6, $params)['assets'];
@@ -318,8 +323,9 @@ class Gredidam extends WidgetBase {
       $this->getCategoryFormElements($folders_content, $modulePath, $form);
     }
     else {
-      if (isset($this->gredidam->getFolderContent($this->currentCategory->id, $params)['assets']))
-      $contents[] = $this->gredidam->getFolderContent($this->currentCategory->id, $params)['assets'];
+      if (isset($this->gredidam->getFolderContent($this->currentCategory->id, $params)['assets'])) {
+        $contents[] = $this->gredidam->getFolderContent($this->currentCategory->id, $params)['assets'];
+      }
 
       if (isset($this->gredidam->getFolderContent($this->currentCategory->id)['folders'])) {
         $this->getCategoryFormElements($this->gredidam->getFolderContent($this->currentCategory->id)['folders'], $modulePath, $form);
@@ -328,6 +334,7 @@ class Gredidam extends WidgetBase {
 
     $initial_key = 0;
     $this->assets = [];
+
     foreach ($contents as $content) {
       if (empty($content)) {
         continue;
@@ -338,20 +345,11 @@ class Gredidam extends WidgetBase {
       }
     }
 
-    if (isset($items)) {
-      $initial_key = 0;
-      foreach ($items as $category_item) {
-        $this->assets[] = $this->layoutMediaEntity($category_item, $initial_key);
-        $initial_key++;
-      }
-    }
-
     $form['asset-container']['assets'] = [
       '#type' => 'checkboxes',
       '#theme_wrappers' => ['checkboxes__gredidam_assets'],
       '#title_display' => 'invisible',
       '#options' => $this->assets,
-
       '#attached' => [
         'library' => [
           'helfi_gredi_image/asset_browser',
@@ -359,17 +357,32 @@ class Gredidam extends WidgetBase {
       ],
     ];
 
-    if (isset($this->currentCategory->id)) $totalAssets = count($this->gredidam->getFolderContent($this->currentCategory->id));
-    else $totalAssets = count($this->gredidam->getCustomerContent(6)['assets']);
+    if (isset($this->currentCategory->id)) {
+      $totalAssets = count($this->gredidam->getFolderContent($this->currentCategory->id));
+    }
+    else {
+      $totalAssets = count($this->gredidam->getCustomerContent(6)['assets']);
+    }
+
     if ($totalAssets > $num_per_page) {
       // Add the pager to the form.
-      $form['actions'] += $this->getPager($totalAssets, $page, $num_per_page, 'listing', $this->currentCategory);
+      $form['actions'] += $this
+        ->getPager($totalAssets, $page, $num_per_page, 'listing', $this->currentCategory);
     }
 
     return $form;
-
   }
 
+  /**
+   * Create pagination and set current page.
+   *
+   * @param $total_count
+   * @param $page
+   * @param $num_per_page
+   * @param $page_type
+   * @param Category|NULL $category
+   * @return array
+   */
   public function getPager($total_count, $page, $num_per_page, $page_type = "listing", Category $category = NULL) {
     // Add container for pager.
     $form['pager-container'] = [
@@ -488,6 +501,7 @@ class Gredidam extends WidgetBase {
         'cardinality',
         'cardinality',
       ]);
+
       if (!count($assets)) {
         $form_state->setError($form['widget']['asset-container'], $this->t('Please select an asset.'));
         return;
@@ -501,13 +515,18 @@ class Gredidam extends WidgetBase {
       // If the field cardinality is limited and the number of assets selected
       // is greater than the field cardinality.
       if ($field_cardinality > 0 && count($assets) > $field_cardinality) {
-        $message = $this->formatPlural($field_cardinality, 'You can not select more than 1 entity.', 'You can not select more than @count entities.');
+
+        $message = $this->formatPlural($field_cardinality,
+          'You can not select more than 1 entity.',
+          'You can not select more than @count entities.');
+
         $form_state->setError($form['widget']['asset-container']['assets'], $message);
         return;
       }
 
       // Get information about the file field used to handle the asset file.
-      $field_definitions = $this->entityFieldManager->getFieldDefinitions('media', $media_bundle->id());
+      $field_definitions = $this->entityFieldManager
+        ->getFieldDefinitions('media', $media_bundle->id());
       $field_definition = $field_definitions[$field_map['media_image']]->getItemDefinition();
 
       // Invoke the API to get all the information about the selected assets.
@@ -518,7 +537,8 @@ class Gredidam extends WidgetBase {
       // downloading the png version anyway.
         // Get the list of allowed extensions for this media bundle.
         $file_extensions = $field_definition->getSetting('file_extensions');
-        $supported_extensions = explode(',', preg_replace('/,?\s/', ',', $file_extensions));
+        $supported_extensions = explode(',',
+          preg_replace('/,?\s/', ',', $file_extensions));
 
         // Browse the selected assets to validate the extensions are allowed.
         foreach ($dam_assets as $asset) {
@@ -526,14 +546,15 @@ class Gredidam extends WidgetBase {
           $type_is_supported = in_array(strtolower($filetype), $supported_extensions);
 
           if (!$type_is_supported) {
-            $message = $this->t('Please make another selection. The "@filetype" file type is not one of the supported file types (@supported_types).', [
+            $message = $this
+              ->t('Please make another selection.
+               The "@filetype" file type is not one of the supported file types (@supported_types).', [
               '@filetype' => $filetype,
               '@supported_types' => implode(', ', $supported_extensions),
-            ]);
+              ]);
             $form_state->setError($form['widget']['asset-container']['assets'], $message);
           }
         }
-
     }
   }
 
@@ -595,11 +616,12 @@ class Gredidam extends WidgetBase {
       '#value' => 'Reset',
       '#name' => 'filter_sort_reset',
     ];
+
     return $form;
   }
 
   /**
-   * {@inheritdoc}
+   * Get Breadcrumb.
    */
   public function getBreadcrumb(Category $category) {
 
@@ -628,7 +650,6 @@ class Gredidam extends WidgetBase {
 
     // Add the breadcrumb buttons to the form.
     foreach ($category->parts as $key => $category_name) {
-
       $level[] = $category_name;
       // Increment it so doesn't overwrite the home.
       $key++;
@@ -650,12 +671,11 @@ class Gredidam extends WidgetBase {
   }
 
   /**
-   * {@inheritDoc}
+   * Get categories.
    */
   public function getCategoryFormElements($categories, $modulePath, &$form) {
 
     foreach ($categories as $category) {
-
       $form['asset-container']['categories'][$category->name] = [
         '#type' => 'container',
         '#attributes' => [
@@ -678,6 +698,7 @@ class Gredidam extends WidgetBase {
         '#value' => $category->name,
       ];
     }
+
     return $form;
   }
 
@@ -692,16 +713,25 @@ class Gredidam extends WidgetBase {
   public function layoutMediaEntity(Asset $gredidamAsset, $key) {
     $assetName = $gredidamAsset->name;
     if (!empty($gredidamAsset->attachments)) {
-
-      $thumbnail = '<div class="gredidam-asset-thumb"><img src="' . $gredidamAsset->attachments . '" width="150px" height="150px" /></div>';
+      $thumbnail = '<div class="gredidam-asset-thumb"><img src="' . $gredidamAsset->attachments
+        . '" width="150px" height="150px" /></div>';
     }
     else {
       $thumbnail = '<span class="gredidam-browser-empty">No preview available.</span>';
     }
-    $element = '<div class="js-form-item form-item js-form-type-checkbox form-type--checkbox form-type--boolean js-form-item-assets-' . $key . ' form-item--assets-' . $key .'">
-    <input data-drupal-selector="edit-assets-' . $key . '" type="checkbox" id="edit-assets-' . $key . '" name="assets[' . $key . ']" value="' . $gredidamAsset->external_id . '" class="form-checkbox form-boolean form-boolean--type-checkbox">';
-    $element .= '<label for="edit-assets-' . $key . '"><div class="gredidam-asset-checkbox">' . $thumbnail . '<div class="gredidam-asset-details"><p class="gredidam-asset-filename">' . $assetName . '</p></div></label></div>';
+    $element = '<div class="js-form-item form-item js-form-type-checkbox form-type--checkbox
+     form-type--boolean js-form-item-assets-' .
+      $key . ' form-item--assets-' . $key .'">
+    <input data-drupal-selector="edit-assets-' .
+      $key . '" type="checkbox" id="edit-assets-' .
+      $key . '" name="assets[' . $key . ']" value="' .
+      $gredidamAsset->external_id . '" class="form-checkbox form-boolean form-boolean--type-checkbox">';
+
+    $element .= '<label for="edit-assets-' . $key . '"><div class="gredidam-asset-checkbox">' .
+      $thumbnail . '<div class="gredidam-asset-details"><p class="gredidam-asset-filename">' .
+      $assetName . '</p></div></label></div>';
     $element .= '</div>';
+
     return $element;
   }
 
@@ -717,6 +747,17 @@ class Gredidam extends WidgetBase {
     $this->selectEntities($assets, $form_state);
   }
 
+  /**
+   * Prepare entity and create media.
+   *
+   * @param array $form
+   * @param FormStateInterface $form_state
+   * @return \Drupal\Core\Entity\EntityInterface[]
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
   protected function prepareEntities(array $form, FormStateInterface $form_state) {
     // Get asset id's from form state.
     $asset_ids = array_values($form_state->getUserInput()['assets']);
@@ -730,13 +771,13 @@ class Gredidam extends WidgetBase {
       ->getSourceFieldDefinition($media_type)
       ->getName();
 
-
     // Query for existing entities.
     $existing_ids = $this->entityTypeManager->getStorage('media')
       ->getQuery()
       ->condition('bundle', $media_type->id())
       ->condition($source_field, $asset_ids, 'IN')
       ->execute();
+
     $entities = $this->entityTypeManager->getStorage('media')
       ->loadMultiple($existing_ids);
 
@@ -777,7 +818,6 @@ class Gredidam extends WidgetBase {
 
       $entity->save();
 
-
       // Reload the entity to make sure we have everything populated properly.
       $entity = $this->entityTypeManager->getStorage('media')
         ->load($entity->id());
@@ -789,6 +829,12 @@ class Gredidam extends WidgetBase {
     return $entities;
   }
 
+  /**
+   * Get file extension.
+   *
+   * @param $mime_type
+   * @return string
+   */
   public function getExtension ($mime_type){
 
     $extensions = array('image/jpeg' => 'jpg',
@@ -799,6 +845,6 @@ class Gredidam extends WidgetBase {
     // Add as many other Mime Types / File Extensions as you like
 
     return $extensions[$mime_type];
-
   }
+
 }

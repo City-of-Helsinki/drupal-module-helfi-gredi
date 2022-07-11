@@ -95,8 +95,8 @@ class GrediClientFactory implements ContainerInjectionInterface {
         $cookieJar = CookieJar::fromArray([
           'JSESSIONID' => $result
         ], 'api4.materialbank.net');
-        return $cookieJar;
 
+        return $cookieJar;
       }
     }
     catch (ClientException $e) {
@@ -125,6 +125,14 @@ class GrediClientFactory implements ContainerInjectionInterface {
     }
   }
 
+  /**
+   *
+   *
+   * @param $customer
+   * @param $params
+   * @return array
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
   public function getCustomerContent($customer, $params = []): array {
     $parameters = '';
 

@@ -2,10 +2,8 @@
 
 namespace Drupal\helfi_gredi_image;
 
-use Drupal\Component\Serialization\Json;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use GuzzleHttp\Cookie\CookieJar;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -80,28 +78,28 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
   }
 
    /**
-    * {@inheritdoc}
+    * Call getCustomerContent from ClientFactory.
     */
    public function getCustomerContent($customer, $params = []) {
       return $this->grediDamClientFactory->getCustomerContent($customer, $params);
    }
 
   /**
-   * {@inheritdoc}
+   * Call getFolderContent from ClientFactory.
    */
   public function getFolderContent($folder_id, $params = []) {
     return $this->grediDamClientFactory->getFolderContent($folder_id, $params);
   }
 
   /**
-   * {@inheritdoc}
+   * Call getMultipleAsset from ClientFactory.
    */
   public function getMultipleAsset($ids, $expand = []) {
     return $this->grediDamClientFactory->getMultipleAsset($ids, $expand);
   }
 
   /**
-   * {@inheritdoc}
+   * Call getAsset from ClientFactory.
    */
   public function getAsset($assetId, $expands = ['meta', 'attachments']) {
     return $this->grediDamClientFactory->getAsset($assetId, $expands);
