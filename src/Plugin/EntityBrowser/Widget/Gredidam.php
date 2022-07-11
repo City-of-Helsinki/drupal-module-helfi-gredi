@@ -340,7 +340,7 @@ class Gredidam extends WidgetBase {
         continue;
       }
       foreach ($content as $cont) {
-        $this->assets[] = $this->layoutMediaEntity($cont, $initial_key);
+        $this->assets[$cont->id] = $this->layoutMediaEntity($cont, $initial_key);
         $initial_key++;
       }
     }
@@ -493,7 +493,13 @@ class Gredidam extends WidgetBase {
       // The form input uses checkboxes which returns zero for unchecked assets.
       // Remove these unchecked assets.
       $assets = array_values($form_state->getUserInput()['assets']);
-
+      $content = [];
+      foreach ($assets as $asset) {
+        if ($asset == NULL) {
+          continue;
+        }
+        $content[] = $asset;
+      }
       // Get the cardinality for the media field that is being populated.
       $field_cardinality = $form_state->get([
         'entity_browser',
@@ -502,12 +508,12 @@ class Gredidam extends WidgetBase {
         'cardinality',
       ]);
 
-      if (!count($assets)) {
+      if (!count($content)) {
         $form_state->setError($form['widget']['asset-container'], $this->t('Please select an asset.'));
         return;
       }
 
-      if (count($assets) != 1) {
+      if (count($content) != 1) {
         $form_state->setError($form['widget']['asset-container'], $this->t('You can select maximum 1 asset.'));
         return;
       }
@@ -530,7 +536,7 @@ class Gredidam extends WidgetBase {
       $field_definition = $field_definitions[$field_map['media_image']]->getItemDefinition();
 
       // Invoke the API to get all the information about the selected assets.
-      $dam_assets = $this->gredidam->getMultipleAsset($assets, ['meta', 'attachments']);
+      $dam_assets = $this->gredidam->getMultipleAsset($content, ['meta', 'attachments']);
 
       // If the media is only referencing images, we only validate that
       // referenced assets are images. We don't check the extension as we are
@@ -784,6 +790,9 @@ class Gredidam extends WidgetBase {
     $assets = $this->gredidam->getMultipleAsset($asset_ids, ['meta', 'attachments']);
 
     foreach ($assets as $asset) {
+      if ($asset == NULL) {
+        continue;
+      }
       $random = new Random();
       $image_name = $random->name(8, TRUE) . '.' . $this->getExtension($asset->mimeType);
       $image_uri = 'public://gredidam/' . $image_name;

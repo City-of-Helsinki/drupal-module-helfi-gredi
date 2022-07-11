@@ -5,7 +5,6 @@ dependencies:
   config:
     - field.field.media.gredi_dam_assets.field_alt_text
     - field.field.media.gredi_dam_assets.field_external_id
-    - field.field.media.gredi_dam_assets.field_gredidam_asset_id
     - field.field.media.gredi_dam_assets.field_height
     - field.field.media.gredi_dam_assets.field_keywords
     - field.field.media.gredi_dam_assets.field_media_image
@@ -40,14 +39,6 @@ content:
   field_external_id:
     type: string_textfield
     weight: 102
-    region: content
-    settings:
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-  field_gredidam_asset_id:
-    type: string_textfield
-    weight: 0
     region: content
     settings:
       size: 60
