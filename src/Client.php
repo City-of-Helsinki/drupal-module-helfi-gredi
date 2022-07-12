@@ -4,7 +4,6 @@ namespace Drupal\helfi_gredi_image;
 
 use Drupal\helfi_gredi_image\Entity\Category;
 use GuzzleHttp\ClientInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Overridden implementation of the cweagans php-webdam-client.
@@ -24,13 +23,6 @@ class Client {
    * @var string
    */
   protected $baseUrl = "https://api4.materialbank.net/api/v1";
-
-  /**
-   * The request stack.
-   *
-   * @var \Symfony\Component\HttpFoundation\RequestStack
-   */
-  protected $requestStack;
 
   /**
    * The version of this client. Used in User-Agent string for API requests.
@@ -60,13 +52,10 @@ class Client {
    *   The Guzzle client interface.
    * @param \Drupal\helfi_gredi_image\GrediDamClient $grediDamClientFactory
    *   An instance of GrediDamClient.
-   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
-   *   The request stack.
    */
-  public function __construct(ClientInterface $client, GrediDamClient $grediDamClientFactory, RequestStack $request_stack) {
+  public function __construct(ClientInterface $client, GrediDamClient $grediDamClientFactory) {
     $this->client = $client;
     $this->grediDamClientFactory = $grediDamClientFactory;
-    $this->requestStack = $request_stack;
   }
 
   /**
