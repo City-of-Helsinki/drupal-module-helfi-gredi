@@ -4,7 +4,7 @@ namespace Drupal\helfi_gredi_image\Plugin\QueueWorker;
 
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\media\Entity\Media;
-use Drupal\helfi_gredi_image\GrediClientFactory;
+use Drupal\helfi_gredi_image\GrediDamClient;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use GuzzleHttp\Client;
 
@@ -21,9 +21,9 @@ class MetaUpdate extends QueueWorkerBase {
   /**
    * Gredi client.
    *
-   * @var \Drupal\helfi_gredi_image\GrediClientFactory
+   * @var \Drupal\helfi_gredi_image\GrediDamClient
    */
-  private $grediClientFactory;
+  private $grediDamClient;
 
   /**
    * Metadata helper.
@@ -46,7 +46,7 @@ class MetaUpdate extends QueueWorkerBase {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
 
     $guzzle_http_client = new Client();
-    $this->grediClientFactory = new GrediClientFactory($guzzle_http_client);
+    $this->grediDamClient = new GrediDamClient($guzzle_http_client);
     $this->metadataHelper = \Drupal::service('helfi_gredi_image.asset_metadata.helper');
   }
 
@@ -55,7 +55,7 @@ class MetaUpdate extends QueueWorkerBase {
    */
   public function processItem($data) {
     /** @var \Drupal\helfi_gredi_image\Entity\Asset $external_gredi_asset */
-    $external_gredi_asset = $this->grediClientFactory->getAsset($data->external_id);
+    $external_gredi_asset = $this->grediDamClient->getAsset($data->external_id);
     /** @var \Drupal\media\Entity\Media $internal_gredi_asset */
     $internal_gredi_asset = Media::load($data->media_id);
     $this->metadataHelper->performMetadataUpdate($internal_gredi_asset, $external_gredi_asset);

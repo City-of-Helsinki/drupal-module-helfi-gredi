@@ -42,7 +42,7 @@ class Client {
   /**
    * The Gredi DAM client service.
    *
-   * @var \Drupal\helfi_gredi_image\GrediClientFactory
+   * @var \Drupal\helfi_gredi_image\GrediDamClient
    */
   protected $grediDamClientFactory;
 
@@ -58,12 +58,12 @@ class Client {
    *
    * @param \GuzzleHttp\ClientInterface $client
    *   The Guzzle client interface.
-   * @param \Drupal\helfi_gredi_image\GrediClientFactory $grediDamClientFactory
-   *   An instance of GrediClientFactory.
+   * @param \Drupal\helfi_gredi_image\GrediDamClient $grediDamClientFactory
+   *   An instance of GrediDamClient.
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   The request stack.
    */
-  public function __construct(ClientInterface $client, GrediClientFactory $grediDamClientFactory, RequestStack $request_stack) {
+  public function __construct(ClientInterface $client, GrediDamClient $grediDamClientFactory, RequestStack $request_stack) {
     $this->client = $client;
     $this->grediDamClientFactory = $grediDamClientFactory;
     $this->requestStack = $request_stack;

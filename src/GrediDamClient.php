@@ -17,7 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * Factory class for Client.
  */
-class GrediClientFactory implements ContainerInjectionInterface {
+class GrediDamClient implements ContainerInjectionInterface {
 
   /**
    * A fully-configured Guzzle client to pass to the dam client.
