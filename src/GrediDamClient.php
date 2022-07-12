@@ -4,6 +4,7 @@ namespace Drupal\helfi_gredi_image;
 
 use cweagans\webdam\Exception\InvalidCredentialsException;
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
@@ -62,14 +63,25 @@ class GrediDamClient implements ContainerInjectionInterface {
   protected $specificMetadataFields;
 
   /**
+   * Config Factory var.
+   *
+   * @var ConfigFactoryInterface
+   */
+  protected $config;
+
+  /**
    * ClientFactory constructor.
    *
    * @param \GuzzleHttp\ClientInterface $guzzleClient
    *   A fully configured Guzzle client to pass to the dam client.
+   * @param ConfigFactoryInterface $config
+   *   Config factory var.
    */
-  public function __construct(ClientInterface $guzzleClient) {
+  public function __construct(ClientInterface $guzzleClient, ConfigFactoryInterface $config) {
     $this->guzzleClient = $guzzleClient;
-    $this->cookieJar = $this->loginWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx');
+    $this->config = $config;
+    $config = $this->config->get('gredi_dam.settings');
+    $this->cookieJar = $this->loginWithCredentials('helsinki', $config->get('user'), $config->get('pass'));
   }
 
   /**
@@ -77,7 +89,8 @@ class GrediDamClient implements ContainerInjectionInterface {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('http_client')
+      $container->get('http_client'),
+      $container->get('config.factory')
     );
   }
 
@@ -112,7 +125,7 @@ class GrediDamClient implements ContainerInjectionInterface {
     try {
       $response = $this->guzzleClient->request(
         "POST",
-        $url,
+        $config->get('domain'),
         $data
       );
 
