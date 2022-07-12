@@ -37,7 +37,7 @@ class GrediClientFactory implements ContainerInjectionInterface {
   public function __construct(ClientInterface $guzzleClient) {
     $this->guzzleClient = $guzzleClient;
 
-    $this->cookieJar = $this->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx');
+    $this->cookieJar = $this->loginWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx');
   }
 
   /**
@@ -62,7 +62,7 @@ class GrediClientFactory implements ContainerInjectionInterface {
    * @return CookieJar
    *   The Gredi DAM client.
    */
-  public function getWithCredentials($customer, $username, $password) {
+  public function loginWithCredentials($customer, $username, $password) {
 
     $url = 'https://api4.materialbank.net/api/v1/sessions/';
     if (empty($data)) {
@@ -149,7 +149,6 @@ class GrediClientFactory implements ContainerInjectionInterface {
       $content = [];
       foreach (Json::decode($posts) as $post) {
         if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
-
           $content['assets'][] = $this->getAsset($post['id'], ['meta', 'attachments'], $post['parentId']);
         }
         elseif ($post['fileType'] == 'folder') {
