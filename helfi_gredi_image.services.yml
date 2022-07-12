@@ -2,12 +2,9 @@ services:
   helfi_gredi_image.client_factory:
     class: Drupal\helfi_gredi_image\GrediDamClient
     arguments: [ '@http_client' ]
-  helfi_gredi_image.client:
-    class: Drupal\helfi_gredi_image\Client
-    arguments: ['@http_client', '@helfi_gredi_image.client_factory']
   helfi_gredi_image.gredidam:
     class: Drupal\helfi_gredi_image\Gredidam
-    arguments: [ '@helfi_gredi_image.client', '@helfi_gredi_image.client_factory', '@logger.factory' ]
+    arguments: [ '@helfi_gredi_image.client_factory', '@logger.factory' ]
   helfi_gredi_image.asset_media.factory:
     class: Drupal\helfi_gredi_image\Service\AssetMediaFactory
     arguments: [ '@entity_type.manager' ]

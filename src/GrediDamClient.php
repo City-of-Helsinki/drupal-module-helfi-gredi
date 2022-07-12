@@ -34,6 +34,34 @@ class GrediDamClient implements ContainerInjectionInterface {
   protected $cookieJar;
 
   /**
+   * The base URL of the Gredi DAM API.
+   *
+   * @var string
+   */
+  protected $baseUrl = "https://api4.materialbank.net/api/v1";
+
+  /**
+   * The version of this client. Used in User-Agent string for API requests.
+   *
+   * @var string
+   */
+  const CLIENTVERSION = "2.x";
+
+  /**
+   * The Gredi DAM client service.
+   *
+   * @var \Drupal\helfi_gredi_image\GrediDamClient
+   */
+  protected $grediDamClientFactory;
+
+  /**
+   * Datastore for the specific metadata fields.
+   *
+   * @var array
+   */
+  protected $specificMetadataFields;
+
+  /**
    * ClientFactory constructor.
    *
    * @param \GuzzleHttp\ClientInterface $guzzleClient
@@ -270,6 +298,97 @@ class GrediDamClient implements ContainerInjectionInterface {
     );
 
     return Asset::fromJson($response->getBody()->getContents(), $folder_id);
+  }
+
+  /**
+   * Load subcategories by Category link or parts (used in breadcrumb).
+   *
+   * @param \Drupal\helfi_gredi_image\Entity\Category $category
+   *   Category object.
+   *
+   * @return \Drupal\helfi_gredi_image\Entity\Category[]
+   *   A list of sub-categories (ie: child categories).
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
+  public function getCategoryData(Category $category): array {
+
+    $url = $this->baseUrl . '/folders/{id}/files/';
+    // If category is not set, it will load the root category.
+    if (isset($category->links->categories)) {
+      $url = $category->links->categories;
+    }
+    elseif (!empty($category->parts)) {
+      $cats = "";
+      foreach ($category->parts as $part) {
+        $cats .= "/" . $part;
+      }
+      $url .= $cats;
+    }
+
+    $response = $this->guzzleClient->request(
+      "GET",
+      $url,
+      [
+        'headers' => [
+          'Content-Type' => 'application/json',
+        ],
+        'cookies' => $this->grediDamClientFactory->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx'),
+      ]
+    );
+    $category = Category::fromJson((string) $response->getBody());
+    return $category;
+  }
+
+  /**
+   * Get a list of metadata.
+   *
+   * @return array
+   *   A list of metadata fields.
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
+  public function getSpecificMetadataFields(): array {
+    $fields = [
+      'external_id' => [
+        'label' => 'External ID',
+        'type' => 'string',
+      ],
+      'name' => [
+        'label' => 'Filename',
+        'type' => 'string',
+      ],
+      'width' => [
+        'label' => 'Width',
+        'type' => 'string',
+      ],
+      'height' => [
+        'label' => 'Height',
+        'type' => 'string',
+      ],
+      'resolution' => [
+        'label' => 'Resolution',
+        'type' => 'string',
+      ],
+      'keywords' => [
+        'label' => 'Keywords',
+        'type' => 'text_long',
+      ],
+      'alt_text' => [
+        'label' => 'Alt text',
+        'type' => 'string',
+      ],
+      'size' => [
+        'label' => 'Filesize (kb)',
+        'type' => 'string',
+      ],
+    ];
+
+    $this->specificMetadataFields = [];
+    foreach ($fields as $key => $field) {
+      $this->specificMetadataFields[$key] = $field;
+    }
+    return $this->specificMetadataFields;
   }
 
 }

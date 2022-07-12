@@ -10,19 +10,6 @@ namespace Drupal\helfi_gredi_image;
 interface GredidamInterface {
 
   /**
-   * Passes method calls through to the DAM client object.
-   *
-   * @param string $name
-   *   The name of the method to call.
-   * @param array $arguments
-   *   An array of arguments.
-   *
-   * @return mixed
-   *   Returns whatever the dam client returns.
-   */
-  public function __call(string $name, array $arguments);
-
-  /**
    * Get customer content from API call.
    *
    * @param int $customer
