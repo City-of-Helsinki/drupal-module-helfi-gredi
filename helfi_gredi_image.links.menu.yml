@@ -1,4 +1,4 @@
-helfi_gredi_image.config:
+helfi_gredi_image.settings:
   title: 'Gredi DAM'
   description: 'Configure Gredi DAM access credentials.'
   route_name: helfi_gredi_image.config

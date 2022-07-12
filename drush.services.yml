@@ -1,0 +1,5 @@
+services:
+  helfi_gredi_image.metaupdater_commands:
+    class: \Drupal\helfi_gredi_image\Commands\MetaUpdaterCommands
+    tags:
+      - { name: drush.command }
