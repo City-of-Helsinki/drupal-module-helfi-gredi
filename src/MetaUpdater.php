@@ -15,7 +15,7 @@ class MetaUpdater {
   /**
    * Function to populate meta_update queue with items to update.
    */
-  public function populateMetaUpdateQueue(): void {
+  public function populateMetadataUpdateQueue(): void {
     /** @var array $results */
     $results = $this->getAssetsToUpdate();
 
@@ -30,6 +30,27 @@ class MetaUpdater {
       $item->external_id = $gredi_asset->get('field_external_id')->getString();
       $queue->createItem($item);
     }
+  }
+
+  /**
+   * Function to perform Gredi asset metadata update.
+   *
+   * @param \Drupal\media\Entity\Media $media
+   *   The Drupal media entity to update.
+   * @param \stdClass $gredi_asset
+   *   The Gredi DAM asset.
+   *
+   * @return void
+   */
+  public function performMetadataUpdate(Media $media, \stdClass $gredi_asset): void {
+    /** @var array $mapping */
+    $mapping = $this->getMapping();
+    foreach ($mapping as $gredi_field => $drupal_field) {
+      if ($gredi_asset->{$gredi_field} != $media->get($drupal_field)->getString()) {
+        $media->set($drupal_field, $gredi_asset->{$gredi_field});
+      }
+    }
+    $media->save();
   }
 
   /**
@@ -48,14 +69,18 @@ class MetaUpdater {
     return $results;
   }
 
-  private function performUpdate() {
+  /**
+   * Function to get mapping between Drupal entity and Gredi DAM asset fields.
+   *
+   * @return array
+   *   Mapping.
+   */
+  private function getMapping(): array {
     /** @var ImmutableConfig $config */
     $config = \Drupal::config('media.type.gredi_dam_assets');
     /** @var array $original_data */
     $original_data = $config->getOriginal();
-    foreach ($original_data['field_map'] as $gredi_field => $drupal_field) {
-      echo $gredi_field;
-      echo $drupal_field;
-    }
+
+    return $original_data['field_map'];
   }
 }
