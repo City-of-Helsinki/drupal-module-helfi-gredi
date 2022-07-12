@@ -126,16 +126,16 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
    *   The HTTP client.
    */
   public function __construct(
-    EntityTypeManagerInterface    $entityTypeManager,
-    EntityFieldManagerInterface   $entityFieldManager,
-    ConfigFactoryInterface        $configFactory,
-    FileSystemInterface           $fileSystem,
-    Token                         $token,
-    AssetImageHelper              $assetImageHelper,
-    GredidamInterface             $grediDamClient,
-    AssetMediaFactory             $assetMediaFactory,
+    EntityTypeManagerInterface $entityTypeManager,
+    EntityFieldManagerInterface $entityFieldManager,
+    ConfigFactoryInterface $configFactory,
+    FileSystemInterface $fileSystem,
+    Token $token,
+    AssetImageHelper $assetImageHelper,
+    GredidamInterface $grediDamClient,
+    AssetMediaFactory $assetMediaFactory,
     LoggerChannelFactoryInterface $loggerChannelFactory,
-    Client                        $client) {
+    Client $client) {
     $this->entityTypeManager = $entityTypeManager;
     $this->entityFieldManager = $entityFieldManager;
     $this->configFactory = $configFactory;
@@ -283,9 +283,9 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
         $this->loggerChannel->warning(
           'Unable to save file for asset ID @asset_id.
            Thumbnail for request size (@size px) has not been found.', [
-            '@asset_id' => $asset->external_id,
-            '@size' => $size_limit,
-          ]
+             '@asset_id' => $asset->external_id,
+             '@size' => $size_limit,
+           ],
         );
         return FALSE;
       }

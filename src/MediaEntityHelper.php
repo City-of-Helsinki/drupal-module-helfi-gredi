@@ -207,8 +207,7 @@ class MediaEntityHelper {
    *
    * @param string $fieldName
    *   The field name.
-   *
-   * @param string $fopt
+   * @param string $opt
    *   The field name.
    *
    * @return null|mixed

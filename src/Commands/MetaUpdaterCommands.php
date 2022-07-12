@@ -4,7 +4,7 @@ namespace Drupal\helfi_gredi_image\Commands;
 
 use Drush\Commands\DrushCommands;
 use Drupal\Core\Queue\SuspendQueueException;
-use Drupal\helfi_gredi_image\MetaUpdater;
+use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 
 /**
  * A Drush command file.
@@ -19,11 +19,18 @@ use Drupal\helfi_gredi_image\MetaUpdater;
  */
 class MetaUpdaterCommands extends DrushCommands {
 
-  /** @var MetaUpdater */
-  private MetaUpdater $metaUpdater;
+  /**
+   * Metadata helper service.
+   *
+   * @var \Drupal\helfi_gredi_image\Service\AssetMetadataHelper
+   */
+  private AssetMetadataHelper $metadataHelper;
 
+  /**
+   * Constructor.
+   */
   public function __construct() {
-    $this->metaUpdater = new MetaUpdater();
+    $this->metadataHelper = \Drupal::service('helfi_gredi_image.asset_metadata.helper');
   }
 
   /**
@@ -33,7 +40,7 @@ class MetaUpdaterCommands extends DrushCommands {
    * @aliases populate_gredi_meta
    */
   public function populateGrediMetadataUpdateQueue() {
-    $this->metaUpdater->populateMetaUpdateQueue();
+    $this->metadataHelper->populateMetadataUpdateQueue();
   }
 
   /**
@@ -43,9 +50,9 @@ class MetaUpdaterCommands extends DrushCommands {
    * @aliases update_gredi_meta
    */
   public function updateGrediMetadata() {
-    /* @var \Drupal\Core\Queue\QueueInterface $queue */
+    /** @var \Drupal\Core\Queue\QueueInterface $queue */
     $queue = \Drupal::service('queue')->get('meta_update');
-    /* @var \Drupal\Core\Queue\QueueWorkerInterface $queue_worker */
+    /** @var \Drupal\Core\Queue\QueueWorkerInterface $queue_worker */
     $queue_worker = \Drupal::service('plugin.manager.queue_worker')->createInstance('meta_update');
 
     $counter = 0;

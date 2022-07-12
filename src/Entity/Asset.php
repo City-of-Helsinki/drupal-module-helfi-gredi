@@ -215,7 +215,7 @@ class Asset implements EntityInterface, \JsonSerializable {
     foreach ($properties as $property) {
       if (isset($json[$property])) {
         if ($property === 'attachments') {
-          $asset->width =  $json['attachments'][0]['propertiesById']['nibo:image-width'];
+          $asset->width = $json['attachments'][0]['propertiesById']['nibo:image-width'];
           $asset->height = $json['attachments'][0]['propertiesById']['nibo:image-height'];
           $asset->resolution = $json['attachments'][0]['propertiesById']['nibo:image-resolution'];
           $asset->keywords = NULL;
@@ -223,9 +223,11 @@ class Asset implements EntityInterface, \JsonSerializable {
           $asset->size = $json['attachments'][0]['propertiesById']['nibo:file-size'];
           $asset->mimeType = $json['attachments'][0]['propertiesById']['nibo:mime-type'];
           $asset->attachments = "https://api4.materialbank.net" . $json['attachments'][0]['publicLink'];
-        } elseif ($property === 'folderId') {
+        }
+        elseif ($property === 'folderId') {
           $asset->folderId = $folder_id;
-        } elseif ($property == 'id') {
+        }
+        elseif ($property == 'id') {
           $asset->id = $json['id'];
           $asset->external_id = $json['id'];
         }

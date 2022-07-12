@@ -20,7 +20,7 @@ interface GredidamInterface {
    * @return mixed
    *   Returns whatever the dam client returns.
    */
-  public function __call($name, array $arguments);
+  public function __call(string $name, array $arguments);
 
   /**
    * Get customer content from API call.
@@ -33,49 +33,45 @@ interface GredidamInterface {
    * @return array
    *   Return the customer content.
    */
-  public function getCustomerContent($customer, $params = []);
+  public function getCustomerContent(int $customer, array $params = []);
 
   /**
-   *  Get folder content from API call.
+   * Get folder content from API call.
    *
    * @param int $folder_id
    *   Folder id.
-   *
    * @param array $params
    *   Folder parameters.
    *
    * @return array|mixed
    *   Return folder content.
    */
-  public function getFolderContent($folder_id, $params = []);
+  public function getFolderContent(int $folder_id, array $params = []);
 
   /**
    * Get multiple assets from API call.
    *
    * @param int $ids
    *   Assets id.
-   *
    * @param array $expand
    *   Parameters for include in API call.
    *
    * @return array|mixed
    *   Return multiple assets.
    */
-  public function getMultipleAsset($ids, $expand = []);
+  public function getMultipleAsset($ids, array $expand = []);
 
   /**
    * Get asset from API call.
    *
    * @param int $assetId
-   *    Asset id.
-   *
+   *   Asset id.
    * @param array $expands
    *   Parameters for include in API call.
    *
    * @return array|mixed
-   *    Return asset.
+   *   Return asset.
    */
-  public function getAsset($assetId, $expands = ['meta', 'attachments']);
+  public function getAsset($assetId, array $expands = ['meta', 'attachments']);
 
 }
-

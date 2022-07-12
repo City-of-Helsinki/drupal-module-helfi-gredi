@@ -7,6 +7,7 @@ use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\helfi_gredi_image\GredidamInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
+use Drupal\media\Entity\Media;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -148,23 +149,100 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
     switch ($name) {
       case 'height':
         return $asset->height;
+
       case 'width':
         return $asset->width;
+
       case 'resolution':
         return $asset->resolution;
+
       case 'keywords':
         return $asset->keywords;
+
       case 'alt-text':
         return $asset->alt_text;
+
       case 'size':
         return $asset->size;
+
       case 'external_id':
         return $asset->external_id;
+
       case 'name':
         return $asset->name;
     }
 
     return NULL;
+  }
+
+  /**
+   * Function to populate meta_update queue with items to update.
+   */
+  public function populateMetadataUpdateQueue(): void {
+    /** @var array $results */
+    $results = $this->getAssetsToUpdate();
+
+    /** @var \Drupal\Core\Queue\QueueInterface $queue */
+    $queue = \Drupal::service('queue')->get('meta_update');
+    foreach ($results as $key => $value) {
+      /** @var \Drupal\media\Entity\Media $gredi_asset */
+      $gredi_asset = Media::load($value);
+      /** @var \stdClass $item */
+      $item = new \stdClass();
+      $item->media_id = $value;
+      $item->external_id = $gredi_asset->get('field_external_id')->getString();
+      $queue->createItem($item);
+    }
+  }
+
+  /**
+   * Function to perform Gredi asset metadata update.
+   *
+   * @param \Drupal\media\Entity\Media $media
+   *   The Drupal media entity to update.
+   * @param \Drupal\helfi_gredi_image\Entity\Asset $gredi_asset
+   *   The Gredi DAM asset.
+   */
+  public function performMetadataUpdate(Media $media, Asset $gredi_asset): void {
+    /** @var array $mapping */
+    $mapping = $this->getMapping();
+    foreach ($mapping as $gredi_field => $drupal_field) {
+      if ($gredi_asset->{$gredi_field} != $media->get($drupal_field)->getString()) {
+        $media->set($drupal_field, $gredi_asset->{$gredi_field});
+      }
+    }
+    $media->save();
+  }
+
+  /**
+   * Function to get list of Gredi DAM Assets to update.
+   *
+   * @return array
+   *   List of Gredi DAM Assets.
+   */
+  private function getAssetsToUpdate(): array {
+    /** @var \Drupal\Core\Entity\Query\QueryInterface $query */
+    $query = \Drupal::entityQuery('media')
+      ->condition('bundle', 'gredi_dam_assets');
+    /** @var array $results */
+    $results = $query->execute();
+
+    return $results;
+  }
+
+  /**
+   * Function to get mapping between Drupal entity and Gredi DAM asset fields.
+   *
+   * @return array
+   *   Mapping.
+   */
+  private function getMapping(): array {
+    /** @var \Drupal\Core\Config\ImmutableConfig $config */
+    $config = \Drupal::config('media.type.gredi_dam_assets');
+    /** @var array $original_data */
+    $original_data = $config->getOriginal();
+
+    return $original_data['field_map'];
   }
 
 }

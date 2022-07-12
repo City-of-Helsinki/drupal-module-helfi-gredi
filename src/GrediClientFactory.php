@@ -26,6 +26,11 @@ class GrediClientFactory implements ContainerInjectionInterface {
    */
   protected $guzzleClient;
 
+  /**
+   * CookieJar for authentication.
+   *
+   * @var \GuzzleHttp\Cookie\CookieJar
+   */
   protected $cookieJar;
 
   /**
@@ -36,7 +41,6 @@ class GrediClientFactory implements ContainerInjectionInterface {
    */
   public function __construct(ClientInterface $guzzleClient) {
     $this->guzzleClient = $guzzleClient;
-
     $this->cookieJar = $this->loginWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx');
   }
 
@@ -59,22 +63,21 @@ class GrediClientFactory implements ContainerInjectionInterface {
    * @param string $password
    *   The password to authenticate with.
    *
-   * @return CookieJar
+   * @return \GuzzleHttp\Cookie\CookieJar
    *   The Gredi DAM client.
    */
   public function loginWithCredentials($customer, $username, $password) {
-
     $url = 'https://api4.materialbank.net/api/v1/sessions/';
     if (empty($data)) {
       $data = [
         'headers' => [
-          'Content-Type' => 'application/json'
+          'Content-Type' => 'application/json',
         ],
         'body' => '{
         "customer": "' . $customer . '",
         "username": "' . $username . '",
         "password": "' . $password . '"
-      }'
+      }',
       ];
     }
 
@@ -90,10 +93,10 @@ class GrediClientFactory implements ContainerInjectionInterface {
         $subtring_start = strpos($getCookie, '=');
         $subtring_start += strlen('=');
         $size = strpos($getCookie, ';', $subtring_start) - $subtring_start;
-        $result =  substr($getCookie, $subtring_start, $size);
+        $result = substr($getCookie, $subtring_start, $size);
         setcookie("JSESSIONID", $result, time() + 60 * 60 * 24, 'api4.materialbank.net');
         $cookieJar = CookieJar::fromArray([
-          'JSESSIONID' => $result
+          'JSESSIONID' => $result,
         ], 'api4.materialbank.net');
 
         return $cookieJar;
@@ -128,56 +131,69 @@ class GrediClientFactory implements ContainerInjectionInterface {
   /**
    * Get folders and assets from Customer id.
    *
-   * @param $customer
-   * @param $params
+   * @param int $customer
+   *   Customer.
+   * @param array $params
+   *   Parameters.
+   *
    * @return array
+   *   Customer content.
+   *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function getCustomerContent($customer, $params = []): array {
+  public function getCustomerContent(int $customer, array $params = []): array {
     $parameters = '';
 
     if (!empty($params)) {
       $parameters .= '&offset=' . $params['offset'] . '&limit=' . $params['limit'];
     }
-      $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/customers/' . $customer . '/contents?include=attachments' . $parameters, [
-        'headers' => [
-          'Content-Type' => 'application/json',
-        ],
-        'cookies' => $this->cookieJar
-      ]);
-      $posts = $userContent->getBody()->getContents();
-      $content = [];
-      foreach (Json::decode($posts) as $post) {
-        if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
-          $content['assets'][] = $this->getAsset($post['id'], ['meta', 'attachments'], $post['parentId']);
-        }
-        elseif ($post['fileType'] == 'folder') {
-          $content['folders'][] = Category::fromJson($post);
-        }
+    $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/customers/' . $customer . '/contents?include=attachments' . $parameters, [
+      'headers' => [
+        'Content-Type' => 'application/json',
+      ],
+      'cookies' => $this->cookieJar,
+    ]);
+    $posts = $userContent->getBody()->getContents();
+    $content = [];
+    foreach (Json::decode($posts) as $post) {
+      if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
+        $expands = ['meta', 'attachments'];
+        $content['assets'][] = $this->getAsset($post['id'], $expands, $post['parentId']);
       }
+      elseif ($post['fileType'] == 'folder') {
+        $content['folders'][] = Category::fromJson($post);
+      }
+    }
 
-      return $content;
+    return $content;
   }
 
   /**
    * Get assets and sub-folders from folders.
    *
-   * @param $folder_id
-   * @param $params
+   * @param int $folder_id
+   *   Folder ID.
+   * @param array $params
+   *   Parameters.
+   *
    * @return array|void
+   *   Content.
+   *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function getFolderContent($folder_id, $params = []) {
-    if (empty($folder_id)) return;
+  public function getFolderContent(int $folder_id, array $params = []) {
+    if (empty($folder_id)) {
+      return;
+    }
     $parameters = '';
     if (!empty($params)) {
-        $parameters .= '?offset=' . $params['offset'] . '&limit=' . $params['limit'];
+      $parameters .= '?offset=' . $params['offset'] . '&limit=' . $params['limit'];
     }
     $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/folders/' . $folder_id . '/files/?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
-      'cookies' => $this->cookieJar
+      'cookies' => $this->cookieJar,
     ]);
     $posts = $userContent->getBody()->getContents();
     $contents = [];
@@ -205,7 +221,7 @@ class GrediClientFactory implements ContainerInjectionInterface {
    * @return array
    *   A list of assets.
    */
-  public function getMultipleAsset($ids, $expand = []) : array {
+  public function getMultipleAsset(array $ids, array $expand = []): array {
     if (empty($ids)) {
       return [];
     }
@@ -249,7 +265,7 @@ class GrediClientFactory implements ContainerInjectionInterface {
         'headers' => [
           'Content-Type' => 'application/json',
         ],
-        'cookies' => $this->cookieJar
+        'cookies' => $this->cookieJar,
       ]
     );
 

@@ -8,7 +8,6 @@ use Drupal\Core\Form\ConfigFormBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\TransferException;
 
 /**
  * Gredi DAM module configuration form.
@@ -71,7 +70,7 @@ class GrediDamConfigForm extends ConfigFormBase {
 
     $form['domain'] = [
       '#type' => 'fieldset',
-      '#title' => $this->t('Domain detail')
+      '#title' => $this->t('Domain detail'),
     ];
 
     $form['domain']['domain_value'] = [
@@ -82,26 +81,26 @@ class GrediDamConfigForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
-      $form['drupal_auth'] = [
-        '#type' => 'fieldset',
-        '#title' => $this->t('Gredi DAM Drupal Account'),
-      ];
+    $form['drupal_auth'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Gredi DAM Drupal Account'),
+    ];
 
-      $form['drupal_auth']['drupal_gredidam_user'] = [
-        '#type' => 'textfield',
-        '#title' => $this->t('Drupal Gredi DAM Username'),
-        '#default_value' => $config->get('user'),
-        '#description' => $this->t('drupaluser'),
-        '#required' => TRUE,
-      ];
+    $form['drupal_auth']['drupal_gredidam_user'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Drupal Gredi DAM Username'),
+      '#default_value' => $config->get('user'),
+      '#description' => $this->t('drupaluser'),
+      '#required' => TRUE,
+    ];
 
-      $form['drupal_auth']['drupal_gredidam_password'] = [
-        '#type' => 'textfield',
-        '#title' => $this->t('Drupal Gredi DAM Password'),
-        '#default_value' => $config->get('pass'),
-        '#description' => $this->t('passexample'),
-        '#required' => TRUE,
-      ];
+    $form['drupal_auth']['drupal_gredidam_password'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Drupal Gredi DAM Password'),
+      '#default_value' => $config->get('pass'),
+      '#description' => $this->t('passexample'),
+      '#required' => TRUE,
+    ];
 
     $form['entity_browser'] = [
       '#type' => 'fieldset',
@@ -131,8 +130,6 @@ class GrediDamConfigForm extends ConfigFormBase {
 
     return $form;
   }
-
-
 
   /**
    * Validate that the provided values are valid or nor.

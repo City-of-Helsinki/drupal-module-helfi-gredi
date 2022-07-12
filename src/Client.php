@@ -58,11 +58,11 @@ class Client {
    *
    * @param \GuzzleHttp\ClientInterface $client
    *   The Guzzle client interface.
-   * @param string \Drupal\helfi_gredi_image\GrediClientFactory
+   * @param \Drupal\helfi_gredi_image\GrediClientFactory $grediDamClientFactory
    *   An instance of GrediClientFactory.
    * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
    *   The request stack.
-  */
+   */
   public function __construct(ClientInterface $client, GrediClientFactory $grediDamClientFactory, RequestStack $request_stack) {
     $this->client = $client;
     $this->grediDamClientFactory = $grediDamClientFactory;
@@ -102,7 +102,7 @@ class Client {
         'headers' => [
           'Content-Type' => 'application/json',
         ],
-        'cookies' => $this->grediDamClientFactory->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx')
+        'cookies' => $this->grediDamClientFactory->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx'),
       ]
     );
     $category = Category::fromJson((string) $response->getBody());
@@ -121,35 +121,35 @@ class Client {
     $fields = [
       'external_id' => [
         'label' => 'External ID',
-        'type' => 'string'
+        'type' => 'string',
       ],
       'name' => [
         'label' => 'Filename',
-        'type' => 'string'
+        'type' => 'string',
       ],
       'width' => [
         'label' => 'Width',
-        'type' => 'string'
+        'type' => 'string',
       ],
       'height' => [
         'label' => 'Height',
-        'type' => 'string'
+        'type' => 'string',
       ],
       'resolution' => [
         'label' => 'Resolution',
-        'type' => 'string'
+        'type' => 'string',
       ],
       'keywords' => [
         'label' => 'Keywords',
-        'type' => 'text_long'
+        'type' => 'text_long',
       ],
       'alt_text' => [
         'label' => 'Alt text',
-        'type' => 'string'
+        'type' => 'string',
       ],
       'size' => [
         'label' => 'Filesize (kb)',
-        'type' => 'string'
+        'type' => 'string',
       ],
     ];
 

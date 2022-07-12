@@ -70,6 +70,8 @@ class Category implements EntityInterface, \JsonSerializable {
    *
    * @param mixed $json
    *   Json object contain categories data.
+   * @param mixed $folder_id
+   *   Folder ID.
    *
    * @return object
    *   Category data.
@@ -115,7 +117,8 @@ class Category implements EntityInterface, \JsonSerializable {
    * Serialize the category data.
    *
    * @return mixed
-   *   Mixed data which can be serialized by json_encode() containing category properties.
+   *   Mixed data which can be serialized by json_encode()
+   *   containing category properties.
    */
   public function jsonSerialize(): mixed {
     $properties = [
