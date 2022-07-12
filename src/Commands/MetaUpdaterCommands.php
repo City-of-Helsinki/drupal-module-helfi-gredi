@@ -3,8 +3,10 @@
 namespace Drupal\helfi_gredi_image\Commands;
 
 use Drush\Commands\DrushCommands;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Queue\SuspendQueueException;
-use Drupal\helfi_gredi_image\MetaUpdater;
+use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * A Drush command file.
@@ -17,13 +19,29 @@ use Drupal\helfi_gredi_image\MetaUpdater;
  *   - http://cgit.drupalcode.org/devel/tree/src/Commands/DevelCommands.php
  *   - http://cgit.drupalcode.org/devel/tree/drush.services.yml
  */
-class MetaUpdaterCommands extends DrushCommands {
+class MetaUpdaterCommands extends DrushCommands implements ContainerInjectionInterface {
 
-  /** @var MetaUpdater */
-  private MetaUpdater $metaUpdater;
+  /**
+   * Metadata helper service.
+   *
+   * @var \Drupal\helfi_gredi_image\Service\AssetMetadataHelper
+   */
+  private AssetMetadataHelper $metadataHelper;
 
-  public function __construct() {
-    $this->metaUpdater = new MetaUpdater();
+  /**
+   * Constructor.
+   */
+  public function __construct(AssetMetadataHelper $metadataHelper) {
+    $this->metadataHelper = $metadataHelper;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('helfi_gredi_image.asset_metadata.helper')
+    );
   }
 
   /**
@@ -33,7 +51,7 @@ class MetaUpdaterCommands extends DrushCommands {
    * @aliases populate_gredi_meta
    */
   public function populateGrediMetadataUpdateQueue() {
-    $this->metaUpdater->populateMetaUpdateQueue();
+    $this->metadataHelper->populateMetadataUpdateQueue();
   }
 
   /**
@@ -43,9 +61,9 @@ class MetaUpdaterCommands extends DrushCommands {
    * @aliases update_gredi_meta
    */
   public function updateGrediMetadata() {
-    /* @var \Drupal\Core\Queue\QueueInterface $queue */
+    /** @var \Drupal\Core\Queue\QueueInterface $queue */
     $queue = \Drupal::service('queue')->get('meta_update');
-    /* @var \Drupal\Core\Queue\QueueWorkerInterface $queue_worker */
+    /** @var \Drupal\Core\Queue\QueueWorkerInterface $queue_worker */
     $queue_worker = \Drupal::service('plugin.manager.queue_worker')->createInstance('meta_update');
 
     $counter = 0;

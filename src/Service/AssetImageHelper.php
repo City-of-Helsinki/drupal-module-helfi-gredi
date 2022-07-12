@@ -291,7 +291,7 @@ class AssetImageHelper implements ContainerInjectionInterface {
   protected function getGrediDamModulePath() {
     /** @var Drupal\Core\Extension\ExtensionPathResolver $path_resolver */
     $path_resolver = \Drupal::service('extension.path.resolver');
-    $path_resolver->getPath('module', 'helfi_gredi_image');
+    return $path_resolver->getPath('module', 'helfi_gredi_image');
   }
 
   /**

@@ -197,9 +197,9 @@ class Gredidam extends WidgetBase {
    */
   public function defaultConfiguration() {
     return [
-        'media_type' => NULL,
-        'submit_text' => $this->t('Select assets'),
-      ] + parent::defaultConfiguration();
+      'media_type' => NULL,
+      'submit_text' => $this->t('Select assets'),
+    ] + parent::defaultConfiguration();
   }
 
   /**
@@ -258,7 +258,7 @@ class Gredidam extends WidgetBase {
       }
       if ($form_state->getValue('assets')) {
         $current_selections = $form_state
-            ->getValue('current_selections', []) + array_filter($form_state->getValue('assets', []));
+          ->getValue('current_selections', []) + array_filter($form_state->getValue('assets', []));
 
         $form['current_selections'] = [
           '#type' => 'value',
@@ -377,13 +377,20 @@ class Gredidam extends WidgetBase {
    * Create pagination and set current page.
    *
    * @param $total_count
+   *   Total count.
    * @param $page
+   *   Page.
    * @param $num_per_page
-   * @param $page_type
-   * @param Category|NULL $category
+   *   Number per page.
+   * @param string $page_type
+   *   Page type.
+   * @param \Drupal\helfi_gredi_image\Entity\Category|null $category
+   *   Category.
+   *
    * @return array
+   *   Form.
    */
-  public function getPager($total_count, $page, $num_per_page, $page_type = "listing", Category $category = NULL) {
+  public function getPager($total_count, $page, $num_per_page, string $page_type = "listing", Category $category = NULL) {
     // Add container for pager.
     $form['pager-container'] = [
       '#type' => 'container',
@@ -521,7 +528,6 @@ class Gredidam extends WidgetBase {
       // If the field cardinality is limited and the number of assets selected
       // is greater than the field cardinality.
       if ($field_cardinality > 0 && count($content) > $field_cardinality) {
-
         $message = $this->formatPlural($field_cardinality,
           'You can not select more than 1 entity.',
           'You can not select more than @count entities.');
@@ -536,31 +542,32 @@ class Gredidam extends WidgetBase {
       $field_definition = $field_definitions[$field_map['media_image']]->getItemDefinition();
 
       // Invoke the API to get all the information about the selected assets.
-      $dam_assets = $this->gredidam->getMultipleAsset($content, ['meta', 'attachments']);
+      $expand = ['meta', 'attachments'];
+      $dam_assets = $this->gredidam->getMultipleAsset($content, $expand);
 
       // If the media is only referencing images, we only validate that
       // referenced assets are images. We don't check the extension as we are
       // downloading the png version anyway.
-        // Get the list of allowed extensions for this media bundle.
-        $file_extensions = $field_definition->getSetting('file_extensions');
-        $supported_extensions = explode(',',
+      // Get the list of allowed extensions for this media bundle.
+      $file_extensions = $field_definition->getSetting('file_extensions');
+      $supported_extensions = explode(',',
           preg_replace('/,?\s/', ',', $file_extensions));
 
-        // Browse the selected assets to validate the extensions are allowed.
-        foreach ($dam_assets as $asset) {
-          $filetype = pathinfo($asset->name, PATHINFO_EXTENSION);
-          $type_is_supported = in_array(strtolower($filetype), $supported_extensions);
+      // Browse the selected assets to validate the extensions are allowed.
+      foreach ($dam_assets as $asset) {
+        $filetype = pathinfo($asset->name, PATHINFO_EXTENSION);
+        $type_is_supported = in_array(strtolower($filetype), $supported_extensions);
 
-          if (!$type_is_supported) {
-            $message = $this
-              ->t('Please make another selection.
-               The "@filetype" file type is not one of the supported file types (@supported_types).', [
-              '@filetype' => $filetype,
-              '@supported_types' => implode(', ', $supported_extensions),
+        if (!$type_is_supported) {
+          $message = $this
+            ->t('Please make another selection.
+              The "@filetype" file type is not one of the supported file types (@supported_types).', [
+                '@filetype' => $filetype,
+                '@supported_types' => implode(', ', $supported_extensions),
               ]);
-            $form_state->setError($form['widget']['asset-container']['assets'], $message);
-          }
+          $form_state->setError($form['widget']['asset-container']['assets'], $message);
         }
+      }
     }
   }
 
@@ -598,12 +605,12 @@ class Gredidam extends WidgetBase {
       '#default_value' => 'asc',
     ];
     // Add dropdown for filtering on asset type.
-//    $form['filter-sort-container']['format_type'] = [
-//      '#type' => 'select',
-//      '#title' => 'File format',
-//      '#options' => Asset::getFileFormats(),
-//      '#default_value' => 0,
-//    ];
+    // $form['filter-sort-container']['format_type'] = [
+    // '#type' => 'select',
+    // '#title' => 'File format',
+    // '#options' => Asset::getFileFormats(),
+    // '#default_value' => 0,
+    // ];
     // Add textfield for keyword search.
     $form['filter-sort-container']['query'] = [
       '#type' => 'textfield',
@@ -727,7 +734,7 @@ class Gredidam extends WidgetBase {
     }
     $element = '<div class="js-form-item form-item js-form-type-checkbox form-type--checkbox
      form-type--boolean js-form-item-assets-' .
-      $key . ' form-item--assets-' . $key .'">
+      $key . ' form-item--assets-' . $key . '">
     <input data-drupal-selector="edit-assets-' .
       $key . '" type="checkbox" id="edit-assets-' .
       $key . '" name="assets[' . $key . ']" value="' .
@@ -740,7 +747,6 @@ class Gredidam extends WidgetBase {
 
     return $element;
   }
-
 
   /**
    * {@inheritdoc}
@@ -757,8 +763,13 @@ class Gredidam extends WidgetBase {
    * Prepare entity and create media.
    *
    * @param array $form
-   * @param FormStateInterface $form_state
+   *   Form definition.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   Form state.
+   *
    * @return \Drupal\Core\Entity\EntityInterface[]
+   *   Array of entities.
+   *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    * @throws \Drupal\Core\Entity\EntityStorageException
@@ -787,7 +798,8 @@ class Gredidam extends WidgetBase {
     $entities = $this->entityTypeManager->getStorage('media')
       ->loadMultiple($existing_ids);
 
-    $assets = $this->gredidam->getMultipleAsset($asset_ids, ['meta', 'attachments']);
+    $expand = ['meta', 'attachments'];
+    $assets = $this->gredidam->getMultipleAsset($asset_ids, $expand);
 
     foreach ($assets as $asset) {
       if ($asset == NULL) {
@@ -819,8 +831,8 @@ class Gredidam extends WidgetBase {
           'target_id' => $file->id(),
         ],
         $source_field => [
-          'asset_id' => $asset->external_id
-          ],
+          'asset_id' => $asset->external_id,
+        ],
         'created' => strtotime($asset->created),
         'changed' => strtotime($asset->modified),
       ]);
@@ -841,18 +853,20 @@ class Gredidam extends WidgetBase {
   /**
    * Get file extension.
    *
-   * @param $mime_type
+   * @param string $mime_type
+   *   Mime type.
+   *
    * @return string
+   *   File extension.
    */
-  public function getExtension ($mime_type){
-
-    $extensions = array('image/jpeg' => 'jpg',
+  public function getExtension(string $mime_type) {
+    $extensions = [
+      'image/jpeg' => 'jpg',
       'image/jpg' => 'jpg',
-      'image/png' => 'png'
-    );
+      'image/png' => 'png',
+    ];
 
-    // Add as many other Mime Types / File Extensions as you like
-
+    // Add as many other Mime Types / File Extensions as you like.
     return $extensions[$mime_type];
   }
 

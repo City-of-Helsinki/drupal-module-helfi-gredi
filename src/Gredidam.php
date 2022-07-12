@@ -46,7 +46,7 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
    *
    * @param \Drupal\helfi_gredi_image\Client $grediDamClient
    *   An instance of ClientFactory that we can get a webdam client from.
-   * @param string \Drupal\helfi_gredi_image\GrediClientFactory
+   * @param \Drupal\helfi_gredi_image\GrediClientFactory $grediDamClientFactory
    *   An instance of GrediClientFactory.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
    *   The Drupal LoggerChannelFactory service.
@@ -77,12 +77,12 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
       call_user_func_array($method_variable, $arguments) : NULL;
   }
 
-   /**
-    * Call getCustomerContent from ClientFactory.
-    */
-   public function getCustomerContent($customer, $params = []) {
-      return $this->grediDamClientFactory->getCustomerContent($customer, $params);
-   }
+  /**
+   * Call getCustomerContent from ClientFactory.
+   */
+  public function getCustomerContent($customer, $params = []) {
+    return $this->grediDamClientFactory->getCustomerContent($customer, $params);
+  }
 
   /**
    * Call getFolderContent from ClientFactory.
