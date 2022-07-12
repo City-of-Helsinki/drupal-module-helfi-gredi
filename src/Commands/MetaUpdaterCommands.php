@@ -3,8 +3,10 @@
 namespace Drupal\helfi_gredi_image\Commands;
 
 use Drush\Commands\DrushCommands;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Queue\SuspendQueueException;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * A Drush command file.
@@ -17,7 +19,7 @@ use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
  *   - http://cgit.drupalcode.org/devel/tree/src/Commands/DevelCommands.php
  *   - http://cgit.drupalcode.org/devel/tree/drush.services.yml
  */
-class MetaUpdaterCommands extends DrushCommands {
+class MetaUpdaterCommands extends DrushCommands implements ContainerInjectionInterface {
 
   /**
    * Metadata helper service.
@@ -29,8 +31,17 @@ class MetaUpdaterCommands extends DrushCommands {
   /**
    * Constructor.
    */
-  public function __construct() {
-    $this->metadataHelper = \Drupal::service('helfi_gredi_image.asset_metadata.helper');
+  public function __construct(AssetMetadataHelper $metadataHelper) {
+    $this->metadataHelper = $metadataHelper;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('helfi_gredi_image.asset_metadata.helper')
+    );
   }
 
   /**

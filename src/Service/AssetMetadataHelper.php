@@ -193,6 +193,7 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
       $item->external_id = $gredi_asset->get('field_external_id')->getString();
       $queue->createItem($item);
     }
+    echo count($results) . " assets added to the queue.";
   }
 
   /**
