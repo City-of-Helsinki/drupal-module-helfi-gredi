@@ -14,7 +14,7 @@ use Drupal\helfi_gredi_image\Service\AssetMediaFactory;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\helfi_gredi_image\GredidamInterface;
+use Drupal\helfi_gredi_image\GrediDamClient;
 
 /**
  * Provides media type plugin for Gredi DAM assets.
@@ -60,7 +60,7 @@ class GredidamAsset extends MediaSourceBase {
   /**
    * The dam interface.
    *
-   * @var \Drupal\helfi_gredi_image\GredidamInterface
+   * @var \Drupal\helfi_gredi_image\GrediDamClient
    */
   protected $gredidam;
 
@@ -69,7 +69,7 @@ class GredidamAsset extends MediaSourceBase {
    *
    * {@inheritdoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, FieldTypePluginManagerInterface $field_type_manager, ConfigFactoryInterface $config_factory, AssetImageHelper $assetImageHelper, AssetMetadataHelper $assetMetadataHelper, AssetMediaFactory $assetMediaFactory, GredidamInterface $gredidam) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, FieldTypePluginManagerInterface $field_type_manager, ConfigFactoryInterface $config_factory, AssetImageHelper $assetImageHelper, AssetMetadataHelper $assetMetadataHelper, AssetMediaFactory $assetMediaFactory, GrediDamClient $gredidam) {
     parent::__construct(
       $configuration,
       $plugin_id,
@@ -110,7 +110,7 @@ class GredidamAsset extends MediaSourceBase {
       $container->get('helfi_gredi_image.asset_image.helper'),
       $container->get('helfi_gredi_image.asset_metadata.helper'),
       $container->get('helfi_gredi_image.asset_media.factory'),
-      $container->get('helfi_gredi_image.gredidam')
+      $container->get('helfi_gredi_image.client_factory')
     );
   }
 

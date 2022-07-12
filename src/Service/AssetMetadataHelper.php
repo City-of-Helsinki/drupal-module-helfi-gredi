@@ -5,7 +5,7 @@ namespace Drupal\helfi_gredi_image\Service;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\helfi_gredi_image\GredidamInterface;
+use Drupal\helfi_gredi_image\GrediDamClient;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\media\Entity\Media;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -29,7 +29,7 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
   /**
    * A configured API object.
    *
-   * @var \Drupal\helfi_gredi_image\GredidamInterface|\Drupal\helfi_gredi_image\Client
+   * @var \Drupal\helfi_gredi_image\GrediDamClient
    *   $gredidam
    */
   protected $gredidam;
@@ -46,10 +46,10 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
    *
    * @param \Drupal\Core\Datetime\DateFormatterInterface $dateFormatter
    *   A Drupal date formatter service.
-   * @param \Drupal\helfi_gredi_image\GredidamInterface|\Drupal\helfi_gredi_image\Client $gredidam
+   * @param \Drupal\helfi_gredi_image\GrediDamClient $gredidam
    *   A configured API object.
    */
-  public function __construct(DateFormatterInterface $dateFormatter, GredidamInterface $gredidam) {
+  public function __construct(DateFormatterInterface $dateFormatter, GrediDamClient $gredidam) {
     $this->dateFormatter = $dateFormatter;
     $this->gredidam = $gredidam;
   }
@@ -60,7 +60,7 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('date.formatter'),
-      $container->get('helfi_gredi_image.gredidam')
+      $container->get('helfi_gredi_image.client_factory')
     );
   }
 

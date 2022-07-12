@@ -10,7 +10,6 @@ use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\Form\GrediDamConfigForm;
 use Drupal\helfi_gredi_image\GrediDamClient;
-use Drupal\helfi_gredi_image\GredidamInterface;
 use Drupal\media\Entity\Media;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -44,16 +43,9 @@ class Gredidam extends WidgetBase {
   /**
    * The dam interface.
    *
-   * @var \Drupal\helfi_gredi_image\GredidamInterface
-   */
-  protected $gredidam;
-
-  /**
-   * The dam interface.
-   *
    * @var \Drupal\helfi_gredi_image\GrediDamClient
    */
-  protected $grediClientFactory;
+  protected $gredidam;
 
   /**
    * The current user account.
@@ -137,10 +129,27 @@ class Gredidam extends WidgetBase {
    *
    * {@inheritdoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, WidgetValidationManager $validation_manager, GredidamInterface $gredidam, GrediDamClient $grediClientFactory, AccountInterface $account, LanguageManagerInterface $languageManager, ModuleHandlerInterface $moduleHandler, MediaSourceManager $sourceManager, UserDataInterface $userData, RequestStack $requestStack, ConfigFactoryInterface $config, ClientInterface $guzzleClient, PagerManagerInterface $pagerManager) {
+  public function __construct(
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    EventDispatcherInterface $event_dispatcher,
+    EntityTypeManagerInterface $entity_type_manager,
+    EntityFieldManagerInterface $entity_field_manager,
+    WidgetValidationManager $validation_manager,
+    GrediDamClient $gredidam,
+    AccountInterface $account,
+    LanguageManagerInterface $languageManager,
+    ModuleHandlerInterface $moduleHandler,
+    MediaSourceManager $sourceManager,
+    UserDataInterface $userData,
+    RequestStack $requestStack,
+    ConfigFactoryInterface $config,
+    ClientInterface $guzzleClient,
+    PagerManagerInterface $pagerManager
+  ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $event_dispatcher, $entity_type_manager, $validation_manager);
     $this->gredidam = $gredidam;
-    $this->grediClientFactory = $grediClientFactory;
     $this->user = $account;
     $this->languageManager = $languageManager;
     $this->moduleHandler = $moduleHandler;
@@ -157,7 +166,25 @@ class Gredidam extends WidgetBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static($configuration, $plugin_id, $plugin_definition, $container->get('event_dispatcher'), $container->get('entity_type.manager'), $container->get('entity_field.manager'), $container->get('plugin.manager.entity_browser.widget_validation'), $container->get('helfi_gredi_image.gredidam'), $container->get('helfi_gredi_image.client_factory'), $container->get('current_user'), $container->get('language_manager'), $container->get('module_handler'), $container->get('plugin.manager.media.source'), $container->get('user.data'), $container->get('request_stack'), $container->get('config.factory'), $container->get('http_client'), $container->get('pager.manager'));
+    return new static(
+      $configuration,
+      $plugin_id,
+      $plugin_definition,
+      $container->get('event_dispatcher'),
+      $container->get('entity_type.manager'),
+      $container->get('entity_field.manager'),
+      $container->get('plugin.manager.entity_browser.widget_validation'),
+      $container->get('helfi_gredi_image.client_factory'),
+      $container->get('current_user'),
+      $container->get('language_manager'),
+      $container->get('module_handler'),
+      $container->get('plugin.manager.media.source'),
+      $container->get('user.data'),
+      $container->get('request_stack'),
+      $container->get('config.factory'),
+      $container->get('http_client'),
+      $container->get('pager.manager')
+    );
   }
 
   /**

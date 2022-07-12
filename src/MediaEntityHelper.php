@@ -60,12 +60,12 @@ class MediaEntityHelper {
    *   Entity Type Manager service.
    * @param \Drupal\helfi_gredi_image\AssetDataInterface $assetData
    *   Gredi DAM asset data service.
-   * @param \Drupal\helfi_gredi_image\GredidamInterface $grediDamClient
+   * @param \Drupal\helfi_gredi_image\GrediDamClient $grediDamClient
    *   Gredi DAM client.
    * @param \Drupal\helfi_gredi_image\Service\AssetFileEntityHelper $assetFileHelper
    *   Gredi DAM file entity helper service.
    */
-  public function __construct(MediaInterface $media, EntityTypeManagerInterface $entityTypeManager, AssetDataInterface $assetData, GredidamInterface $grediDamClient, AssetFileEntityHelper $assetFileHelper) {
+  public function __construct(MediaInterface $media, EntityTypeManagerInterface $entityTypeManager, AssetDataInterface $assetData, GrediDamClient $grediDamClient, AssetFileEntityHelper $assetFileHelper) {
     $this->entityTypeManager = $entityTypeManager;
     $this->assetData = $assetData;
     $this->grediDamClient = $grediDamClient;

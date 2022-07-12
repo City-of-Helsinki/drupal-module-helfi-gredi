@@ -11,7 +11,7 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Utility\Token;
 use Drupal\file\FileInterface;
-use Drupal\helfi_gredi_image\GredidamInterface;
+use Drupal\helfi_gredi_image\GrediDamClient;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -76,7 +76,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
   /**
    * Gredi DAM client.
    *
-   * @var \Drupal\helfi_gredi_image\GredidamInterface
+   * @var \Drupal\helfi_gredi_image\GrediDamClient
    */
   protected $grediDamClient;
 
@@ -116,7 +116,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
    *   Drupal token service.
    * @param \Drupal\helfi_gredi_image\Service\AssetImageHelper $assetImageHelper
    *   Gredi DAM asset image helper service.
-   * @param \Drupal\helfi_gredi_image\GredidamInterface $grediDamClient
+   * @param \Drupal\helfi_gredi_image\GrediDamClient $grediDamClient
    *   Gredi DAM client.
    * @param \Drupal\helfi_gredi_image\Service\AssetMediaFactory $assetMediaFactory
    *   Gredi DAM Asset Media Factory service.
@@ -132,7 +132,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     FileSystemInterface $fileSystem,
     Token $token,
     AssetImageHelper $assetImageHelper,
-    GredidamInterface $grediDamClient,
+    GrediDamClient $grediDamClient,
     AssetMediaFactory $assetMediaFactory,
     LoggerChannelFactoryInterface $loggerChannelFactory,
     Client $client) {
@@ -160,7 +160,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
       $container->get('file_system'),
       $container->get('token'),
       $container->get('helfi_gredi_image.asset_image.helper'),
-      $container->get('helfi_gredi_image.gredidam'),
+      $container->get('helfi_gredi_image.client_factory'),
       $container->get('helfi_gredi_image.asset_media.factory'),
       $container->get('logger.factory'),
       $container->get('http_client')
