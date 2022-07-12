@@ -80,8 +80,7 @@ class GrediDamClient implements ContainerInjectionInterface {
   public function __construct(ClientInterface $guzzleClient, ConfigFactoryInterface $config) {
     $this->guzzleClient = $guzzleClient;
     $this->config = $config;
-    $config = $this->config->get('gredi_dam.settings');
-    $this->cookieJar = $this->loginWithCredentials('helsinki', $config->get('user'), $config->get('pass'));
+    $this->cookieJar = $this->loginWithCredentials();
   }
 
   /**
@@ -97,18 +96,16 @@ class GrediDamClient implements ContainerInjectionInterface {
   /**
    * Gets a base DAM Client object using the specified credentials.
    *
-   * @param string $customer
-   *   The customer to authenticate with.
-   * @param string $username
-   *   The username to authenticate with.
-   * @param string $password
-   *   The password to authenticate with.
-   *
    * @return \GuzzleHttp\Cookie\CookieJar
    *   The Gredi DAM client.
    */
-  public function loginWithCredentials($customer, $username, $password) {
+  public function loginWithCredentials() {
     $url = 'https://api4.materialbank.net/api/v1/sessions/';
+
+    $customer = 'helsinki';
+    $config = $this->config->get('gredi_dam.settings');
+    $username = $config->get('user');
+    $password = $config->get('pass');
     if (empty($data)) {
       $data = [
         'headers' => [
