@@ -520,7 +520,7 @@ class Gredidam extends WidgetBase {
 
       // If the field cardinality is limited and the number of assets selected
       // is greater than the field cardinality.
-      if ($field_cardinality > 0 && count($assets) > $field_cardinality) {
+      if ($field_cardinality > 0 && count($content) > $field_cardinality) {
 
         $message = $this->formatPlural($field_cardinality,
           'You can not select more than 1 entity.',
