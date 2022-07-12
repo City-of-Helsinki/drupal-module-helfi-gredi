@@ -65,7 +65,7 @@ class GrediDamClient implements ContainerInjectionInterface {
   /**
    * Config Factory var.
    *
-   * @var ConfigFactoryInterface
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $config;
 
@@ -74,7 +74,7 @@ class GrediDamClient implements ContainerInjectionInterface {
    *
    * @param \GuzzleHttp\ClientInterface $guzzleClient
    *   A fully configured Guzzle client to pass to the dam client.
-   * @param ConfigFactoryInterface $config
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
    *   Config factory var.
    */
   public function __construct(ClientInterface $guzzleClient, ConfigFactoryInterface $config) {
@@ -100,8 +100,6 @@ class GrediDamClient implements ContainerInjectionInterface {
    *   The Gredi DAM client.
    */
   public function loginWithCredentials() {
-    $url = 'https://api4.materialbank.net/api/v1/sessions/';
-
     $customer = 'helsinki';
     $config = $this->config->get('gredi_dam.settings');
     $username = $config->get('user');
@@ -185,7 +183,7 @@ class GrediDamClient implements ContainerInjectionInterface {
     if (!empty($params)) {
       $parameters .= '&offset=' . $params['offset'] . '&limit=' . $params['limit'];
     }
-    $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/customers/' . $customer . '/contents?include=attachments' . $parameters, [
+    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/customers/' . $customer . '/contents?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
@@ -227,7 +225,7 @@ class GrediDamClient implements ContainerInjectionInterface {
     if (!empty($params)) {
       $parameters .= '?offset=' . $params['offset'] . '&limit=' . $params['limit'];
     }
-    $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/folders/' . $folder_id . '/files/?include=attachments' . $parameters, [
+    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/folders/' . $folder_id . '/files/?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
@@ -298,7 +296,7 @@ class GrediDamClient implements ContainerInjectionInterface {
 
     $response = $this->guzzleClient->request(
       "GET",
-      'https://api4.materialbank.net/api/v1/files/' . $id . '?include=' . implode('%2C', $expands),
+      $this->baseUrl . '/files/' . $id . '?include=' . implode('%2C', $expands),
       [
         'headers' => [
           'Content-Type' => 'application/json',
@@ -322,7 +320,6 @@ class GrediDamClient implements ContainerInjectionInterface {
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getCategoryData(Category $category): array {
-
     $url = $this->baseUrl . '/folders/{id}/files/';
     // If category is not set, it will load the root category.
     if (isset($category->links->categories)) {
