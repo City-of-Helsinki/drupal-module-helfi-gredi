@@ -71,7 +71,7 @@ class Category implements EntityInterface, \JsonSerializable {
    * @param mixed $json
    *   Json object contain categories data.
    *
-   * @return object
+   * @return object|array
    *   Category data.
    */
   public static function fromJson($json, $folder_id = NULL) {
