@@ -1,6 +1,6 @@
 services:
   helfi_gredi_image.client_factory:
-    class: Drupal\helfi_gredi_image\GrediClientFactory
+    class: Drupal\helfi_gredi_image\GrediDamClient
     arguments: [ '@http_client' ]
   helfi_gredi_image.client:
     class: Drupal\helfi_gredi_image\Client

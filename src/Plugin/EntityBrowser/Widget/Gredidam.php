@@ -9,7 +9,7 @@ use Drupal\entity_browser\WidgetBase;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\Form\GrediDamConfigForm;
-use Drupal\helfi_gredi_image\GrediClientFactory;
+use Drupal\helfi_gredi_image\GrediDamClient;
 use Drupal\helfi_gredi_image\GredidamInterface;
 use Drupal\media\Entity\Media;
 use GuzzleHttp\ClientInterface;
@@ -51,7 +51,7 @@ class Gredidam extends WidgetBase {
   /**
    * The dam interface.
    *
-   * @var \Drupal\helfi_gredi_image\GrediClientFactory
+   * @var \Drupal\helfi_gredi_image\GrediDamClient
    */
   protected $grediClientFactory;
 
@@ -137,7 +137,7 @@ class Gredidam extends WidgetBase {
    *
    * {@inheritdoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, WidgetValidationManager $validation_manager, GredidamInterface $gredidam, GrediClientFactory $grediClientFactory, AccountInterface $account, LanguageManagerInterface $languageManager, ModuleHandlerInterface $moduleHandler, MediaSourceManager $sourceManager, UserDataInterface $userData, RequestStack $requestStack, ConfigFactoryInterface $config, ClientInterface $guzzleClient, PagerManagerInterface $pagerManager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EventDispatcherInterface $event_dispatcher, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, WidgetValidationManager $validation_manager, GredidamInterface $gredidam, GrediDamClient $grediClientFactory, AccountInterface $account, LanguageManagerInterface $languageManager, ModuleHandlerInterface $moduleHandler, MediaSourceManager $sourceManager, UserDataInterface $userData, RequestStack $requestStack, ConfigFactoryInterface $config, ClientInterface $guzzleClient, PagerManagerInterface $pagerManager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $event_dispatcher, $entity_type_manager, $validation_manager);
     $this->gredidam = $gredidam;
     $this->grediClientFactory = $grediClientFactory;

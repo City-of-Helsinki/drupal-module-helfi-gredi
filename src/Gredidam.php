@@ -30,7 +30,7 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
   /**
    * The Gredi DAM client service.
    *
-   * @var \Drupal\helfi_gredi_image\GrediClientFactory
+   * @var \Drupal\helfi_gredi_image\GrediDamClient
    */
   protected $grediDamClientFactory;
 
@@ -46,12 +46,12 @@ class Gredidam implements GredidamInterface, ContainerInjectionInterface {
    *
    * @param \Drupal\helfi_gredi_image\Client $grediDamClient
    *   An instance of ClientFactory that we can get a webdam client from.
-   * @param \Drupal\helfi_gredi_image\GrediClientFactory $grediDamClientFactory
-   *   An instance of GrediClientFactory.
+   * @param \Drupal\helfi_gredi_image\GrediDamClient $grediDamClientFactory
+   *   An instance of GrediDamClient.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
    *   The Drupal LoggerChannelFactory service.
    */
-  public function __construct(Client $grediDamClient, GrediClientFactory $grediDamClientFactory, LoggerChannelFactoryInterface $loggerChannelFactory) {
+  public function __construct(Client $grediDamClient, GrediDamClient $grediDamClientFactory, LoggerChannelFactoryInterface $loggerChannelFactory) {
     $this->grediDamClient = $grediDamClient;
     $this->grediDamClientFactory = $grediDamClientFactory;
     $this->loggerChannel = $loggerChannelFactory->get('helfi_gredi_image');
