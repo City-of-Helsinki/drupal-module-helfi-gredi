@@ -70,12 +70,12 @@ class GrediDamConfigForm extends ConfigFormBase {
 
     $form['domain'] = [
       '#type' => 'fieldset',
-      '#title' => $this->t('Domain detail'),
+      '#title' => $this->t('Login URL detail'),
     ];
 
     $form['domain']['domain_value'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Gredi DAM Domain'),
+      '#title' => $this->t('Gredi DAM Login URL'),
       '#default_value' => $config->get('domain'),
       '#description' => $this->t('example: demo.gredidam.fi'),
       '#required' => TRUE,
