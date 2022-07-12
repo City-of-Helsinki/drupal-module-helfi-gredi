@@ -184,15 +184,14 @@ class GredidamAsset extends MediaSourceBase {
    *
    * @param \Drupal\media\MediaInterface $media
    *   The media entity to get metadata from.
-   * @param string $name
+   * @param string $attribute_name
    *   The metadata item to get the value of.
    *
    * @return mixed|null
    *   The metadata value or NULL if unset.
    */
-  public function getMetadata(MediaInterface $media, $name) {
-
-    switch ($name) {
+  public function getMetadata(MediaInterface $media, $attribute_name) {
+    switch ($attribute_name) {
       case 'name':
         return parent::getMetadata($media, 'default_name');
 
@@ -217,7 +216,7 @@ class GredidamAsset extends MediaSourceBase {
       return NULL;
     }
 
-    return $this->assetMetadataHelper->getMetadataFromAsset($this->currentAsset, $name);
+    return $this->assetMetadataHelper->getMetadataFromAsset($this->currentAsset, $attribute_name);
   }
 
 }

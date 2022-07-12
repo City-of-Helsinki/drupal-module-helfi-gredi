@@ -166,7 +166,6 @@ class GrediDamConfigForm extends ConfigFormBase {
         'drupal_gredidam_password',
         $this->t('Provided password is not valid.')
       );
-      return;
     }
   }
 
