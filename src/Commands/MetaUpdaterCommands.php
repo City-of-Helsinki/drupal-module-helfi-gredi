@@ -19,16 +19,30 @@ use Drupal\helfi_gredi_image\MetaUpdater;
  */
 class MetaUpdaterCommands extends DrushCommands {
 
+  /** @var MetaUpdater */
+  private MetaUpdater $metaUpdater;
+
+  public function __construct() {
+    $this->metaUpdater = new MetaUpdater();
+  }
+
   /**
-   * Update Gredi Meta.
+   * Populate Gredi metadata queue.
+   *
+   * @command populate_gredi:meta
+   * @aliases populate_gredi_meta
+   */
+  public function populateGrediMetadataUpdateQueue() {
+    $this->metaUpdater->populateMetaUpdateQueue();
+  }
+
+  /**
+   * Update Gredi metadata.
    *
    * @command update_gredi:meta
    * @aliases update_gredi_meta
    */
-  public function updateGrediMeta() {
-    /** @var MetaUpdater $meta_updater */
-    $meta_updater = new MetaUpdater();
-    $meta_updater->populateMetaUpdateQueue();
+  public function updateGrediMetadata() {
     /* @var \Drupal\Core\Queue\QueueInterface $queue */
     $queue = \Drupal::service('queue')->get('meta_update');
     /* @var \Drupal\Core\Queue\QueueWorkerInterface $queue_worker */

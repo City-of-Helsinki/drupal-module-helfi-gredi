@@ -6,6 +6,7 @@ use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Queue\QueueInterface;
 use Drupal\media\Entity\Media;
+use Drupal\helfi_gredi_image\Entity\Asset;
 
 /**
  * Class MetaUpdater.
@@ -35,14 +36,14 @@ class MetaUpdater {
   /**
    * Function to perform Gredi asset metadata update.
    *
-   * @param \Drupal\media\Entity\Media $media
+   * @param Media $media
    *   The Drupal media entity to update.
-   * @param \stdClass $gredi_asset
+   * @param Asset $gredi_asset
    *   The Gredi DAM asset.
    *
    * @return void
    */
-  public function performMetadataUpdate(Media $media, \stdClass $gredi_asset): void {
+  public function performMetadataUpdate(Media $media, Asset $gredi_asset): void {
     /** @var array $mapping */
     $mapping = $this->getMapping();
     foreach ($mapping as $gredi_field => $drupal_field) {
