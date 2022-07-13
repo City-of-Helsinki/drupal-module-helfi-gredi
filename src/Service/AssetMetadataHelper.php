@@ -30,9 +30,8 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
    * A configured API object.
    *
    * @var \Drupal\helfi_gredi_image\GrediDamClient
-   *   $gredidam
    */
-  protected $gredidam;
+  protected $grediDamClient;
 
   /**
    * Specific metadata fields.
@@ -46,12 +45,12 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
    *
    * @param \Drupal\Core\Datetime\DateFormatterInterface $dateFormatter
    *   A Drupal date formatter service.
-   * @param \Drupal\helfi_gredi_image\GrediDamClient $gredidam
+   * @param \Drupal\helfi_gredi_image\GrediDamClient $grediDamClient
    *   A configured API object.
    */
-  public function __construct(DateFormatterInterface $dateFormatter, GrediDamClient $gredidam) {
+  public function __construct(DateFormatterInterface $dateFormatter, GrediDamClient $grediDamClient) {
     $this->dateFormatter = $dateFormatter;
-    $this->gredidam = $gredidam;
+    $this->grediDamClient = $grediDamClient;
   }
 
   /**
@@ -96,7 +95,7 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
   public function getSpecificMetadataFields() {
     if (empty($this->specificMetadataFields)) {
       $this->setSpecificMetadataFields(
-        $this->gredidam->getSpecificMetadataFields()
+        $this->grediDamClient->getSpecificMetadataFields()
       );
     }
 
@@ -126,7 +125,6 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
     $specificMetadataFields = $this->getSpecificMetadataFields();
     if (!empty($specificMetadataFields)) {
       foreach ($specificMetadataFields as $id => $field) {
-
         $fields[$id] = $field['label'];
       }
     }

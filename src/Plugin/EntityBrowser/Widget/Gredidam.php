@@ -45,7 +45,7 @@ class Gredidam extends WidgetBase {
    *
    * @var \Drupal\helfi_gredi_image\GrediDamClient
    */
-  protected $gredidam;
+  protected $ggrediDamClient;
 
   /**
    * The current user account.
@@ -137,7 +137,7 @@ class Gredidam extends WidgetBase {
     EntityTypeManagerInterface $entity_type_manager,
     EntityFieldManagerInterface $entity_field_manager,
     WidgetValidationManager $validation_manager,
-    GrediDamClient $gredidam,
+    GrediDamClient $grediDamClient,
     AccountInterface $account,
     LanguageManagerInterface $languageManager,
     ModuleHandlerInterface $moduleHandler,
@@ -149,7 +149,7 @@ class Gredidam extends WidgetBase {
     PagerManagerInterface $pagerManager
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $event_dispatcher, $entity_type_manager, $validation_manager);
-    $this->gredidam = $gredidam;
+    $this->grediDamClient = $grediDamClient;
     $this->user = $account;
     $this->languageManager = $languageManager;
     $this->moduleHandler = $moduleHandler;
@@ -324,7 +324,7 @@ class Gredidam extends WidgetBase {
     $form += $this->getFilterSort();
 
     // Get folders content from customer id.
-    $folders_content = $this->gredidam->getCustomerContent(6)['folders'];
+    $folders_content = $this->grediDamClient->getCustomerContent(6)['folders'];
 
     $contents = [];
 
@@ -345,17 +345,17 @@ class Gredidam extends WidgetBase {
     ];
 
     if ($this->currentCategory->id == NULL) {
-      $contents[] = $this->gredidam->getCustomerContent(6, $params)['assets'];
+      $contents[] = $this->grediDamClient->getCustomerContent(6, $params)['assets'];
 
       $this->getCategoryFormElements($folders_content, $modulePath, $form);
     }
     else {
-      if (isset($this->gredidam->getFolderContent($this->currentCategory->id, $params)['assets'])) {
-        $contents[] = $this->gredidam->getFolderContent($this->currentCategory->id, $params)['assets'];
+      if (isset($this->grediDamClient->getFolderContent($this->currentCategory->id, $params)['assets'])) {
+        $contents[] = $this->grediDamClient->getFolderContent($this->currentCategory->id, $params)['assets'];
       }
 
-      if (isset($this->gredidam->getFolderContent($this->currentCategory->id)['folders'])) {
-        $this->getCategoryFormElements($this->gredidam->getFolderContent($this->currentCategory->id)['folders'], $modulePath, $form);
+      if (isset($this->grediDamClient->getFolderContent($this->currentCategory->id)['folders'])) {
+        $this->getCategoryFormElements($this->grediDamClient->getFolderContent($this->currentCategory->id)['folders'], $modulePath, $form);
       }
     }
 
@@ -385,10 +385,10 @@ class Gredidam extends WidgetBase {
     ];
 
     if (isset($this->currentCategory->id)) {
-      $totalAssets = count($this->gredidam->getFolderContent($this->currentCategory->id));
+      $totalAssets = count($this->grediDamClient->getFolderContent($this->currentCategory->id));
     }
     else {
-      $totalAssets = count($this->gredidam->getCustomerContent(6)['assets']);
+      $totalAssets = count($this->grediDamClient->getCustomerContent(6)['assets']);
     }
 
     if ($totalAssets > $num_per_page) {
@@ -570,7 +570,7 @@ class Gredidam extends WidgetBase {
 
       // Invoke the API to get all the information about the selected assets.
       $expand = ['meta', 'attachments'];
-      $dam_assets = $this->gredidam->getMultipleAsset($content, $expand);
+      $dam_assets = $this->grediDamClient->getMultipleAsset($content, $expand);
 
       // If the media is only referencing images, we only validate that
       // referenced assets are images. We don't check the extension as we are
@@ -824,7 +824,7 @@ class Gredidam extends WidgetBase {
       ->loadMultiple($existing_ids);
 
     $expand = ['meta', 'attachments'];
-    $assets = $this->gredidam->getMultipleAsset($asset_ids, $expand);
+    $assets = $this->grediDamClient->getMultipleAsset($asset_ids, $expand);
 
     foreach ($assets as $asset) {
       if ($asset == NULL) {

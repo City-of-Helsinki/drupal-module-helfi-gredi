@@ -62,14 +62,14 @@ class GredidamAsset extends MediaSourceBase {
    *
    * @var \Drupal\helfi_gredi_image\GrediDamClient
    */
-  protected $gredidam;
+  protected $grediDamClient;
 
   /**
    * GredidamAsset constructor.
    *
    * {@inheritdoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, FieldTypePluginManagerInterface $field_type_manager, ConfigFactoryInterface $config_factory, AssetImageHelper $assetImageHelper, AssetMetadataHelper $assetMetadataHelper, AssetMediaFactory $assetMediaFactory, GrediDamClient $gredidam) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, FieldTypePluginManagerInterface $field_type_manager, ConfigFactoryInterface $config_factory, AssetImageHelper $assetImageHelper, AssetMetadataHelper $assetMetadataHelper, AssetMediaFactory $assetMediaFactory, GrediDamClient $grediDamClient) {
     parent::__construct(
       $configuration,
       $plugin_id,
@@ -83,7 +83,7 @@ class GredidamAsset extends MediaSourceBase {
     $this->assetImageHelper = $assetImageHelper;
     $this->assetMetadataHelper = $assetMetadataHelper;
     $this->assetMediaFactory = $assetMediaFactory;
-    $this->gredidam = $gredidam;
+    $this->grediDamClient = $grediDamClient;
   }
 
   /**
