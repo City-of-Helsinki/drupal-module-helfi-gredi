@@ -174,7 +174,7 @@ class Gredidam extends WidgetBase {
       $container->get('entity_type.manager'),
       $container->get('entity_field.manager'),
       $container->get('plugin.manager.entity_browser.widget_validation'),
-      $container->get('helfi_gredi_image.client_factory'),
+      $container->get('helfi_gredi_image.dam_client'),
       $container->get('current_user'),
       $container->get('language_manager'),
       $container->get('module_handler'),

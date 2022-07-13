@@ -59,7 +59,7 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('date.formatter'),
-      $container->get('helfi_gredi_image.client_factory')
+      $container->get('helfi_gredi_image.dam_client')
     );
   }
 
