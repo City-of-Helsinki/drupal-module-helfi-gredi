@@ -2,7 +2,6 @@
 
 namespace Drupal\helfi_gredi_image;
 
-use cweagans\webdam\Exception\InvalidCredentialsException;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
@@ -21,6 +20,27 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class GrediDamClient implements ContainerInjectionInterface {
 
   /**
+   * The base URL of the Gredi DAM API.
+   *
+   * @var string
+   */
+  const BASE_URL = "https://api4.materialbank.net/api/v1";
+
+  /**
+   * The cookie domain for Gredi DAM API.
+   *
+   * @var string
+   */
+  const COOKIE_DOMAIN = "api4.materialbank.net";
+
+  /**
+   * The version of this client. Used in User-Agent string for API requests.
+   *
+   * @var string
+   */
+  const CLIENTVERSION = "2.x";
+
+  /**
    * A fully-configured Guzzle client to pass to the dam client.
    *
    * @var \GuzzleHttp\ClientInterface
@@ -33,20 +53,6 @@ class GrediDamClient implements ContainerInjectionInterface {
    * @var \GuzzleHttp\Cookie\CookieJar
    */
   protected $cookieJar;
-
-  /**
-   * The base URL of the Gredi DAM API.
-   *
-   * @var string
-   */
-  protected $baseUrl = "https://api4.materialbank.net/api/v1";
-
-  /**
-   * The version of this client. Used in User-Agent string for API requests.
-   *
-   * @var string
-   */
-  const CLIENTVERSION = "2.x";
 
   /**
    * Datastore for the specific metadata fields.
@@ -123,37 +129,23 @@ class GrediDamClient implements ContainerInjectionInterface {
         $subtring_start += strlen('=');
         $size = strpos($getCookie, ';', $subtring_start) - $subtring_start;
         $result = substr($getCookie, $subtring_start, $size);
-        setcookie("JSESSIONID", $result, time() + 60 * 60 * 24, 'api4.materialbank.net');
+        setcookie("JSESSIONID", $result, time() + 60 * 60 * 24, self::COOKIE_DOMAIN);
         $cookieJar = CookieJar::fromArray([
           'JSESSIONID' => $result,
-        ], 'api4.materialbank.net');
+        ], self::COOKIE_DOMAIN);
 
         return $cookieJar;
       }
     }
     catch (ClientException $e) {
-      // For bad auth, the WebDAM API has been observed to return either
-      // 400 or 403, so handle those via InvalidCredentialsException.
       $status_code = $e->getResponse()->getStatusCode();
-      if ($status_code == 400 || $status_code == 403) {
-        $body = (string) $e->getResponse()->getBody();
-        $body = json_decode($body);
-
-        throw new InvalidCredentialsException(
-          $body->error_description . ' (' . $body->error . ').'
-        );
-      }
-      else {
-        // We've received an error status other than 400 or 403; log it
-        // and move on.
-        \Drupal::logger('helfi_gredi_image')->error(
-          'Unable to authenticate. DAM API client returned a @code exception code with the following message: %message',
-          [
-            '@code' => $status_code,
-            '%message' => $e->getMessage(),
-          ]
-        );
-      }
+      \Drupal::logger('helfi_gredi_image')->error(
+        'Unable to authenticate. DAM API client returned a @code exception code with the following message: %message',
+        [
+          '@code' => $status_code,
+          '%message' => $e->getMessage(),
+        ]
+      );
     }
   }
 
@@ -177,7 +169,7 @@ class GrediDamClient implements ContainerInjectionInterface {
       $parameters .= '&' . $key . '=' . $param;
     }
 
-    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/customers/' . $customer . '/contents?include=attachments' . $parameters, [
+    $userContent = $this->guzzleClient->request('GET', self::BASE_URL . '/customers/' . $customer . '/contents?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
@@ -219,7 +211,7 @@ class GrediDamClient implements ContainerInjectionInterface {
     foreach ($params as $key => $param) {
       $parameters .= '&' . $key . '=' . $param;
     }
-    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/folders/' . $folder_id . '/files/?include=attachments' . $parameters, [
+    $userContent = $this->guzzleClient->request('GET', self::BASE_URL . '/folders/' . $folder_id . '/files/?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
@@ -290,7 +282,7 @@ class GrediDamClient implements ContainerInjectionInterface {
 
     $response = $this->guzzleClient->request(
       "GET",
-      $this->baseUrl . '/files/' . $id . '?include=' . implode('%2C', $expands),
+      self::BASE_URL . '/files/' . $id . '?include=' . implode('%2C', $expands),
       [
         'headers' => [
           'Content-Type' => 'application/json',

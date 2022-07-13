@@ -403,11 +403,11 @@ class Gredidam extends WidgetBase {
   /**
    * Create pagination and set current page.
    *
-   * @param $total_count
+   * @param int $total_count
    *   Total count.
-   * @param $page
+   * @param int $page
    *   Page.
-   * @param $num_per_page
+   * @param int $num_per_page
    *   Number per page.
    * @param string $page_type
    *   Page type.
@@ -417,7 +417,7 @@ class Gredidam extends WidgetBase {
    * @return array
    *   Form.
    */
-  public function getPager($total_count, $page, $num_per_page, string $page_type = "listing", Category $category = NULL) {
+  public function getPager(int $total_count, int $page, int $num_per_page, string $page_type = "listing", Category $category = NULL) {
     // Add container for pager.
     $form['pager-container'] = [
       '#type' => 'container',

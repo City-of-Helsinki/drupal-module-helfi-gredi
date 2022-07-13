@@ -66,12 +66,11 @@ class MediaEntityHelper {
    *   Gredi DAM file entity helper service.
    */
   public function __construct(MediaInterface $media, EntityTypeManagerInterface $entityTypeManager, AssetData $assetData, GrediDamClient $grediDamClient, AssetFileEntityHelper $assetFileHelper) {
+    $this->mediaEntity = $media;
     $this->entityTypeManager = $entityTypeManager;
     $this->assetData = $assetData;
     $this->grediDamClient = $grediDamClient;
     $this->assetFileHelper = $assetFileHelper;
-
-    $this->mediaEntity = $media;
   }
 
   /**
