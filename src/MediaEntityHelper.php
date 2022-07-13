@@ -169,7 +169,6 @@ class MediaEntityHelper {
    *   The asset or NULL on failure.
    */
   public function getAsset() {
-
     $assetId = $this->getAssetId();
     if (empty($assetId)) {
       return NULL;
@@ -214,7 +213,6 @@ class MediaEntityHelper {
    *   The field value or NULL.
    */
   protected function getFieldPropertyValue($fieldName, $opt = 'asset_id') {
-
     if ($this->mediaEntity->hasField($fieldName)) {
       /** @var \Drupal\Core\Field\FieldItemInterface $item */
       $item = $this->mediaEntity->{$fieldName}->first();

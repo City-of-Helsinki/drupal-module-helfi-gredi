@@ -49,13 +49,6 @@ class GrediDamClient implements ContainerInjectionInterface {
   const CLIENTVERSION = "2.x";
 
   /**
-   * The Gredi DAM client service.
-   *
-   * @var \Drupal\helfi_gredi_image\GrediDamClient
-   */
-  protected $grediDamClientFactory;
-
-  /**
    * Datastore for the specific metadata fields.
    *
    * @var array
@@ -306,45 +299,6 @@ class GrediDamClient implements ContainerInjectionInterface {
     );
 
     return Asset::fromJson($response->getBody()->getContents(), $folder_id);
-  }
-
-  /**
-   * Load subcategories by Category link or parts (used in breadcrumb).
-   *
-   * @param \Drupal\helfi_gredi_image\Entity\Category $category
-   *   Category object.
-   *
-   * @return \Drupal\helfi_gredi_image\Entity\Category[]
-   *   A list of sub-categories (ie: child categories).
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
-   */
-  public function getCategoryData(Category $category): array {
-    $url = $this->baseUrl . '/folders/{id}/files/';
-    // If category is not set, it will load the root category.
-    if (isset($category->links->categories)) {
-      $url = $category->links->categories;
-    }
-    elseif (!empty($category->parts)) {
-      $cats = "";
-      foreach ($category->parts as $part) {
-        $cats .= "/" . $part;
-      }
-      $url .= $cats;
-    }
-
-    $response = $this->guzzleClient->request(
-      "GET",
-      $url,
-      [
-        'headers' => [
-          'Content-Type' => 'application/json',
-        ],
-        'cookies' => $this->grediDamClientFactory->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx'),
-      ]
-    );
-    $category = Category::fromJson((string) $response->getBody());
-    return $category;
   }
 
   /**

@@ -664,7 +664,6 @@ class Gredidam extends WidgetBase {
    * Get Breadcrumb.
    */
   public function getBreadcrumb(Category $category) {
-
     // Create a container for the breadcrumb.
     $form['breadcrumb-container'] = [
       '#type' => 'container',
@@ -714,7 +713,6 @@ class Gredidam extends WidgetBase {
    * Get categories.
    */
   public function getCategoryFormElements($categories, $modulePath, &$form) {
-
     foreach ($categories as $category) {
       $form['asset-container']['categories'][$category->name] = [
         '#type' => 'container',
