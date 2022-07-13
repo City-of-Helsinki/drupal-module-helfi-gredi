@@ -108,6 +108,7 @@ class GrediDamConfigForm extends ConfigFormBase {
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
     ];
+
     $form['entity_browser']['num_assets_per_page'] = [
       '#type' => 'number',
       '#title' => $this->t('Assets per page'),
@@ -166,7 +167,6 @@ class GrediDamConfigForm extends ConfigFormBase {
         'drupal_gredidam_password',
         $this->t('Provided password is not valid.')
       );
-      return;
     }
   }
 

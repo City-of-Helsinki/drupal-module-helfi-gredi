@@ -1,5 +1,3 @@
-node_modules
-
 drush/sites/
 drush/Commands/*
 node_modules

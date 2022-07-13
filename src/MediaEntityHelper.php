@@ -33,7 +33,7 @@ class MediaEntityHelper {
   /**
    * Gredi DAM client.
    *
-   * @var \Drupal\helfi_gredi_image\Gredidam
+   * @var \Drupal\helfi_gredi_image\GredidamClient
    */
   protected $grediDamClient;
 
@@ -60,12 +60,12 @@ class MediaEntityHelper {
    *   Entity Type Manager service.
    * @param \Drupal\helfi_gredi_image\AssetDataInterface $assetData
    *   Gredi DAM asset data service.
-   * @param \Drupal\helfi_gredi_image\GredidamInterface $grediDamClient
+   * @param \Drupal\helfi_gredi_image\GrediDamClient $grediDamClient
    *   Gredi DAM client.
    * @param \Drupal\helfi_gredi_image\Service\AssetFileEntityHelper $assetFileHelper
    *   Gredi DAM file entity helper service.
    */
-  public function __construct(MediaInterface $media, EntityTypeManagerInterface $entityTypeManager, AssetDataInterface $assetData, GredidamInterface $grediDamClient, AssetFileEntityHelper $assetFileHelper) {
+  public function __construct(MediaInterface $media, EntityTypeManagerInterface $entityTypeManager, AssetDataInterface $assetData, GrediDamClient $grediDamClient, AssetFileEntityHelper $assetFileHelper) {
     $this->entityTypeManager = $entityTypeManager;
     $this->assetData = $assetData;
     $this->grediDamClient = $grediDamClient;
@@ -169,12 +169,11 @@ class MediaEntityHelper {
    *   The asset or NULL on failure.
    */
   public function getAsset() {
-
     $assetId = $this->getAssetId();
     if (empty($assetId)) {
       return NULL;
     }
-    return $this->grediDamClient->getAsset($assetId);
+    return $this->grediDamClient->getAsset($assetId, ['meta', 'attachments']);
   }
 
   /**
@@ -214,7 +213,6 @@ class MediaEntityHelper {
    *   The field value or NULL.
    */
   protected function getFieldPropertyValue($fieldName, $opt = 'asset_id') {
-
     if ($this->mediaEntity->hasField($fieldName)) {
       /** @var \Drupal\Core\Field\FieldItemInterface $item */
       $item = $this->mediaEntity->{$fieldName}->first();

@@ -84,7 +84,7 @@ class Category implements EntityInterface, \JsonSerializable {
     $subCategories = [];
     if (isset($json->total_count) && $json->total_count > 0) {
       foreach ($json as $subcategory_data) {
-        if ($subcategory_data['folder'] == TRUE) {
+        if ($subcategory_data['folder']) {
           $subCategories[] = Category::fromJson($subcategory_data);
         }
       }

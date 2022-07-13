@@ -49,13 +49,6 @@ class GrediDamClient implements ContainerInjectionInterface {
   const CLIENTVERSION = "2.x";
 
   /**
-   * The Gredi DAM client service.
-   *
-   * @var \Drupal\helfi_gredi_image\GrediDamClient
-   */
-  protected $grediDamClientFactory;
-
-  /**
    * Datastore for the specific metadata fields.
    *
    * @var array
@@ -65,7 +58,7 @@ class GrediDamClient implements ContainerInjectionInterface {
   /**
    * Config Factory var.
    *
-   * @var ConfigFactoryInterface
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $config;
 
@@ -74,7 +67,7 @@ class GrediDamClient implements ContainerInjectionInterface {
    *
    * @param \GuzzleHttp\ClientInterface $guzzleClient
    *   A fully configured Guzzle client to pass to the dam client.
-   * @param ConfigFactoryInterface $config
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config
    *   Config factory var.
    */
   public function __construct(ClientInterface $guzzleClient, ConfigFactoryInterface $config) {
@@ -100,8 +93,6 @@ class GrediDamClient implements ContainerInjectionInterface {
    *   The Gredi DAM client.
    */
   public function loginWithCredentials() {
-    $url = 'https://api4.materialbank.net/api/v1/sessions/';
-
     $customer = 'helsinki';
     $config = $this->config->get('gredi_dam.settings');
     $username = $config->get('user');
@@ -185,7 +176,7 @@ class GrediDamClient implements ContainerInjectionInterface {
     if (!empty($params)) {
       $parameters .= '&offset=' . $params['offset'] . '&limit=' . $params['limit'];
     }
-    $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/customers/' . $customer . '/contents?include=attachments' . $parameters, [
+    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/customers/' . $customer . '/contents?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
@@ -227,7 +218,7 @@ class GrediDamClient implements ContainerInjectionInterface {
     if (!empty($params)) {
       $parameters .= '?offset=' . $params['offset'] . '&limit=' . $params['limit'];
     }
-    $userContent = $this->guzzleClient->request('GET', 'https://api4.materialbank.net/api/v1/folders/' . $folder_id . '/files/?include=attachments' . $parameters, [
+    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/folders/' . $folder_id . '/files/?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
@@ -237,7 +228,7 @@ class GrediDamClient implements ContainerInjectionInterface {
     $contents = [];
 
     foreach (Json::decode($posts) as $post) {
-      if ($post['folder'] == FALSE) {
+      if (!$post['folder']) {
         $contents['assets'][] = Asset::fromJson($post, $folder_id);
       }
       else {
@@ -298,7 +289,7 @@ class GrediDamClient implements ContainerInjectionInterface {
 
     $response = $this->guzzleClient->request(
       "GET",
-      'https://api4.materialbank.net/api/v1/files/' . $id . '?include=' . implode('%2C', $expands),
+      $this->baseUrl . '/files/' . $id . '?include=' . implode('%2C', $expands),
       [
         'headers' => [
           'Content-Type' => 'application/json',
@@ -308,46 +299,6 @@ class GrediDamClient implements ContainerInjectionInterface {
     );
 
     return Asset::fromJson($response->getBody()->getContents(), $folder_id);
-  }
-
-  /**
-   * Load subcategories by Category link or parts (used in breadcrumb).
-   *
-   * @param \Drupal\helfi_gredi_image\Entity\Category $category
-   *   Category object.
-   *
-   * @return \Drupal\helfi_gredi_image\Entity\Category[]
-   *   A list of sub-categories (ie: child categories).
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
-   */
-  public function getCategoryData(Category $category): array {
-
-    $url = $this->baseUrl . '/folders/{id}/files/';
-    // If category is not set, it will load the root category.
-    if (isset($category->links->categories)) {
-      $url = $category->links->categories;
-    }
-    elseif (!empty($category->parts)) {
-      $cats = "";
-      foreach ($category->parts as $part) {
-        $cats .= "/" . $part;
-      }
-      $url .= $cats;
-    }
-
-    $response = $this->guzzleClient->request(
-      "GET",
-      $url,
-      [
-        'headers' => [
-          'Content-Type' => 'application/json',
-        ],
-        'cookies' => $this->grediDamClientFactory->getWithCredentials('helsinki', 'apiuser', 'uFNL4SzULSDEPkmx'),
-      ]
-    );
-    $category = Category::fromJson((string) $response->getBody());
-    return $category;
   }
 
   /**
