@@ -110,7 +110,7 @@ class GredidamAsset extends MediaSourceBase {
       $container->get('helfi_gredi_image.asset_image.helper'),
       $container->get('helfi_gredi_image.asset_metadata.helper'),
       $container->get('helfi_gredi_image.asset_media.factory'),
-      $container->get('helfi_gredi_image.client_factory')
+      $container->get('helfi_gredi_image.dam_client')
     );
   }
 

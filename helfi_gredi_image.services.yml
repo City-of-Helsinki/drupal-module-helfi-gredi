@@ -1,5 +1,5 @@
 services:
-  helfi_gredi_image.client_factory:
+  helfi_gredi_image.dam_client:
     class: Drupal\helfi_gredi_image\GrediDamClient
     arguments: [ '@http_client', '@config.factory' ]
   helfi_gredi_image.asset_media.factory:
@@ -10,10 +10,10 @@ services:
     arguments: [ '@config.factory', '@file_system', '@http_client', '@file.mime_type.guesser', '@image.factory', '@entity_type.manager' ]
   helfi_gredi_image.asset_metadata.helper:
     class: Drupal\helfi_gredi_image\Service\AssetMetadataHelper
-    arguments: [ '@date.formatter', '@helfi_gredi_image.client_factory' ]
+    arguments: [ '@date.formatter', '@helfi_gredi_image.dam_client' ]
   helfi_gredi_image.asset_file.helper:
     class: Drupal\helfi_gredi_image\Service\AssetFileEntityHelper
-    arguments: [ '@entity_type.manager', '@entity_field.manager','@config.factory', '@file_system', '@token', '@helfi_gredi_image.asset_image.helper', '@helfi_gredi_image.client_factory', '@helfi_gredi_image.asset_media.factory', '@logger.factory', '@http_client' ]
+    arguments: [ '@entity_type.manager', '@entity_field.manager','@config.factory', '@file_system', '@token', '@helfi_gredi_image.asset_image.helper', '@helfi_gredi_image.dam_client', '@helfi_gredi_image.asset_media.factory', '@logger.factory', '@http_client' ]
   helfi_gredi_image.asset_data:
     class: Drupal\helfi_gredi_image\AssetData
     arguments: [ '@database' ]
