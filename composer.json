@@ -6,6 +6,7 @@
     "minimum-stability": "dev",
     "require": {
         "php": "^8.0",
+        "twistor/stream-util": "dev-master",
         "drupal/media_entity_browser": "^2.0"
     },
     "require-dev": {
@@ -14,11 +15,26 @@
         "phpstan/phpstan": "1.8.x-dev"
     },
     "extra": {
+        "drupal-scaffold": {
+            "locations": {
+                "web-root": "src/"
+            }
+        },
         "enable-patching": true
     },
     "config": {
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
         }
-    }
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://repository.drupal.hel.ninja"
+        },
+        {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        }
+    ]
 }
