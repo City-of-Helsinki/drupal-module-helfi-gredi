@@ -6,9 +6,10 @@
     "minimum-stability": "dev",
     "require": {
         "php": "^8.0",
-        "drupal/helfi_api_base": "^2.0 || dev-main",
-        "drupal/media_entity_browser": "^2.0",
-        "cweagans/php-webdam-client": "^1.0.1"
+        "drupal/helfi_api_base": "^2.2.0",
+        "cweagans/php-webdam-client": "^1.0.1",
+        "twistor/stream-util": "dev-master",
+        "drupal/media_entity_browser": "^2.0"
     },
     "require-dev": {
         "drupal/coder": "^8.3",
@@ -16,11 +17,26 @@
         "phpstan/phpstan": "1.8.x-dev"
     },
     "extra": {
+        "drupal-scaffold": {
+            "locations": {
+                "web-root": "src/"
+            }
+        },
         "enable-patching": true
     },
     "config": {
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
         }
-    }
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://repository.drupal.hel.ninja"
+        },
+        {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        }
+    ]
 }
