@@ -1,5 +1,9 @@
 parameters:
   treatPhpDocTypesAsCertain: false
+  level: 6
+  paths:
+    - src
+    - tests
   excludePaths:
       - *Test.php
       - *TestBase.php

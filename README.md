@@ -55,12 +55,23 @@ SNYK testing can be done with npm.
 - You got to have npm(nodejs) installed to your local computer.
 - npm install
 - npm_modules created by install is included in .gitignore -file
-- Run
+- Snyk account can be created by calling:
+```
+   snyk auth
+```
+- Snyk token should contain your token created by authentication:
+```
+export SNYK_TOKEN=<YOUR_SNYK_TOKEN>
+```
+
+- To run vulnerability tests:
 ```
    npm run snyk
 ```
 
 PHPStan can be used to analyse php code.
+- Rule level i set to 6 in the phpstan.neon
+- To run tests:
 ```
 vendor/bin/phpstan analyse src tests
 ```
