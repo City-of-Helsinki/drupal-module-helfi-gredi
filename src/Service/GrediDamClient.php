@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\helfi_gredi_image;
+namespace Drupal\helfi_gredi_image\Service;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;

@@ -9,7 +9,7 @@ use Drupal\entity_browser\WidgetBase;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\Form\GrediDamConfigForm;
-use Drupal\helfi_gredi_image\GrediDamClient;
+use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\media\Entity\Media;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -43,9 +43,9 @@ class Gredidam extends WidgetBase {
   /**
    * The dam interface.
    *
-   * @var \Drupal\helfi_gredi_image\GrediDamClient
+   * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
    */
-  protected $ggrediDamClient;
+  protected $grediDamClient;
 
   /**
    * The current user account.
