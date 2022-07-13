@@ -3,8 +3,10 @@
 namespace Drupal\helfi_gredi_image;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\media\MediaInterface;
+use Drupal\helfi_gredi_image\Service\AssetData;
 use Drupal\helfi_gredi_image\Service\AssetFileEntityHelper;
+use Drupal\helfi_gredi_image\Service\GrediDamClient;
+use Drupal\media\MediaInterface;
 use GuzzleHttp\Exception\GuzzleException;
 
 /**
@@ -26,14 +28,14 @@ class MediaEntityHelper {
   /**
    * Gredi DAM asset data service.
    *
-   * @var \Drupal\helfi_gredi_image\AssetData
+   * @var \Drupal\helfi_gredi_image\Service\AssetData
    */
   protected $assetData;
 
   /**
    * Gredi DAM client.
    *
-   * @var \Drupal\helfi_gredi_image\GredidamClient
+   * @var \Drupal\helfi_gredi_image\Service\GredidamClient
    */
   protected $grediDamClient;
 
@@ -58,9 +60,9 @@ class MediaEntityHelper {
    *   The media entity to wrap.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   Entity Type Manager service.
-   * @param \Drupal\helfi_gredi_image\AssetData $assetData
+   * @param \Drupal\helfi_gredi_image\Service\AssetData $assetData
    *   Gredi DAM asset data service.
-   * @param \Drupal\helfi_gredi_image\GrediDamClient $grediDamClient
+   * @param \Drupal\helfi_gredi_image\Service\GrediDamClient $grediDamClient
    *   Gredi DAM client.
    * @param \Drupal\helfi_gredi_image\Service\AssetFileEntityHelper $assetFileHelper
    *   Gredi DAM file entity helper service.

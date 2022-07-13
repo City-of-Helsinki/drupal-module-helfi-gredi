@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\helfi_gredi_image;
+namespace Drupal\helfi_gredi_image\Service;
 
 use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;

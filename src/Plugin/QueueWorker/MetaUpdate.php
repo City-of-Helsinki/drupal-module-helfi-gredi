@@ -4,8 +4,8 @@ namespace Drupal\helfi_gredi_image\Plugin\QueueWorker;
 
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\media\Entity\Media;
-use Drupal\helfi_gredi_image\GrediDamClient;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
+use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use GuzzleHttp\Client;
 
 /**
@@ -21,7 +21,7 @@ class MetaUpdate extends QueueWorkerBase {
   /**
    * Gredi client.
    *
-   * @var \Drupal\helfi_gredi_image\GrediDamClient
+   * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
    */
   private $grediDamClient;
 

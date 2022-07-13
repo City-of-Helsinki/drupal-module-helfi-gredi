@@ -14,7 +14,7 @@ use Drupal\helfi_gredi_image\Service\AssetMediaFactory;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\helfi_gredi_image\GrediDamClient;
+use Drupal\helfi_gredi_image\Service\GrediDamClient;
 
 /**
  * Provides media type plugin for Gredi DAM assets.
@@ -60,7 +60,7 @@ class GredidamAsset extends MediaSourceBase {
   /**
    * The dam interface.
    *
-   * @var \Drupal\helfi_gredi_image\GrediDamClient
+   * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
    */
   protected $grediDamClient;
 
