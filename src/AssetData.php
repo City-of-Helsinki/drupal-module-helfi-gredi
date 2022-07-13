@@ -10,7 +10,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Gredi DAM Asset Data service implementation.
  */
-class AssetData implements AssetDataInterface, ContainerInjectionInterface {
+class AssetData implements ContainerInjectionInterface {
 
   /**
    * The database connection to use.
@@ -37,21 +37,6 @@ class AssetData implements AssetDataInterface, ContainerInjectionInterface {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function delete($assetID = NULL, $name = NULL) {
-    $query = $this->connection->delete('gredidam_assets_data');
-    // Cast scalars to array so we can consistently use an IN condition.
-    if (isset($assetID)) {
-      $query->condition('asset_id', (array) $assetID, 'IN');
-    }
-    if (isset($name)) {
-      $query->condition('name', (array) $name, 'IN');
-    }
-    $query->execute();
-  }
-
-  /**
    * Check if the given asset is different than what is stored.
    *
    * @param \Drupal\helfi_gredi_image\Entity\Asset $asset
@@ -68,9 +53,21 @@ class AssetData implements AssetDataInterface, ContainerInjectionInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * Returns data stored for an asset.
+   *
+   * @param int $assetID
+   *   The ID of the asset that data is associated with.
+   * @param string $name
+   *   (optional) The name of the data key.
+   *
+   * @return mixed|array
+   *   The requested asset data, depending on the arguments passed:
+   *     - If $name was provided then the stored value is returned, or NULL if
+   *       no value was found.
+   *     - If no $name was provided then all data will be returned for the given
+   *       asset if found.
    */
-  public function get($assetID = NULL, $name = NULL) {
+  public function get(int $assetID = NULL, $name = NULL) {
     $query = $this->connection->select('gredidam_assets_data', 'ad')->fields(
         'ad'
       );
@@ -115,9 +112,16 @@ class AssetData implements AssetDataInterface, ContainerInjectionInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * Stores data for an asset.
+   *
+   * @param int $assetID
+   *   The ID of the asset to store data against.
+   * @param string $name
+   *   The name of the data key.
+   * @param mixed $value
+   *   The value to store. Non-scalar values are serialized automatically.
    */
-  public function set($assetID, $name, $value) {
+  public function set(int $assetID, string $name, $value) {
     $serialized = (int) !is_scalar($value);
     if ($serialized) {
       $value = serialize($value);
@@ -133,6 +137,28 @@ class AssetData implements AssetDataInterface, ContainerInjectionInterface {
         'serialized' => $serialized,
       ]
     )->execute();
+  }
+
+  /**
+   * Deletes data stored for an asset.
+   *
+   * @param int|array $assetID
+   *   (optional) The ID of the asset the data is associated with. Can also
+   *   be an array to delete the data of multiple assets.
+   * @param string $name
+   *   (optional) The name of the data key. If omitted, all data associated with
+   *   $assetID.
+   */
+  public function delete($assetID = NULL, $name = NULL) {
+    $query = $this->connection->delete('gredidam_assets_data');
+    // Cast scalars to array so we can consistently use an IN condition.
+    if (isset($assetID)) {
+      $query->condition('asset_id', (array) $assetID, 'IN');
+    }
+    if (isset($name)) {
+      $query->condition('name', (array) $name, 'IN');
+    }
+    $query->execute();
   }
 
 }
