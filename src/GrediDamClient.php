@@ -228,7 +228,7 @@ class GrediDamClient implements ContainerInjectionInterface {
     $contents = [];
 
     foreach (Json::decode($posts) as $post) {
-      if ($post['folder'] == FALSE) {
+      if (!$post['folder']) {
         $contents['assets'][] = Asset::fromJson($post, $folder_id);
       }
       else {
