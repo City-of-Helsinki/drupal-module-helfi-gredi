@@ -304,7 +304,7 @@ class Gredidam extends WidgetBase {
 
       if ($trigger_elem['#name'] === 'gredidam_pager') {
         $this->currentCategory->name = $trigger_elem['#current_category']->name ?? NULL;
-        $this->currentCategory->parts[] = $trigger_elem['#gredidam_category']['name'];
+        $this->currentCategory->parts[] = $trigger_elem['#gredidam_category']['name'] ?? NULL;
 
         // Set the current category id to the id of the category, was clicked.
         $page = intval($trigger_elem['#gredidam_page']);

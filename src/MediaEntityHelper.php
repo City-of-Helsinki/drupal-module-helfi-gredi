@@ -33,7 +33,7 @@ class MediaEntityHelper {
   /**
    * Gredi DAM client.
    *
-   * @var \Drupal\helfi_gredi_image\Gredidam
+   * @var \Drupal\helfi_gredi_image\GredidamClient
    */
   protected $grediDamClient;
 
@@ -173,7 +173,7 @@ class MediaEntityHelper {
     if (empty($assetId)) {
       return NULL;
     }
-    return $this->grediDamClient->getAsset($assetId);
+    return $this->grediDamClient->getAsset($assetId, ['meta', 'attachments']);
   }
 
   /**
