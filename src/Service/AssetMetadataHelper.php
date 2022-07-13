@@ -5,7 +5,6 @@ namespace Drupal\helfi_gredi_image\Service;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\media\Entity\Media;
 use Symfony\Component\DependencyInjection\ContainerInterface;

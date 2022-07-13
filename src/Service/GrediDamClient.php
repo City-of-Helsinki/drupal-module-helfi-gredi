@@ -20,18 +20,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class GrediDamClient implements ContainerInjectionInterface {
 
   /**
-   * The base URL of the Gredi DAM API.
+   * The customer of the Gredi DAM API.
    *
    * @var string
    */
-  const BASE_URL = "https://api4.materialbank.net/api/v1";
-
-  /**
-   * The cookie domain for Gredi DAM API.
-   *
-   * @var string
-   */
-  const COOKIE_DOMAIN = "api4.materialbank.net";
+  const CUSTOMER = "helsinki";
 
   /**
    * The version of this client. Used in User-Agent string for API requests.
@@ -69,6 +62,20 @@ class GrediDamClient implements ContainerInjectionInterface {
   protected $config;
 
   /**
+   * The base URL of the Gredi DAM API.
+   *
+   * @var string
+   */
+  private $baseUrl;
+
+  /**
+   * The cookie domain for Gredi DAM API.
+   *
+   * @var string
+   */
+  private $cookieDomain;
+
+  /**
    * ClientFactory constructor.
    *
    * @param \GuzzleHttp\ClientInterface $guzzleClient
@@ -99,8 +106,9 @@ class GrediDamClient implements ContainerInjectionInterface {
    *   The Gredi DAM client.
    */
   public function loginWithCredentials() {
-    $customer = 'helsinki';
     $config = $this->config->get('gredi_dam.settings');
+    $this->baseUrl = $config->get('domain');
+    $this->cookieDomain = parse_url($this->baseUrl)['host'];
     $username = $config->get('user');
     $password = $config->get('pass');
     if (empty($data)) {
@@ -109,7 +117,7 @@ class GrediDamClient implements ContainerInjectionInterface {
           'Content-Type' => 'application/json',
         ],
         'body' => '{
-        "customer": "' . $customer . '",
+        "customer": "' . self::CUSTOMER . '",
         "username": "' . $username . '",
         "password": "' . $password . '"
       }',
@@ -119,7 +127,7 @@ class GrediDamClient implements ContainerInjectionInterface {
     try {
       $response = $this->guzzleClient->request(
         "POST",
-        $config->get('domain'),
+        $this->baseUrl . '/sessions',
         $data
       );
 
@@ -129,10 +137,10 @@ class GrediDamClient implements ContainerInjectionInterface {
         $subtring_start += strlen('=');
         $size = strpos($getCookie, ';', $subtring_start) - $subtring_start;
         $result = substr($getCookie, $subtring_start, $size);
-        setcookie("JSESSIONID", $result, time() + 60 * 60 * 24, self::COOKIE_DOMAIN);
+        setcookie("JSESSIONID", $result, time() + 60 * 60 * 24, $this->cookieDomain);
         $cookieJar = CookieJar::fromArray([
           'JSESSIONID' => $result,
-        ], self::COOKIE_DOMAIN);
+        ], $this->cookieDomain);
 
         return $cookieJar;
       }
@@ -169,7 +177,7 @@ class GrediDamClient implements ContainerInjectionInterface {
       $parameters .= '&' . $key . '=' . $param;
     }
 
-    $userContent = $this->guzzleClient->request('GET', self::BASE_URL . '/customers/' . $customer . '/contents?include=attachments' . $parameters, [
+    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/customers/' . $customer . '/contents?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
@@ -211,7 +219,7 @@ class GrediDamClient implements ContainerInjectionInterface {
     foreach ($params as $key => $param) {
       $parameters .= '&' . $key . '=' . $param;
     }
-    $userContent = $this->guzzleClient->request('GET', self::BASE_URL . '/folders/' . $folder_id . '/files/?include=attachments' . $parameters, [
+    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/folders/' . $folder_id . '/files/?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
@@ -282,7 +290,7 @@ class GrediDamClient implements ContainerInjectionInterface {
 
     $response = $this->guzzleClient->request(
       "GET",
-      self::BASE_URL . '/files/' . $id . '?include=' . implode('%2C', $expands),
+      $this->baseUrl . '/files/' . $id . '?include=' . implode('%2C', $expands),
       [
         'headers' => [
           'Content-Type' => 'application/json',
