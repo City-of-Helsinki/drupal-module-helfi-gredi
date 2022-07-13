@@ -173,9 +173,10 @@ class GrediDamClient implements ContainerInjectionInterface {
   public function getCustomerContent(int $customer, array $params = []): array {
     $parameters = '';
 
-    if (!empty($params)) {
-      $parameters .= '&offset=' . $params['offset'] . '&limit=' . $params['limit'];
+    foreach ($params as $key => $param) {
+      $parameters .= '&' . $key . '=' . $param;
     }
+
     $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/customers/' . $customer . '/contents?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',
@@ -215,8 +216,8 @@ class GrediDamClient implements ContainerInjectionInterface {
       return;
     }
     $parameters = '';
-    if (!empty($params)) {
-      $parameters .= '?offset=' . $params['offset'] . '&limit=' . $params['limit'];
+    foreach ($params as $key => $param) {
+      $parameters .= '&' . $key . '=' . $param;
     }
     $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/folders/' . $folder_id . '/files/?include=attachments' . $parameters, [
       'headers' => [
