@@ -209,9 +209,9 @@ class Asset implements EntityInterface, \JsonSerializable {
       'released_and_not_expired',
       'attachments',
     ];
+    $remote_asset_url = self::getAssetRemoteBaseUrl();
     // Copy all the simple properties.
     $asset = new self();
-
     foreach ($properties as $property) {
       if (isset($json[$property])) {
         if ($property === 'attachments') {
@@ -222,7 +222,7 @@ class Asset implements EntityInterface, \JsonSerializable {
           $asset->alt_text = NULL;
           $asset->size = $json['attachments'][0]['propertiesById']['nibo:file-size'];
           $asset->mimeType = $json['attachments'][0]['propertiesById']['nibo:mime-type'];
-          $asset->attachments = "https://api4.materialbank.net" . $json['attachments'][0]['publicLink'];
+          $asset->attachments = $remote_asset_url . $json['attachments'][0]['publicLink'];
         }
         elseif ($property === 'folderId') {
           $asset->folderId = $folder_id;
@@ -237,6 +237,15 @@ class Asset implements EntityInterface, \JsonSerializable {
       }
     }
     return $asset;
+  }
+
+  public static function getAssetRemoteBaseUrl(): string {
+    /** @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
+    $config_factory = \Drupal::service('config.factory');
+    $module_config = $config_factory->get('gredi_dam.settings');
+    $base_url = $module_config->get('domain');
+    $base_url_parts = parse_url($base_url);
+    return $base_url_parts['scheme'] . '://' . $base_url_parts['host'];
   }
 
   /**
