@@ -66,15 +66,7 @@ class Category implements EntityInterface, \JsonSerializable {
   public $parts = [];
 
   /**
-   * Get category object.
-   *
-   * @param mixed $json
-   *   Json object contain categories data.
-   * @param mixed $folder_id
-   *   Folder ID.
-   *
-   * @return object|array
-   *   Category data.
+   * {@inheritdoc}
    */
   public static function fromJson($json, $folder_id = NULL) {
     if (is_string($json)) {
@@ -114,11 +106,7 @@ class Category implements EntityInterface, \JsonSerializable {
   }
 
   /**
-   * Serialize the category data.
-   *
-   * @return mixed
-   *   Mixed data which can be serialized by json_encode()
-   *   containing category properties.
+   * {@inheritdoc}
    */
   public function jsonSerialize() {
     $properties = [

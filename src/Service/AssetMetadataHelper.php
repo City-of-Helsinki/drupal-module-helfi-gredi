@@ -180,7 +180,7 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
     $results = $this->getAssetsToUpdate();
 
     /** @var \Drupal\Core\Queue\QueueInterface $queue */
-    $queue = \Drupal::service('queue')->get('meta_update');
+    $queue = \Drupal::queue('meta_update');
     foreach ($results as $key => $value) {
       /** @var \Drupal\media\Entity\Media $gredi_asset */
       $gredi_asset = Media::load($value);

@@ -5,15 +5,14 @@ namespace Drupal\helfi_gredi_image\Plugin\QueueWorker;
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\media\Entity\Media;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
-use Drupal\helfi_gredi_image\Service\GrediDamClient;
-use GuzzleHttp\Client;
 
 /**
  * A worker that updates metadata for every image.
  *
  * @QueueWorker(
  *   id = "meta_update",
- *   title = @Translation("Meta Update")
+ *   title = @Translation("Meta Update"),
+ *   cron = {"time" = 90}
  * )
  */
 class MetaUpdate extends QueueWorkerBase {
@@ -44,9 +43,7 @@ class MetaUpdate extends QueueWorkerBase {
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-
-    $guzzle_http_client = new Client();
-    $this->grediDamClient = new GrediDamClient($guzzle_http_client);
+    $this->grediDamClient = \Drupal::service('helfi_gredi_image.dam_client');
     $this->metadataHelper = \Drupal::service('helfi_gredi_image.asset_metadata.helper');
   }
 
@@ -59,7 +56,7 @@ class MetaUpdate extends QueueWorkerBase {
     /** @var \Drupal\media\Entity\Media $internal_gredi_asset */
     $internal_gredi_asset = Media::load($data->media_id);
     $this->metadataHelper->performMetadataUpdate($internal_gredi_asset, $external_gredi_asset);
-    \Drupal::logger('GrediMetaData')->notice('Metadata for Gredi asset with id  ' . $data->id);
+    \Drupal::logger('GrediMetaData')->notice('Metadata for Gredi asset with id ' . $data->media_id);
   }
 
 }
