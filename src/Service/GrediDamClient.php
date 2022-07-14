@@ -206,14 +206,14 @@ class GrediDamClient implements ContainerInjectionInterface {
    * @param array $params
    *   Parameters.
    *
-   * @return array|void
+   * @return array|null
    *   Content.
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function getFolderContent(int $folder_id, array $params = []) {
+  public function getFolderContent(int $folder_id, array $params = []): ?array {
     if (empty($folder_id)) {
-      return;
+      return NULL;
     }
     $parameters = '';
     foreach ($params as $key => $param) {

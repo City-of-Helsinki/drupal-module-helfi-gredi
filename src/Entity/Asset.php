@@ -239,6 +239,12 @@ class Asset implements EntityInterface, \JsonSerializable {
     return $asset;
   }
 
+  /**
+   * Function to get remote asset base url.
+   *
+   * @return string
+   *   Remote asset base url.
+   */
   public static function getAssetRemoteBaseUrl(): string {
     /** @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
     $config_factory = \Drupal::service('config.factory');
