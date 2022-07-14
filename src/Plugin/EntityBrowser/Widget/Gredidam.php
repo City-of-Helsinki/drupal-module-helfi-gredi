@@ -817,12 +817,14 @@ class Gredidam extends WidgetBase {
     $existing_ids = $this->entityTypeManager->getStorage('media')
       ->getQuery()
       ->condition('bundle', $media_type->id())
-      ->condition($source_field, $asset_ids, 'IN')
+      ->condition('field_external_id', $asset_ids, 'IN')
       ->execute();
 
     $entities = $this->entityTypeManager->getStorage('media')
       ->loadMultiple($existing_ids);
-
+    if (isset($entities)) {
+      return [current($entities)];
+    }
     $expand = ['meta', 'attachments'];
     $assets = $this->grediDamClient->getMultipleAsset($asset_ids, $expand);
 
@@ -830,8 +832,8 @@ class Gredidam extends WidgetBase {
       if ($asset == NULL) {
         continue;
       }
-      $random = new Random();
-      $image_name = $random->name(8, TRUE) . '.' . $this->getExtension($asset->mimeType);
+//      $loadMediaIfExist = ;
+      $image_name = $asset->name . '.' . $this->getExtension($asset->mimeType);
       $image_uri = 'public://gredidam/' . $image_name;
       $resource = fopen($image_uri, 'w');
       $stream = Utils::streamFor($resource);
