@@ -8,7 +8,6 @@ use Drupal\Core\Form\ConfigFormBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\TransferException;
 
 /**
  * Gredi DAM module configuration form.
@@ -71,54 +70,37 @@ class GrediDamConfigForm extends ConfigFormBase {
 
     $form['domain'] = [
       '#type' => 'fieldset',
-      '#title' => $this->t('Domain detail')
+      '#title' => $this->t('Base URL detail'),
     ];
 
     $form['domain']['domain_value'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Gredi DAM Domain'),
+      '#title' => $this->t('Gredi DAM Base URL'),
       '#default_value' => $config->get('domain'),
       '#description' => $this->t('example: demo.gredidam.fi'),
       '#required' => TRUE,
-      '#ajax' => [
-        'callback' => '::yearSelectCallback',
-        'disable-refocus' => FALSE, // Or TRUE to prevent re-focusing on the triggering element.
-        'event' => 'change',
-        'wrapper' => 'drupal-auth-output', // This element is updated with this AJAX callback.
-        'progress' => [
-          'type' => 'throbber',
-          'message' => $this->t('Verifying entry...'),
-        ],
-      ]
     ];
 
-      $form['drupal_auth'] = [
-        '#type' => 'fieldset',
-        '#title' => $this->t('Drupal authentication'),
-        '#prefix' => '<div id="drupal-auth-output">',
-        '#suffix' => '</div>',
-        '#states' => [
-          'visible' => [
-            ':input[name="domain_value"]' => ['filled' => TRUE],
-          ],
-        ],
-      ];
+    $form['drupal_auth'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Gredi DAM Drupal Account'),
+    ];
 
-      $form['drupal_auth']['drupal_gredidam_user'] = [
-        '#type' => 'textfield',
-        '#title' => $this->t('Drupal Gredi DAM Username'),
-        '#default_value' => $config->get('user'),
-        '#description' => $this->t('drupaluser'),
-        '#required' => TRUE,
-      ];
+    $form['drupal_auth']['drupal_gredidam_user'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Drupal Gredi DAM Username'),
+      '#default_value' => $config->get('user'),
+      '#description' => $this->t('drupaluser'),
+      '#required' => TRUE,
+    ];
 
-      $form['drupal_auth']['drupal_gredidam_password'] = [
-        '#type' => 'textfield',
-        '#title' => $this->t('Drupal Gredi DAM Password'),
-        '#default_value' => $config->get('pass'),
-        '#description' => $this->t('passexample'),
-        '#required' => TRUE,
-      ];
+    $form['drupal_auth']['drupal_gredidam_password'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Drupal Gredi DAM Password'),
+      '#default_value' => $config->get('pass'),
+      '#description' => $this->t('passexample'),
+      '#required' => TRUE,
+    ];
 
     $form['entity_browser'] = [
       '#type' => 'fieldset',
@@ -126,6 +108,7 @@ class GrediDamConfigForm extends ConfigFormBase {
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
     ];
+
     $form['entity_browser']['num_assets_per_page'] = [
       '#type' => 'number',
       '#title' => $this->t('Assets per page'),
@@ -148,11 +131,6 @@ class GrediDamConfigForm extends ConfigFormBase {
 
     return $form;
   }
-
-  public function yearSelectCallback(array $form, FormStateInterface $form_state) {
-    return $form['drupal_auth'];
-  }
-
 
   /**
    * Validate that the provided values are valid or nor.
@@ -189,48 +167,6 @@ class GrediDamConfigForm extends ConfigFormBase {
         'drupal_gredidam_password',
         $this->t('Provided password is not valid.')
       );
-      return;
-    }
-  }
-
-  /**
-   * Validates that the provided domain is valid.
-   *
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   Form state instance.
-   */
-  public function validateDomain(FormStateInterface $form_state) {
-    if ($form_state->getValue('domain_value')
-      && $form_state->getValue('drupal_gredidam_user')
-      && $form_state->getValue('drupal_gredidam_password')) {
-
-      try{
-        $response = $this->httpClient->request("POST", $form_state->getValue('domain_value'), [
-          'headers' => [
-            'Content-Type' => 'application/json'
-          ],
-          'body' => '{
-      "customer": "helsinki",
-      "username": "' . $form_state->getValue('drupal_gredidam_user') . '",
-      "password": "' . $form_state->getValue('drupal_gredidam_password') . '"
-    }'
-        ]);
-
-        $status = $response->getStatusCode();
-
-        if ($status == '200') {
-          $this->messenger()->addStatus($this->t('Validating domain: OK!'));
-        }
-        else {
-          $this->messenger()->addError($this->t('Validating domain: ' . $status));
-        }
-      }
-      catch (\ErrorException $e) {
-        $this->messenger()->addError($e);
-      }
-
-
-
     }
   }
 

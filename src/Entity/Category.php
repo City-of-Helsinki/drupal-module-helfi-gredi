@@ -66,13 +66,7 @@ class Category implements EntityInterface, \JsonSerializable {
   public $parts = [];
 
   /**
-   * Get category object.
-   *
-   * @param mixed $json
-   *   Json object contain categories data.
-   *
-   * @return object
-   *   Category data.
+   * {@inheritdoc}
    */
   public static function fromJson($json, $folder_id = NULL) {
     if (is_string($json)) {
@@ -82,11 +76,11 @@ class Category implements EntityInterface, \JsonSerializable {
     $subCategories = [];
     if (isset($json->total_count) && $json->total_count > 0) {
       foreach ($json as $subcategory_data) {
-        if ($subcategory_data['folder'] == TRUE) {
+        if ($subcategory_data['folder']) {
           $subCategories[] = Category::fromJson($subcategory_data);
         }
-
       }
+
       return $subCategories;
     }
     elseif (isset($json->total_count) && $json->total_count === 0) {
@@ -112,10 +106,7 @@ class Category implements EntityInterface, \JsonSerializable {
   }
 
   /**
-   * Serialize the category data.
-   *
-   * @return array
-   *   Array contain category properties.
+   * {@inheritdoc}
    */
   public function jsonSerialize() {
     $properties = [

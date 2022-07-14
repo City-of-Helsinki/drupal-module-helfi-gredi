@@ -130,6 +130,7 @@ class AssetImageHelper implements ContainerInjectionInterface {
     }
 
     $image_properties = $asset->file_properties->image_properties ?? NULL;
+
     if (!$image_properties) {
       $query = [];
     }
@@ -142,7 +143,6 @@ class AssetImageHelper implements ContainerInjectionInterface {
         $dimension = 'h';
         $size = $image_properties->height;
       }
-
       $scaled_size = min($thumbnailSize, $size);
       $query = [
         $dimension => $scaled_size,
@@ -289,8 +289,9 @@ class AssetImageHelper implements ContainerInjectionInterface {
    *   The path to the Gredi DAM module.
    */
   protected function getGrediDamModulePath() {
-    // @phpstan-ignore-next-line
-    return drupal_get_path('module', 'helfi_gredi_image');
+    /** @var Drupal\Core\Extension\ExtensionPathResolver $path_resolver */
+    $path_resolver = \Drupal::service('extension.path.resolver');
+    return $path_resolver->getPath('module', 'helfi_gredi_image');
   }
 
   /**

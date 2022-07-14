@@ -209,24 +209,25 @@ class Asset implements EntityInterface, \JsonSerializable {
       'released_and_not_expired',
       'attachments',
     ];
+    $remote_asset_url = self::getAssetRemoteBaseUrl();
     // Copy all the simple properties.
     $asset = new self();
-
     foreach ($properties as $property) {
       if (isset($json[$property])) {
         if ($property === 'attachments') {
-          $asset->width =  $json['attachments'][0]['propertiesById']['nibo:image-width'];
+          $asset->width = $json['attachments'][0]['propertiesById']['nibo:image-width'];
           $asset->height = $json['attachments'][0]['propertiesById']['nibo:image-height'];
           $asset->resolution = $json['attachments'][0]['propertiesById']['nibo:image-resolution'];
           $asset->keywords = NULL;
           $asset->alt_text = NULL;
           $asset->size = $json['attachments'][0]['propertiesById']['nibo:file-size'];
           $asset->mimeType = $json['attachments'][0]['propertiesById']['nibo:mime-type'];
-
-          $asset->attachments = "https://api4.materialbank.net" . $json['attachments'][0]['publicLink'];
-        } elseif ($property === 'folderId') {
+          $asset->attachments = $remote_asset_url . $json['attachments'][0]['publicLink'];
+        }
+        elseif ($property === 'folderId') {
           $asset->folderId = $folder_id;
-        } elseif ($property == 'id') {
+        }
+        elseif ($property == 'id') {
           $asset->id = $json['id'];
           $asset->external_id = $json['id'];
         }
@@ -235,14 +236,28 @@ class Asset implements EntityInterface, \JsonSerializable {
         }
       }
     }
-
     return $asset;
+  }
+
+  /**
+   * Function to get remote asset base url.
+   *
+   * @return string
+   *   Remote asset base url.
+   */
+  public static function getAssetRemoteBaseUrl(): string {
+    /** @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
+    $config_factory = \Drupal::service('config.factory');
+    $module_config = $config_factory->get('gredi_dam.settings');
+    $base_url = $module_config->get('domain');
+    $base_url_parts = parse_url($base_url);
+    return $base_url_parts['scheme'] . '://' . $base_url_parts['host'];
   }
 
   /**
    * {@inheritdoc}
    */
-  public function jsonSerialize():array {
+  public function jsonSerialize()  {
     return [
       'id' => $this->id,
       'linkFileId' => $this->linkFileId,

@@ -11,7 +11,6 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Utility\Token;
 use Drupal\file\FileInterface;
-use Drupal\helfi_gredi_image\GredidamInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -76,7 +75,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
   /**
    * Gredi DAM client.
    *
-   * @var \Drupal\helfi_gredi_image\GredidamInterface
+   * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
    */
   protected $grediDamClient;
 
@@ -116,7 +115,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
    *   Drupal token service.
    * @param \Drupal\helfi_gredi_image\Service\AssetImageHelper $assetImageHelper
    *   Gredi DAM asset image helper service.
-   * @param \Drupal\helfi_gredi_image\GredidamInterface $grediDamClient
+   * @param \Drupal\helfi_gredi_image\Service\GrediDamClient $grediDamClient
    *   Gredi DAM client.
    * @param \Drupal\helfi_gredi_image\Service\AssetMediaFactory $assetMediaFactory
    *   Gredi DAM Asset Media Factory service.
@@ -126,16 +125,16 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
    *   The HTTP client.
    */
   public function __construct(
-    EntityTypeManagerInterface    $entityTypeManager,
-    EntityFieldManagerInterface   $entityFieldManager,
-    ConfigFactoryInterface        $configFactory,
-    FileSystemInterface           $fileSystem,
-    Token                         $token,
-    AssetImageHelper              $assetImageHelper,
-    GredidamInterface             $grediDamClient,
-    AssetMediaFactory             $assetMediaFactory,
+    EntityTypeManagerInterface $entityTypeManager,
+    EntityFieldManagerInterface $entityFieldManager,
+    ConfigFactoryInterface $configFactory,
+    FileSystemInterface $fileSystem,
+    Token $token,
+    AssetImageHelper $assetImageHelper,
+    GrediDamClient $grediDamClient,
+    AssetMediaFactory $assetMediaFactory,
     LoggerChannelFactoryInterface $loggerChannelFactory,
-    Client                        $client) {
+    Client $client) {
     $this->entityTypeManager = $entityTypeManager;
     $this->entityFieldManager = $entityFieldManager;
     $this->configFactory = $configFactory;
@@ -160,7 +159,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
       $container->get('file_system'),
       $container->get('token'),
       $container->get('helfi_gredi_image.asset_image.helper'),
-      $container->get('helfi_gredi_image.gredidam'),
+      $container->get('helfi_gredi_image.dam_client'),
       $container->get('helfi_gredi_image.asset_media.factory'),
       $container->get('logger.factory'),
       $container->get('http_client')
@@ -215,7 +214,8 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
    */
   public function createNewFile(Asset $asset, $destination_folder) {
     // Ensure we can write to our destination directory.
-    if (!$this->fileSystem->prepareDirectory($destination_folder, FileSystemInterface::CREATE_DIRECTORY)) {
+    if (!$this->fileSystem
+      ->prepareDirectory($destination_folder, FileSystemInterface::CREATE_DIRECTORY)) {
       $this->loggerChannel->warning(
         'Unable to save file for asset ID @asset_id on directory @destination_folder.', [
           '@asset_id' => $asset->id,
@@ -280,10 +280,11 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
 
       if (empty($download_url)) {
         $this->loggerChannel->warning(
-          'Unable to save file for asset ID @asset_id. Thumbnail for request size (@size px) has not been found.', [
-            '@asset_id' => $asset->external_id,
-            '@size' => $size_limit,
-          ]
+          'Unable to save file for asset ID @asset_id.
+           Thumbnail for request size (@size px) has not been found.', [
+             '@asset_id' => $asset->external_id,
+             '@size' => $size_limit,
+           ],
         );
         return FALSE;
       }
@@ -302,9 +303,12 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
           'track_redirects' => TRUE,
         ],
       ]);
+
       $size = $response->getBody()->getSize();
+
       if ($size === NULL || $size === 0) {
-        $this->loggerChannel->error('Unable to download contents for asset ID @asset_id. Received zero-byte response for download URL @url with redirects to @history',
+        $this->loggerChannel->error('Unable to download contents for asset ID @asset_id.
+        Received zero-byte response for download URL @url with redirects to @history',
         [
           '@asset_id' => $asset->external_id,
           '@url' => $download_url,
@@ -322,7 +326,8 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
       }
     }
     catch (RequestException $exception) {
-      $message = 'Unable to download contents for asset ID @asset_id: %message. Attempted download URL @url with redirects to @history';
+      $message = 'Unable to download contents for asset ID @asset_id: %message.
+      Attempted download URL @url with redirects to @history';
       $context = [
         '@asset_id' => $asset->external_id,
         '%message' => $exception->getMessage(),
@@ -401,9 +406,9 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
    *   A file entity, or FALSE on error.
    */
   protected function drupalFileSaveData($data, $destination = NULL) {
-    // Deprecated after 9.3, module still supports 8.x.
-    // @phpstan-ignore-next-line
-    return file_save_data($data, $destination, FileSystemInterface::EXISTS_REPLACE);
+    /** @var \Drupal\file\FileRepositoryInterface $file_repository */
+    $file_repository = \Drupal::service('file.repository');
+    return $file_repository->writeData($data, $destination, FileSystemInterface::EXISTS_REPLACE);
   }
 
 }

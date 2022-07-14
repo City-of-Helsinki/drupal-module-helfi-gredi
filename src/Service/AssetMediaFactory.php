@@ -253,7 +253,7 @@ class AssetMediaFactory implements ContainerInjectionInterface {
     return new $helper_class($media,
       $this->entityTypeManager,
       $container->get('helfi_gredi_image.asset_data'),
-      $container->get('helfi_gredi_image.gredidam'),
+      $container->get('helfi_gredi_image.dam_client'),
       $container->get('helfi_gredi_image.asset_file.helper'));
   }
 

@@ -3,8 +3,10 @@
 namespace Drupal\helfi_gredi_image;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\media\MediaInterface;
+use Drupal\helfi_gredi_image\Service\AssetData;
 use Drupal\helfi_gredi_image\Service\AssetFileEntityHelper;
+use Drupal\helfi_gredi_image\Service\GrediDamClient;
+use Drupal\media\MediaInterface;
 use GuzzleHttp\Exception\GuzzleException;
 
 /**
@@ -26,14 +28,14 @@ class MediaEntityHelper {
   /**
    * Gredi DAM asset data service.
    *
-   * @var \Drupal\helfi_gredi_image\AssetData
+   * @var \Drupal\helfi_gredi_image\Service\AssetData
    */
   protected $assetData;
 
   /**
    * Gredi DAM client.
    *
-   * @var \Drupal\helfi_gredi_image\Gredidam
+   * @var \Drupal\helfi_gredi_image\Service\GredidamClient
    */
   protected $grediDamClient;
 
@@ -58,20 +60,19 @@ class MediaEntityHelper {
    *   The media entity to wrap.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   Entity Type Manager service.
-   * @param \Drupal\helfi_gredi_image\AssetDataInterface $assetData
+   * @param \Drupal\helfi_gredi_image\Service\AssetData $assetData
    *   Gredi DAM asset data service.
-   * @param \Drupal\helfi_gredi_image\GredidamInterface $grediDamClient
+   * @param \Drupal\helfi_gredi_image\Service\GrediDamClient $grediDamClient
    *   Gredi DAM client.
    * @param \Drupal\helfi_gredi_image\Service\AssetFileEntityHelper $assetFileHelper
    *   Gredi DAM file entity helper service.
    */
-  public function __construct(MediaInterface $media, EntityTypeManagerInterface $entityTypeManager, AssetDataInterface $assetData, GredidamInterface $grediDamClient, AssetFileEntityHelper $assetFileHelper) {
+  public function __construct(MediaInterface $media, EntityTypeManagerInterface $entityTypeManager, AssetData $assetData, GrediDamClient $grediDamClient, AssetFileEntityHelper $assetFileHelper) {
+    $this->mediaEntity = $media;
     $this->entityTypeManager = $entityTypeManager;
     $this->assetData = $assetData;
     $this->grediDamClient = $grediDamClient;
     $this->assetFileHelper = $assetFileHelper;
-
-    $this->mediaEntity = $media;
   }
 
   /**
@@ -169,12 +170,11 @@ class MediaEntityHelper {
    *   The asset or NULL on failure.
    */
   public function getAsset() {
-
     $assetId = $this->getAssetId();
     if (empty($assetId)) {
       return NULL;
     }
-    return $this->grediDamClient->getAsset($assetId);
+    return $this->grediDamClient->getAsset($assetId, ['meta', 'attachments']);
   }
 
   /**
@@ -207,15 +207,13 @@ class MediaEntityHelper {
    *
    * @param string $fieldName
    *   The field name.
-   *
-   * @param string $fopt
+   * @param string $opt
    *   The field name.
    *
    * @return null|mixed
    *   The field value or NULL.
    */
   protected function getFieldPropertyValue($fieldName, $opt = 'asset_id') {
-
     if ($this->mediaEntity->hasField($fieldName)) {
       /** @var \Drupal\Core\Field\FieldItemInterface $item */
       $item = $this->mediaEntity->{$fieldName}->first();
