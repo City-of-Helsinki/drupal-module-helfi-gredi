@@ -62,7 +62,7 @@ class MetaUpdaterCommands extends DrushCommands implements ContainerInjectionInt
    */
   public function updateGrediMetadata() {
     /** @var \Drupal\Core\Queue\QueueInterface $queue */
-    $queue = \Drupal::service('queue')->get('meta_update');
+    $queue = \Drupal::queue('meta_update');
     /** @var \Drupal\Core\Queue\QueueWorkerInterface $queue_worker */
     $queue_worker = \Drupal::service('plugin.manager.queue_worker')->createInstance('meta_update');
 

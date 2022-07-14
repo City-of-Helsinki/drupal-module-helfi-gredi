@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 
 /**
  * Implements hook_theme().
@@ -17,6 +18,28 @@ function media_gredidam_theme($existing, $type, $theme, $path) {
       'template' => 'checkboxes--gredidam-assets',
     ],
   ];
+}
+
+/**
+ * Implements hook_cron().
+ */
+function helfi_gredi_image_cron()
+{
+  /** @var int $last_run */
+  $last_run = \Drupal::state()->get('helfi_gredi_image.last_run', 0);
+  /** @var int $request_time */
+  $request_time = \Drupal::time()->getRequestTime();
+  // If 60 minutes passed since last time.
+  if (($request_time - $last_run) > 60 * 60 * 24) {
+    /** @var \Drupal\Core\Datetime\DateFormatterInterface $date_formatter */
+    $date_formatter = \Drupal::service('date.formatter');
+    /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $gradi_dam_client */
+    $gradi_dam_client = \Drupal::service('helfi_gredi_image.dam_client');
+    /** @var \Drupal\helfi_gredi_image\Service\AssetMetadataHelper $metadata_helper */
+    $metadata_helper = new AssetMetadataHelper($date_formatter, $gradi_dam_client);
+    $metadata_helper->populateMetadataUpdateQueue();
+    \Drupal::state()->set('helfi_gredi_image.last_run', $request_time);
+  }
 }
 
 /**

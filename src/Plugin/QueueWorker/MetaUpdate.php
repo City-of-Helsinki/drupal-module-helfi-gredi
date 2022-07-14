@@ -59,7 +59,7 @@ class MetaUpdate extends QueueWorkerBase {
     /** @var \Drupal\media\Entity\Media $internal_gredi_asset */
     $internal_gredi_asset = Media::load($data->media_id);
     $this->metadataHelper->performMetadataUpdate($internal_gredi_asset, $external_gredi_asset);
-    \Drupal::logger('GrediMetaData')->notice('Metadata for Gredi asset with id  ' . $data->id);
+    \Drupal::logger('GrediMetaData')->notice('Metadata for Gredi asset with id ' . $data->id);
   }
 
 }
