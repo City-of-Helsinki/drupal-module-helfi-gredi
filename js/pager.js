@@ -16,7 +16,7 @@ console.log(drupalSettings);
             showGoButton: true,
             showFirstOnEllipsisShow: true,
             showLastOnEllipsisShow: true,
-            callback: function(data, pagination) {
+            callback: function (data, pagination) {
               // template method of yourself
               var dataHtml = '';
               data.forEach(function (item) {
