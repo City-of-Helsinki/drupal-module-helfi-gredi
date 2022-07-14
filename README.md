@@ -76,6 +76,13 @@ PHPStan can be used to analyse php code.
 vendor/bin/phpstan analyse src tests
 ```
 
+Code Sniffer can be used to analyze the -drupal code, too.
+- Sniffer is using squizlabs/php_codesniffer and drupal/coder packages.
+- To run tests:
+```
+vendor/bin/phpcs --standard=Drupal helfi_gredi_image.module
+```
+
 Future development:
 -------------------
 

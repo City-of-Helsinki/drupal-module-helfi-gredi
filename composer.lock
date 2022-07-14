@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4207bdde45e2b6c5c4d8fed14c941176",
+    "content-hash": "d76422e16d0717a94d49b155ff00748b",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -425,12 +425,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/drupal/core.git",
-                "reference": "15e2828db405e5e3065ae46809ea9ee9fee5bc29"
+                "reference": "0f9a1c9d913dd4581938c945f03f509fe6c8ec14"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/drupal/core/zipball/15e2828db405e5e3065ae46809ea9ee9fee5bc29",
-                "reference": "15e2828db405e5e3065ae46809ea9ee9fee5bc29",
+                "url": "https://api.github.com/repos/drupal/core/zipball/0f9a1c9d913dd4581938c945f03f509fe6c8ec14",
+                "reference": "0f9a1c9d913dd4581938c945f03f509fe6c8ec14",
                 "shasum": ""
             },
             "require": {
@@ -557,7 +557,7 @@
             "support": {
                 "source": "https://github.com/drupal/core/tree/9.5.x"
             },
-            "time": "2022-07-12T14:03:15+00:00"
+            "time": "2022-07-14T05:35:28+00:00"
         },
         {
             "name": "drupal/entity",
@@ -1032,12 +1032,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/egulias/EmailValidator.git",
-                "reference": "74d2f16d9d765fc282553a5b5b8bb99b7277c619"
+                "reference": "413b26361741baa0639347a7bca44d0dc52eb8b9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/egulias/EmailValidator/zipball/74d2f16d9d765fc282553a5b5b8bb99b7277c619",
-                "reference": "74d2f16d9d765fc282553a5b5b8bb99b7277c619",
+                "url": "https://api.github.com/repos/egulias/EmailValidator/zipball/413b26361741baa0639347a7bca44d0dc52eb8b9",
+                "reference": "413b26361741baa0639347a7bca44d0dc52eb8b9",
                 "shasum": ""
             },
             "require": {
@@ -1093,7 +1093,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2022-06-24T18:51:04+00:00"
+            "time": "2022-07-13T14:53:11+00:00"
         },
         {
             "name": "guzzlehttp/guzzle",
@@ -2123,12 +2123,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-fig/http-factory.git",
-                "reference": "36fa03d50ff82abcae81860bdaf4ed9a1510c7cd"
+                "reference": "5a4f141ac2e5bc35e615134f127e1833158d2944"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-fig/http-factory/zipball/36fa03d50ff82abcae81860bdaf4ed9a1510c7cd",
-                "reference": "36fa03d50ff82abcae81860bdaf4ed9a1510c7cd",
+                "url": "https://api.github.com/repos/php-fig/http-factory/zipball/5a4f141ac2e5bc35e615134f127e1833158d2944",
+                "reference": "5a4f141ac2e5bc35e615134f127e1833158d2944",
                 "shasum": ""
             },
             "require": {
@@ -2171,7 +2171,7 @@
             "support": {
                 "source": "https://github.com/php-fig/http-factory/tree/master"
             },
-            "time": "2020-09-17T16:52:55+00:00"
+            "time": "2022-07-14T07:21:53+00:00"
         },
         {
             "name": "psr/http-message",
@@ -5208,26 +5208,23 @@
         },
         {
             "name": "drupal/coder",
-            "version": "8.3.x-dev",
+            "version": "8.3.13",
             "source": {
                 "type": "git",
                 "url": "https://git.drupalcode.org/project/coder.git",
-                "reference": "6a6ec0584210bef0fe5c11570a8d590158e182aa"
+                "reference": "d3286d571b19633cc296d438c36b9aed195de43c"
             },
             "require": {
-                "dealerdirect/phpcodesniffer-composer-installer": "^0.7.1",
                 "ext-mbstring": "*",
-                "php": ">=7.1",
+                "php": ">=7.0.8",
                 "sirbrillig/phpcs-variable-analysis": "^2.10",
-                "slevomat/coding-standard": "^7.0",
-                "squizlabs/php_codesniffer": "^3.7.1",
+                "squizlabs/php_codesniffer": "^3.5.6",
                 "symfony/yaml": ">=2.0.5"
             },
             "require-dev": {
-                "phpstan/phpstan": "^1.7.12",
-                "phpunit/phpunit": "^7.0 || ^8.0"
+                "phpstan/phpstan": "^0.12.63",
+                "phpunit/phpunit": "^6.0 || ^7.0"
             },
-            "default-branch": true,
             "type": "phpcodesniffer-standard",
             "autoload": {
                 "psr-4": {
@@ -5250,7 +5247,7 @@
                 "issues": "https://www.drupal.org/project/issues/coder",
                 "source": "https://www.drupal.org/project/coder"
             },
-            "time": "2022-06-18T18:38:01+00:00"
+            "time": "2021-02-06T10:44:32+00:00"
         },
         {
             "name": "myclabs/deep-copy",
@@ -5723,12 +5720,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpdoc-parser.git",
-                "reference": "135607f9ccc297d6923d49c2bcf309f509413215"
+                "reference": "dd322ae2e81d7f4cd8a95840d414e7ee97c45ef5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/135607f9ccc297d6923d49c2bcf309f509413215",
-                "reference": "135607f9ccc297d6923d49c2bcf309f509413215",
+                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/dd322ae2e81d7f4cd8a95840d414e7ee97c45ef5",
+                "reference": "dd322ae2e81d7f4cd8a95840d414e7ee97c45ef5",
                 "shasum": ""
             },
             "require": {
@@ -5759,9 +5756,9 @@
             "description": "PHPDoc parser with support for nullable, intersection and generic types",
             "support": {
                 "issues": "https://github.com/phpstan/phpdoc-parser/issues",
-                "source": "https://github.com/phpstan/phpdoc-parser/tree/1.6.4"
+                "source": "https://github.com/phpstan/phpdoc-parser/tree/1.6.x"
             },
-            "time": "2022-06-26T13:09:08+00:00"
+            "time": "2022-07-13T10:52:46+00:00"
         },
         {
             "name": "phpstan/phpstan",
@@ -5769,12 +5766,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpstan.git",
-                "reference": "75971390e18114058ce6a47ff683c716866a43b2"
+                "reference": "57f327c35daddeb76b39f166c5792ca86ed3f472"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/75971390e18114058ce6a47ff683c716866a43b2",
-                "reference": "75971390e18114058ce6a47ff683c716866a43b2",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/57f327c35daddeb76b39f166c5792ca86ed3f472",
+                "reference": "57f327c35daddeb76b39f166c5792ca86ed3f472",
                 "shasum": ""
             },
             "require": {
@@ -5821,7 +5818,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-07-11T08:48:27+00:00"
+            "time": "2022-07-13T12:42:37+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
@@ -5829,12 +5826,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "417a284d5b37e363f2455a26f66acdca73fd0d85"
+                "reference": "53e40236c527413c55828cd7edf2a1188b322ee2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/417a284d5b37e363f2455a26f66acdca73fd0d85",
-                "reference": "417a284d5b37e363f2455a26f66acdca73fd0d85",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/53e40236c527413c55828cd7edf2a1188b322ee2",
+                "reference": "53e40236c527413c55828cd7edf2a1188b322ee2",
                 "shasum": ""
             },
             "require": {
@@ -5898,7 +5895,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2022-07-12T06:59:59+00:00"
+            "time": "2022-07-13T13:11:30+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -6147,12 +6144,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "b9468bc76fb7eda411bc48d4839e848c03f80efa"
+                "reference": "1d2cec6338d9d50f96c3021d1a1072de4dc4be39"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/b9468bc76fb7eda411bc48d4839e848c03f80efa",
-                "reference": "b9468bc76fb7eda411bc48d4839e848c03f80efa",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/1d2cec6338d9d50f96c3021d1a1072de4dc4be39",
+                "reference": "1d2cec6338d9d50f96c3021d1a1072de4dc4be39",
                 "shasum": ""
             },
             "require": {
@@ -6241,7 +6238,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2022-07-12T06:57:22+00:00"
+            "time": "2022-07-14T05:24:10+00:00"
         },
         {
             "name": "sebastian/cli-parser",
@@ -7263,7 +7260,7 @@
         },
         {
             "name": "slevomat/coding-standard",
-            "version": "dev-master",
+            "version": "8.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/slevomat/coding-standard.git",
@@ -7290,7 +7287,6 @@
                 "phpstan/phpstan-strict-rules": "1.3.0",
                 "phpunit/phpunit": "7.5.20|8.5.21|9.5.21"
             },
-            "default-branch": true,
             "type": "phpcodesniffer-standard",
             "extra": {
                 "branch-alias": {
