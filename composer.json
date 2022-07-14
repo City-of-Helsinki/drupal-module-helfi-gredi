@@ -7,7 +7,6 @@
     "require": {
         "php": "^8.0",
         "drupal/helfi_api_base": "^2.2.0",
-        "cweagans/php-webdam-client": "^1.0.1",
         "twistor/stream-util": "dev-master",
         "drupal/media_entity_browser": "^2.0"
     },
@@ -15,8 +14,7 @@
         "phpunit/phpunit":"^9.1",
         "phpstan/phpstan": "1.8.x-dev",
         "squizlabs/php_codesniffer": "^3.7.1",
-        "drupal/coder": "^8.3.13",
-        "slevomat/coding-standard": "^8.2"
+        "drupal/coder": "^8.3.13"
     },
     "extra": {
         "drupal-scaffold": {
