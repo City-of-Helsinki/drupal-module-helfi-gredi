@@ -2,7 +2,6 @@
 
 namespace Drupal\helfi_gredi_image\Plugin\EntityBrowser\Widget;
 
-use Drupal\Component\Utility\Random;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Pager\PagerManagerInterface;
 use Drupal\entity_browser\WidgetBase;
@@ -348,15 +347,18 @@ class Gredidam extends WidgetBase {
       $contents[] = $this->grediDamClient->getCustomerContent($this->grediDamClient->getClientId(), $params)['assets'];
 
       $this->getCategoryFormElements($folders_content, $modulePath, $form);
+      $totalAssets = count($this->grediDamClient->getCustomerContent(6)['assets']);
     }
     else {
-      if (isset($this->grediDamClient->getFolderContent($this->currentCategory->id, $params)['assets'])) {
-        $contents[] = $this->grediDamClient->getFolderContent($this->currentCategory->id, $params)['assets'];
+      $assets = $this->grediDamClient->getFolderContent($this->currentCategory->id, $params)['assets'];
+      if (isset($assets)) {
+        $contents[] = $assets;
       }
-
-      if (isset($this->grediDamClient->getFolderContent($this->currentCategory->id)['folders'])) {
-        $this->getCategoryFormElements($this->grediDamClient->getFolderContent($this->currentCategory->id)['folders'], $modulePath, $form);
+      $folder_content = $this->grediDamClient->getFolderContent($this->currentCategory->id);
+      if (isset($folder_content['folders'])) {
+        $this->getCategoryFormElements($folder_content['folders'], $modulePath, $form);
       }
+      $totalAssets = count($folder_content);
     }
 
     $initial_key = 0;
@@ -822,7 +824,7 @@ class Gredidam extends WidgetBase {
 
     $entities = $this->entityTypeManager->getStorage('media')
       ->loadMultiple($existing_ids);
-    if (isset($entities)) {
+    if (!empty($entities)) {
       return [current($entities)];
     }
     $expand = ['meta', 'attachments'];
@@ -832,7 +834,6 @@ class Gredidam extends WidgetBase {
       if ($asset == NULL) {
         continue;
       }
-//      $loadMediaIfExist = ;
       $image_name = $asset->name . '.' . $this->getExtension($asset->mimeType);
       $image_uri = 'public://gredidam/' . $image_name;
       $resource = fopen($image_uri, 'w');

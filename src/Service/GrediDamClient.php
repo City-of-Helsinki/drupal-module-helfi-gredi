@@ -69,13 +69,6 @@ class GrediDamClient implements ContainerInjectionInterface {
   private $baseUrl;
 
   /**
-   * The cookie domain for Gredi DAM API.
-   *
-   * @var string
-   */
-  private $cookieDomain;
-
-  /**
    * ClientFactory constructor.
    *
    * @param \GuzzleHttp\ClientInterface $guzzleClient
@@ -105,10 +98,10 @@ class GrediDamClient implements ContainerInjectionInterface {
    * @return \GuzzleHttp\Cookie\CookieJar
    *   The Gredi DAM client.
    */
-  public function loginWithCredentials() {
+  public function loginWithCredentials(): ?CookieJar {
     $config = $this->config->get('gredi_dam.settings');
     $this->baseUrl = $config->get('domain');
-    $this->cookieDomain = parse_url($this->baseUrl)['host'];
+    $cookieDomain = parse_url($this->baseUrl)['host'];
     $username = $config->get('user');
     $password = $config->get('pass');
     if (empty($data)) {
@@ -137,10 +130,10 @@ class GrediDamClient implements ContainerInjectionInterface {
         $subtring_start += strlen('=');
         $size = strpos($getCookie, ';', $subtring_start) - $subtring_start;
         $result = substr($getCookie, $subtring_start, $size);
-        setcookie("JSESSIONID", $result, time() + 60 * 60 * 24, $this->cookieDomain);
+        setcookie("JSESSIONID", $result, time() + 60 * 60 * 24, $cookieDomain);
         $cookieJar = CookieJar::fromArray([
           'JSESSIONID' => $result,
-        ], $this->cookieDomain);
+        ], $cookieDomain);
 
         return $cookieJar;
       }
