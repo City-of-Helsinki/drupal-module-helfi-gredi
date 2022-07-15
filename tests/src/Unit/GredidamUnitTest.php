@@ -3,13 +3,20 @@
 namespace Drupal\Tests\helfi_gredi_image\Unit;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\EntityTypeManager;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\EntityTypeRepository;
 use Drupal\Core\Form\FormState;
 use Drupal\file\Entity\File;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Plugin\EntityBrowser\Widget\Gredidam;
+use Drupal\helfi_gredi_image\Service\CreateTestSetUp;
 use Drupal\media\Entity\Media;
 use Drupal\Tests\UnitTestCase;
-
+use Prophecy\Argument;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 
 /**
@@ -20,10 +27,46 @@ use Drupal\Tests\UnitTestCase;
 class GredidamUnitTest extends UnitTestCase
 {
   /**
-   * Data provider for testPrepareEntities().
+   * @var \Drupal\helfi_gredi_image\Service\CreateTestSetUp
    */
-  public function provideTestPrepareEntities() {
-    return JSON::encode([
+  protected $sut; //subject under test.
+
+  /**
+   * @return void
+   */
+  public function setUp()
+  {
+    //My subject under test.
+    $this->sut = new CreateTestSetUp();
+
+    // Mocking the services.
+    $entity_manager = $this->prophesize(EntityTypeManagerInterface::class);
+   // $entity_repository = $this->prophesize(EntityTypeRepository::class);
+    $entity_storage =  $this->prophesize(EntityStorageInterface::class);
+
+    // Doing some magic.
+    $entity_storage->create(Argument::any())->will(function($args, $mock){
+      return $args;
+    });
+
+    $entity_manager->getStorage('media')->willReturn($entity_storage);
+    //$entity_repository->getEntityTypeFromClass(Media::class)->willReturn('media');
+    $entity_manager->getEntityTypeFromClass(Media::class)->willReturn('media');
+
+     // Putting the mocked services in the Drupal service container.
+    $container = new ContainerBuilder();
+    $container->set('entity.manager', $entity_manager->reveal());
+    \Drupal::setContainer($container);
+}
+
+  /**
+   * Check if the prepareEntities method creates media entity.
+   *
+   * @return void
+   */
+  public function testPrepareEntities() {
+
+    $asset = json_encode([
       'id' => '13584702',
       "parentId" => "5316423",
       "created" => "2022-06-28T11:28:28Z",
@@ -44,64 +87,26 @@ class GredidamUnitTest extends UnitTestCase
       "hasPublicSharingValidityPeriod" => false,
       "folder" => false,
     ]);
-  }
 
-  /**
-   * Check if the prepareEntities method creates entities.
-   *
-   * @dataProvider provideTestPrepareEntities
-   *
-   * @return void
-   */
-  public function testPrepareEntities() {
+//    // Create mock for Gredidam constructor.
+//    $gredidam_mock = $this->getMockBuilder(Gredidam::class)
+//      ->disableOriginalConstructor()
+//      ->getMock();
 
-    $asset = Asset::fromJSON($this->provideTestPrepareEntities());
-
-    // Create mock for Gredidam constructor.
-    $gredidam = $this->getMockBuilder(Gredidam::class)
-      ->disableOriginalConstructor()
-      ->getMock();
-
-    // Create reflection for protected function prepareEntities.
-    $ref_add = new \ReflectionMethod($gredidam, 'prepareEntities');
-    $ref_add->setAccessible(TRUE);
+//    // Create reflection for protected function prepareEntities.
+//    $ref_add = new \ReflectionMethod($gredidam_mock, 'prepareEntities');
+//    $ref_add->setAccessible(TRUE);
 
     // Create form_state by asset id.
-    $form_state = (new FormState())->setUserInput(['assets' => [$asset->id]]);
+  //  $form_state = (new FormState())->setUserInput(['assets' => [$asset->id]]);
 
-    $image_name = $asset->name . '.jpg';
-    $image_uri = 'public://gredidam/' . $image_name;
+    $result = $this->sut->setMedia($asset);
 
-    $file = File::create([
-      'uid' => 1,
-      'filename' => $image_name,
-      'uri' => $image_uri,
-      'status' => 1,
-    ]);
-    $file->save();
 
-    $entity = Media::create([
-      'bundle' => 'gredi_dam_assets',
-      'uid' => 1,
-      'langcode' => 'en',
-      // @todo Find out if we can use status from Gredi Dam.
-      'status' => 1,
-      'name' => $asset->name,
-      'field_media_image' => [
-        'target_id' => $file->id(),
-      ],
-
-      'field_external_id' => [
-        'asset_id' => $asset->external_id,
-      ],
-
-      'created' => strtotime($asset->created),
-      'changed' => strtotime($asset->modified),
-    ]);
-
-    $entity->save();
-
-    $this->assertEquals([$entity], $ref_add->invokeArgs($gredidam, [[],$form_state]));
+    $this->assertInstanceOf('\Drupal\media\Entity\Media', $result);
+//    $this->expectOutputString('');
+//    var_dump($result);
+   // $this->assertEquals($entity, $ref_add->invokeArgs($gredidam, [[],$form_state]));
   }
 
   /**
