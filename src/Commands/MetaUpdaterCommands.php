@@ -32,6 +32,7 @@ class MetaUpdaterCommands extends DrushCommands implements ContainerInjectionInt
    * Constructor.
    */
   public function __construct(AssetMetadataHelper $metadataHelper) {
+    parent::__construct();
     $this->metadataHelper = $metadataHelper;
   }
 

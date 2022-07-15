@@ -67,7 +67,7 @@ class AssetData implements ContainerInjectionInterface {
    *     - If no $name was provided then all data will be returned for the given
    *       asset if found.
    */
-  public function get(int $assetID = NULL, $name = NULL) {
+  public function get(int $assetID = NULL, string $name = NULL) {
     $query = $this->connection->select('gredidam_assets_data', 'ad')->fields(
         'ad'
       );
