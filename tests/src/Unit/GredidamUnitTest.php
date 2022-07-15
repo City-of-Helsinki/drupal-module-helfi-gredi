@@ -40,7 +40,7 @@ class GredidamUnitTest extends UnitTestCase
     $this->sut = new CreateTestSetUp();
 
     // Mocking the services.
-    $entity_manager = $this->prophesize(EntityTypeManagerInterface::class);
+    $entity_manager = $this->prophesize(EntityTypeManager::class);
    // $entity_repository = $this->prophesize(EntityTypeRepository::class);
     $entity_storage =  $this->prophesize(EntityStorageInterface::class);
 

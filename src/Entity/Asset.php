@@ -193,6 +193,7 @@ class Asset implements EntityInterface, \JsonSerializable {
    * {@inheritdoc}
    */
   public static function fromJson($json, $folder_id = NULL) {
+
     if (is_string($json)) {
       $json = Json::decode($json);
     }
