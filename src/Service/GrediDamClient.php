@@ -68,6 +68,8 @@ class GrediDamClient implements ContainerInjectionInterface {
    */
   private $baseUrl;
 
+  protected $getCustomerId;
+
   /**
    * ClientFactory constructor.
    *
@@ -80,6 +82,8 @@ class GrediDamClient implements ContainerInjectionInterface {
     $this->guzzleClient = $guzzleClient;
     $this->config = $config;
     $this->cookieJar = $this->loginWithCredentials();
+    $this->getCustomerId = $this->getClientId();
+
   }
 
   /**
@@ -161,8 +165,6 @@ class GrediDamClient implements ContainerInjectionInterface {
   /**
    * Get folders and assets from Customer id.
    *
-   * @param int $customer
-   *   Customer.
    * @param array $params
    *   Parameters.
    *
@@ -171,14 +173,17 @@ class GrediDamClient implements ContainerInjectionInterface {
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function getCustomerContent(int $customer, array $params = []): array {
+  public function getCustomerContent($params = []) {
     $parameters = '';
 
-    foreach ($params as $key => $param) {
-      $parameters .= '&' . $key . '=' . $param;
+    if (isset($params)) {
+      foreach ($params as $key => $param) {
+        $parameters .= '&' . $key . '=' . $param;
+      }
     }
 
-    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/customers/' . $customer . '/contents?include=attachments' . $parameters, [
+
+    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/customers/' . $this->getCustomerId . '/contents?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
@@ -217,9 +222,13 @@ class GrediDamClient implements ContainerInjectionInterface {
       return NULL;
     }
     $parameters = '';
-    foreach ($params as $key => $param) {
-      $parameters .= '&' . $key . '=' . $param;
+
+    if (isset($params)) {
+      foreach ($params as $key => $param) {
+        $parameters .= '&' . $key . '=' . $param;
+      }
     }
+
     $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/folders/' . $folder_id . '/files/?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',

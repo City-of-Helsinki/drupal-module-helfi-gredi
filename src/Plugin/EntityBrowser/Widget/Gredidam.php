@@ -330,7 +330,7 @@ class Gredidam extends WidgetBase {
     $form += $this->getFilterSort();
 
     // Get folders content from customer id.
-    $folders_content = $this->grediDamClient->getCustomerContent($this->grediDamClient->getClientId())['folders'];
+    $folders_content = $this->grediDamClient->getCustomerContent()['folders'];
 
     $contents = [];
 
@@ -351,10 +351,9 @@ class Gredidam extends WidgetBase {
     ];
 
     if ($this->currentCategory->id == NULL) {
-      $contents[] = $this->grediDamClient->getCustomerContent($this->grediDamClient->getClientId(), $params)['assets'];
+      $contents[] = $this->grediDamClient->getCustomerContent($params)['assets'];
 
       $this->getCategoryFormElements($folders_content, $modulePath, $form);
-      $totalAssets = count($this->grediDamClient->getCustomerContent(6)['assets']);
     }
     else {
       $assets = $this->grediDamClient->getFolderContent($this->currentCategory->id, $params)['assets'];
@@ -365,7 +364,6 @@ class Gredidam extends WidgetBase {
       if (isset($folder_content['folders'])) {
         $this->getCategoryFormElements($folder_content['folders'], $modulePath, $form);
       }
-      $totalAssets = count($folder_content);
     }
 
     $initial_key = 0;
@@ -397,7 +395,7 @@ class Gredidam extends WidgetBase {
       $totalAssets = count($this->grediDamClient->getFolderContent($this->currentCategory->id));
     }
     else {
-      $totalAssets = count($this->grediDamClient->getCustomerContent($this->grediDamClient->getClientId())['assets']);
+      $totalAssets = count($this->grediDamClient->getCustomerContent()['assets']);
     }
 
     if ($totalAssets > $num_per_page) {
