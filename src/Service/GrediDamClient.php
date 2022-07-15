@@ -137,7 +137,7 @@ class GrediDamClient implements ContainerInjectionInterface {
         $subtring_start += strlen('=');
         $size = strpos($getCookie, ';', $subtring_start) - $subtring_start;
         $result = substr($getCookie, $subtring_start, $size);
-        setcookie("JSESSIONID", $result, time() + 60 * 60 * 24, $this->cookieDomain);
+        setcookie("JSESSIONID", $result, time() + 60 * 60 * 24, "/", $this->cookieDomain, true, true);
         $cookieJar = CookieJar::fromArray([
           'JSESSIONID' => $result,
         ], $this->cookieDomain);
