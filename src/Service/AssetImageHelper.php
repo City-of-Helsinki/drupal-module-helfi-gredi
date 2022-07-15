@@ -289,7 +289,7 @@ class AssetImageHelper implements ContainerInjectionInterface {
    *   The path to the Gredi DAM module.
    */
   protected function getGrediDamModulePath() {
-    /** @var Drupal\Core\Extension\ExtensionPathResolver $path_resolver */
+    /** @var \Drupal\Core\Extension\ExtensionPathResolver $path_resolver */
     $path_resolver = \Drupal::service('extension.path.resolver');
     return $path_resolver->getPath('module', 'helfi_gredi_image');
   }

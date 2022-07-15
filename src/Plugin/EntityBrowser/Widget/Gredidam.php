@@ -96,6 +96,13 @@ class Gredidam extends WidgetBase {
   protected $requestStack;
 
   /**
+   * Config factory instance.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $config;
+
+  /**
    * A fully-configured Guzzle client to pass to the dam client.
    *
    * @var \GuzzleHttp\ClientInterface
