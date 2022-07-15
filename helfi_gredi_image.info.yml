@@ -1,10 +1,11 @@
-name: Helfi Gredi Image
+name: HELfi Gredi Image
 description: Fetch and display images from Gredi API
-package: Helfi
+package: Custom
 type: module
 version: 1.0
 core_version_requirement: ^9
 dependencies:
+  - helfi_api_base
   - drupal:media
   - drupal:media_library
   - media_entity_browser:media_entity_browser
