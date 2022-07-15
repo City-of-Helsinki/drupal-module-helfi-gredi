@@ -142,19 +142,34 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
    * @return mixed
    *   Result will vary based on the metadata item.
    */
-  public function getMetadataFromAsset(Asset $asset, string $name) {
-    return match ($name) {
-      'height' => $asset->height,
-      'width' => $asset->width,
-      'resolution' => $asset->resolution,
-      'keywords' => $asset->keywords,
-      'alt-text' => $asset->alt_text,
-      'size' => $asset->size,
-      'external_id' => $asset->external_id,
-      'name' => $asset->name,
-      default => NULL,
-    };
+  public function getMetadataFromAsset(Asset $asset, $name) {
+    switch ($name) {
+      case 'height':
+        return $asset->height;
 
+      case 'width':
+        return $asset->width;
+
+      case 'resolution':
+        return $asset->resolution;
+
+      case 'keywords':
+        return $asset->keywords;
+
+      case 'alt-text':
+        return $asset->alt_text;
+
+      case 'size':
+        return $asset->size;
+
+      case 'external_id':
+        return $asset->external_id;
+
+      case 'name':
+        return $asset->name;
+    }
+
+    return NULL;
   }
 
   /**
