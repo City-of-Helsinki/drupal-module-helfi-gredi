@@ -68,12 +68,7 @@ class GrediDamClient implements ContainerInjectionInterface {
    */
   private $baseUrl;
 
-  /**
-   * The cookie domain for Gredi DAM API.
-   *
-   * @var string
-   */
-  private $cookieDomain;
+  protected $getCustomerId;
 
   /**
    * ClientFactory constructor.
@@ -87,6 +82,8 @@ class GrediDamClient implements ContainerInjectionInterface {
     $this->guzzleClient = $guzzleClient;
     $this->config = $config;
     $this->cookieJar = $this->loginWithCredentials();
+    $this->getCustomerId = $this->getClientId();
+
   }
 
   /**
@@ -105,10 +102,10 @@ class GrediDamClient implements ContainerInjectionInterface {
    * @return \GuzzleHttp\Cookie\CookieJar
    *   The Gredi DAM client.
    */
-  public function loginWithCredentials() {
+  public function loginWithCredentials(): ?CookieJar {
     $config = $this->config->get('gredi_dam.settings');
     $this->baseUrl = $config->get('domain');
-    $this->cookieDomain = parse_url($this->baseUrl)['host'];
+    $cookieDomain = parse_url($this->baseUrl)['host'];
     $username = $config->get('user');
     $password = $config->get('pass');
     if (empty($data)) {
@@ -140,7 +137,7 @@ class GrediDamClient implements ContainerInjectionInterface {
         setcookie("JSESSIONID", $result, time() + 60 * 60 * 24, "/", $this->cookieDomain, true, true);
         $cookieJar = CookieJar::fromArray([
           'JSESSIONID' => $result,
-        ], $this->cookieDomain);
+        ], $cookieDomain);
 
         return $cookieJar;
       }
@@ -157,11 +154,17 @@ class GrediDamClient implements ContainerInjectionInterface {
     }
   }
 
+  public function getClientId() {
+    $apiCall = $this->guzzleClient->request('GET', $this->baseUrl . '/customerIds/' . self::CUSTOMER, [
+      'cookies' => $this->cookieJar
+    ]);
+
+    return Json::decode($apiCall->getBody()->getContents())['id'];
+  }
+
   /**
    * Get folders and assets from Customer id.
    *
-   * @param int $customer
-   *   Customer.
    * @param array $params
    *   Parameters.
    *
@@ -170,14 +173,17 @@ class GrediDamClient implements ContainerInjectionInterface {
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function getCustomerContent(int $customer, array $params = []): array {
+  public function getCustomerContent($params = []) {
     $parameters = '';
 
-    foreach ($params as $key => $param) {
-      $parameters .= '&' . $key . '=' . $param;
+    if (isset($params)) {
+      foreach ($params as $key => $param) {
+        $parameters .= '&' . $key . '=' . $param;
+      }
     }
 
-    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/customers/' . $customer . '/contents?include=attachments' . $parameters, [
+
+    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/customers/' . $this->getCustomerId . '/contents?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
@@ -216,9 +222,13 @@ class GrediDamClient implements ContainerInjectionInterface {
       return NULL;
     }
     $parameters = '';
-    foreach ($params as $key => $param) {
-      $parameters .= '&' . $key . '=' . $param;
+
+    if (isset($params)) {
+      foreach ($params as $key => $param) {
+        $parameters .= '&' . $key . '=' . $param;
+      }
     }
+
     $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/folders/' . $folder_id . '/files/?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',

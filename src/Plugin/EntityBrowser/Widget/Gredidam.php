@@ -2,7 +2,6 @@
 
 namespace Drupal\helfi_gredi_image\Plugin\EntityBrowser\Widget;
 
-use Drupal\Component\Utility\Random;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Pager\PagerManagerInterface;
 use Drupal\entity_browser\WidgetBase;
@@ -95,6 +94,13 @@ class Gredidam extends WidgetBase {
    * @var \Symfony\Component\HttpFoundation\RequestStack
    */
   protected $requestStack;
+
+  /**
+   * Config factory instance.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $config;
 
   /**
    * A fully-configured Guzzle client to pass to the dam client.
@@ -324,7 +330,7 @@ class Gredidam extends WidgetBase {
     $form += $this->getFilterSort();
 
     // Get folders content from customer id.
-    $folders_content = $this->grediDamClient->getCustomerContent(6)['folders'];
+    $folders_content = $this->grediDamClient->getCustomerContent()['folders'];
 
     $contents = [];
 
@@ -345,17 +351,18 @@ class Gredidam extends WidgetBase {
     ];
 
     if ($this->currentCategory->id == NULL) {
-      $contents[] = $this->grediDamClient->getCustomerContent(6, $params)['assets'];
+      $contents[] = $this->grediDamClient->getCustomerContent($params)['assets'];
 
       $this->getCategoryFormElements($folders_content, $modulePath, $form);
     }
     else {
-      if (isset($this->grediDamClient->getFolderContent($this->currentCategory->id, $params)['assets'])) {
-        $contents[] = $this->grediDamClient->getFolderContent($this->currentCategory->id, $params)['assets'];
+      $assets = $this->grediDamClient->getFolderContent($this->currentCategory->id, $params)['assets'];
+      if (isset($assets)) {
+        $contents[] = $assets;
       }
-
-      if (isset($this->grediDamClient->getFolderContent($this->currentCategory->id)['folders'])) {
-        $this->getCategoryFormElements($this->grediDamClient->getFolderContent($this->currentCategory->id)['folders'], $modulePath, $form);
+      $folder_content = $this->grediDamClient->getFolderContent($this->currentCategory->id);
+      if (isset($folder_content['folders'])) {
+        $this->getCategoryFormElements($folder_content['folders'], $modulePath, $form);
       }
     }
 
@@ -388,7 +395,7 @@ class Gredidam extends WidgetBase {
       $totalAssets = count($this->grediDamClient->getFolderContent($this->currentCategory->id));
     }
     else {
-      $totalAssets = count($this->grediDamClient->getCustomerContent(6)['assets']);
+      $totalAssets = count($this->grediDamClient->getCustomerContent()['assets']);
     }
 
     if ($totalAssets > $num_per_page) {
@@ -832,7 +839,6 @@ class Gredidam extends WidgetBase {
       if ($asset == NULL) {
         continue;
       }
-//      $loadMediaIfExist = ;
       $image_name = $asset->name . '.' . $this->getExtension($asset->mimeType);
       $image_uri = 'public://gredidam/' . $image_name;
       $resource = fopen($image_uri, 'w');

@@ -32,6 +32,7 @@ class MetaUpdaterCommands extends DrushCommands implements ContainerInjectionInt
    * Constructor.
    */
   public function __construct(AssetMetadataHelper $metadataHelper) {
+    parent::__construct();
     $this->metadataHelper = $metadataHelper;
   }
 
@@ -77,6 +78,7 @@ class MetaUpdaterCommands extends DrushCommands implements ContainerInjectionInt
       catch (SuspendQueueException $e) {
         // If the worker indicates there is a problem with the whole queue,
         // release the item and skip to the next queue.
+        watchdog_exception('GrediMetaData', $e);
         $queue->releaseItem($item);
         break;
       }
