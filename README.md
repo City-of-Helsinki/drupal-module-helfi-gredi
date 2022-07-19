@@ -16,11 +16,11 @@ Technical structure
 We should create a media type, to which image content is
 fetched creating a Stream Wrapper (remote entity).
 
-Original image stay in Gredi service.
+The original image is only stored in Gredi service.
 New media module will contain derivative images of different size.
 
 Metadata will be stored to the media type.
-Metadata of the picture, will be queried separately. (This is little bit open).
+Metadata of the picture will be queried separately.
 
 Entity will be part of Drupal backend.
 
@@ -36,7 +36,7 @@ or both. Module should be compatible with CoH Drupal Platform.
 Module will be used in all 9 instances.
 One module configuration will query images belong to one user group of the CoH.
 Each instance of the module will have username and password (aka. secrets) of their own.
-Each user has license of their own. 9 groups are base on CoH departments.
+Each user has license of their own. 9 groups are based on CoH departments.
 
 Repository
 ----------
@@ -54,7 +54,7 @@ PHP code is tested by creating PHPUnit tests.
 SNYK testing can be done with npm.
 - You got to have npm(nodejs) installed to your local computer.
 - npm install
-- npm_modules created by install is included in .gitignore -file
+- npm_modules created by install is included in the .gitignore -file
 - Snyk account can be created by calling:
 ```
    snyk auth
@@ -70,10 +70,17 @@ export SNYK_TOKEN=<YOUR_SNYK_TOKEN>
 ```
 
 PHPStan can be used to analyse php code.
-- Rule level i set to 6 in the phpstan.neon
+- Rule level is set to 6 in the phpstan.neon
 - To run tests:
 ```
 vendor/bin/phpstan analyse src tests
+```
+
+Code Sniffer can be used to analyze the Drupal code, too.
+- Sniffer is using squizlabs/php_codesniffer and drupal/coder packages.
+- To run tests:
+```
+vendor/bin/phpcs --standard=Drupal helfi_gredi_image.module
 ```
 
 Future development:
