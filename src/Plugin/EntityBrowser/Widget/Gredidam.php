@@ -830,8 +830,9 @@ class Gredidam extends WidgetBase {
 
     $entities = $this->entityTypeManager->getStorage('media')
       ->loadMultiple($existing_ids);
+
     if (!empty($entities)) {
-      return [current($entities)];
+      return [end($entities)];
     }
     $expand = ['meta', 'attachments'];
     $assets = $this->grediDamClient->getMultipleAsset($asset_ids, $expand);
