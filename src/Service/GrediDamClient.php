@@ -7,6 +7,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
+use Drupal\helfi_gredi_image\GrediDamClientInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
@@ -17,7 +18,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * Factory class for Client.
  */
-class GrediDamClient implements ContainerInjectionInterface {
+class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInterface {
 
   /**
    * The customer of the Gredi DAM API.
@@ -159,17 +160,7 @@ class GrediDamClient implements ContainerInjectionInterface {
   }
 
   /**
-   * Get folders and assets from Customer id.
-   *
-   * @param int $customer
-   *   Customer.
-   * @param array $params
-   *   Parameters.
-   *
-   * @return array
-   *   Customer content.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
+   * {@inheritDoc}
    */
   public function getCustomerContent(int $customer, array $params = []): array {
     $parameters = '';

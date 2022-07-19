@@ -230,6 +230,7 @@ class Gredidam extends WidgetBase {
 
   /**
    * {@inheritdoc}
+   * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getForm(array &$original_form, FormStateInterface $form_state, array $additional_widget_parameters) {
     $media_type_storage = $this->entityTypeManager->getStorage('media_type');
