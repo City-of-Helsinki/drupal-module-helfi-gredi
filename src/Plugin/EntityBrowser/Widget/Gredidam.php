@@ -2,15 +2,18 @@
 
 namespace Drupal\helfi_gredi_image\Plugin\EntityBrowser\Widget;
 
-use Drupal\Component\Utility\Random;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Pager\PagerManagerInterface;
 use Drupal\entity_browser\WidgetBase;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\Form\GrediDamConfigForm;
+use Drupal\helfi_gredi_image\Service\GrediDamAuthService;
 use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\media\Entity\Media;
+use Drupal\user\Entity\User;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -97,6 +100,13 @@ class Gredidam extends WidgetBase {
   protected $requestStack;
 
   /**
+   * Config factory instance.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $config;
+
+  /**
    * A fully-configured Guzzle client to pass to the dam client.
    *
    * @var \GuzzleHttp\ClientInterface
@@ -125,6 +135,18 @@ class Gredidam extends WidgetBase {
   protected $currentCategory;
 
   /**
+   * Gredi dam auth service.
+   */
+  protected $grediDamAuthService;
+
+  /**
+   * Messenger var.
+   *
+   * @var MessengerInterface
+   */
+  protected $messenger;
+
+  /**
    * Gredidam constructor.
    *
    * {@inheritdoc}
@@ -146,7 +168,9 @@ class Gredidam extends WidgetBase {
     RequestStack $requestStack,
     ConfigFactoryInterface $config,
     ClientInterface $guzzleClient,
-    PagerManagerInterface $pagerManager
+    PagerManagerInterface $pagerManager,
+    GrediDamAuthService $grediDamAuthService,
+    MessengerInterface $messenger
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $event_dispatcher, $entity_type_manager, $validation_manager);
     $this->grediDamClient = $grediDamClient;
@@ -160,6 +184,8 @@ class Gredidam extends WidgetBase {
     $this->config = $config;
     $this->guzzleClient = $guzzleClient;
     $this->pagerManager = $pagerManager;
+    $this->grediDamAuthService = $grediDamAuthService;
+    $this->messenger = $messenger;
   }
 
   /**
@@ -183,7 +209,9 @@ class Gredidam extends WidgetBase {
       $container->get('request_stack'),
       $container->get('config.factory'),
       $container->get('http_client'),
-      $container->get('pager.manager')
+      $container->get('pager.manager'),
+      $container->get('helfi_gredi_image.auth_service'),
+      $container->get('messenger')
     );
   }
 
@@ -231,6 +259,7 @@ class Gredidam extends WidgetBase {
 
   /**
    * {@inheritdoc}
+   * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getForm(array &$original_form, FormStateInterface $form_state, array $additional_widget_parameters) {
     $media_type_storage = $this->entityTypeManager->getStorage('media_type');
@@ -247,8 +276,18 @@ class Gredidam extends WidgetBase {
       // Return an empty array.
       return [];
     }
-
     $form = parent::getForm($original_form, $form_state, $additional_widget_parameters);
+
+    $user = User::load($this->user->id());
+
+    if (!isset($user->field_gredi_dam_username->getValue()[0]['value']) || !isset($user->field_gredi_dam_password->getValue()[0]['value'])) {
+      return $this->messenger->addError($this->t('You have to fill Gredi DAM Username and Password in @user_profile', [
+        '@user_profile' => Link::createFromRoute(t('user edit'), 'entity.user.edit_form', [
+          'user' => $this->user->id()])->toString()
+        ]));
+    }
+
+
     $config = $this->config->get('gredi_dam.settings');
 
     $modulePath = $this->moduleHandler->getModule('helfi_gredi_image')->getPath();
@@ -324,7 +363,7 @@ class Gredidam extends WidgetBase {
     $form += $this->getFilterSort();
 
     // Get folders content from customer id.
-    $folders_content = $this->grediDamClient->getCustomerContent(6)['folders'];
+    $folders_content = $this->grediDamClient->getCustomerContent()['folders'];
 
     $contents = [];
 
@@ -345,17 +384,18 @@ class Gredidam extends WidgetBase {
     ];
 
     if ($this->currentCategory->id == NULL) {
-      $contents[] = $this->grediDamClient->getCustomerContent(6, $params)['assets'];
+      $contents[] = $this->grediDamClient->getCustomerContent($params)['assets'];
 
       $this->getCategoryFormElements($folders_content, $modulePath, $form);
     }
     else {
-      if (isset($this->grediDamClient->getFolderContent($this->currentCategory->id, $params)['assets'])) {
-        $contents[] = $this->grediDamClient->getFolderContent($this->currentCategory->id, $params)['assets'];
+      $assets = $this->grediDamClient->getFolderContent($this->currentCategory->id, $params)['assets'];
+      if (isset($assets)) {
+        $contents[] = $assets;
       }
-
-      if (isset($this->grediDamClient->getFolderContent($this->currentCategory->id)['folders'])) {
-        $this->getCategoryFormElements($this->grediDamClient->getFolderContent($this->currentCategory->id)['folders'], $modulePath, $form);
+      $folder_content = $this->grediDamClient->getFolderContent($this->currentCategory->id);
+      if (isset($folder_content['folders'])) {
+        $this->getCategoryFormElements($folder_content['folders'], $modulePath, $form);
       }
     }
 
@@ -388,7 +428,7 @@ class Gredidam extends WidgetBase {
       $totalAssets = count($this->grediDamClient->getFolderContent($this->currentCategory->id));
     }
     else {
-      $totalAssets = count($this->grediDamClient->getCustomerContent(6)['assets']);
+      $totalAssets = count($this->grediDamClient->getCustomerContent()['assets']);
     }
 
     if ($totalAssets > $num_per_page) {
@@ -822,8 +862,9 @@ class Gredidam extends WidgetBase {
 
     $entities = $this->entityTypeManager->getStorage('media')
       ->loadMultiple($existing_ids);
-    if (isset($entities)) {
-      return [current($entities)];
+
+    if (!empty($entities)) {
+      return [end($entities)];
     }
     $expand = ['meta', 'attachments'];
     $assets = $this->grediDamClient->getMultipleAsset($asset_ids, $expand);
@@ -832,7 +873,6 @@ class Gredidam extends WidgetBase {
       if ($asset == NULL) {
         continue;
       }
-//      $loadMediaIfExist = ;
       $image_name = $asset->name . '.' . $this->getExtension($asset->mimeType);
       $image_uri = 'public://gredidam/' . $image_name;
       $resource = fopen($image_uri, 'w');
