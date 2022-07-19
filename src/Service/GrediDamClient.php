@@ -7,6 +7,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
+use Drupal\helfi_gredi_image\GrediDamClientInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
@@ -17,7 +18,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * Factory class for Client.
  */
-class GrediDamClient implements ContainerInjectionInterface {
+class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInterface {
 
   /**
    * The customer of the Gredi DAM API.
@@ -139,7 +140,7 @@ class GrediDamClient implements ContainerInjectionInterface {
         $subtring_start += strlen('=');
         $size = strpos($getCookie, ';', $subtring_start) - $subtring_start;
         $result = substr($getCookie, $subtring_start, $size);
-        setcookie("JSESSIONID", $result, time() + 60 * 60 * 24, "/", $this->cookieDomain, true, true);
+
         $cookieJar = CookieJar::fromArray([
           'JSESSIONID' => $result,
         ], $cookieDomain);
@@ -176,17 +177,9 @@ class GrediDamClient implements ContainerInjectionInterface {
   }
 
   /**
-   * Get folders and assets from Customer id.
-   *
-   * @param array $params
-   *   Parameters.
-   *
-   * @return array
-   *   Customer content.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
+   * {@inheritDoc}
    */
-  public function getCustomerContent(array $params = []) {
+  public function getCustomerContent(array $params = []): array {
     $parameters = '';
 
     if (isset($params)) {
@@ -217,17 +210,7 @@ class GrediDamClient implements ContainerInjectionInterface {
   }
 
   /**
-   * Get assets and sub-folders from folders.
-   *
-   * @param int $folder_id
-   *   Folder ID.
-   * @param array $params
-   *   Parameters.
-   *
-   * @return array|null
-   *   Content.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
+   * {@inheritDoc}
    */
   public function getFolderContent(int $folder_id, array $params = []): ?array {
     if (empty($folder_id)) {
@@ -263,15 +246,7 @@ class GrediDamClient implements ContainerInjectionInterface {
   }
 
   /**
-   * Get a list of Assets given an array of Asset ID's.
-   *
-   * @param array $ids
-   *   The Gredi DAM Asset ID's.
-   * @param array $expand
-   *   A list of dta items to expand on the result set.
-   *
-   * @return array
-   *   A list of assets.
+   * {@inheritDoc}
    */
   public function getMultipleAsset(array $ids, array $expand = []): array {
     if (empty($ids)) {
@@ -290,20 +265,7 @@ class GrediDamClient implements ContainerInjectionInterface {
   }
 
   /**
-   * Get an Asset given an Asset ID.
-   *
-   * @param string $id
-   *   The Gredi DAM Asset ID.
-   * @param array $expands
-   *   The additional properties to be included.
-   * @param string $folder_id
-   *   Folder id.
-   *
-   * @return \Drupal\helfi_gredi_image\Entity\Asset
-   *   The asset entity.
-   *
-   * @throws \GuzzleHttp\Exception\RequestException
-   * @throws \GuzzleHttp\Exception\GuzzleException
+   * {@inheritDoc}
    */
   public function getAsset(string $id, array $expands = [], string $folder_id = NULL): Asset {
     $required_expands = Asset::getRequiredExpands();
@@ -325,12 +287,7 @@ class GrediDamClient implements ContainerInjectionInterface {
   }
 
   /**
-   * Get a list of metadata.
-   *
-   * @return array
-   *   A list of metadata fields.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
+   * {@inheritDoc}
    */
   public function getSpecificMetadataFields(): array {
     $fields = [

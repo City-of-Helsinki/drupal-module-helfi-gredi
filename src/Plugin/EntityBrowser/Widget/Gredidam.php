@@ -237,6 +237,7 @@ class Gredidam extends WidgetBase {
 
   /**
    * {@inheritdoc}
+   * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getForm(array &$original_form, FormStateInterface $form_state, array $additional_widget_parameters) {
     $media_type_storage = $this->entityTypeManager->getStorage('media_type');
@@ -829,8 +830,9 @@ class Gredidam extends WidgetBase {
 
     $entities = $this->entityTypeManager->getStorage('media')
       ->loadMultiple($existing_ids);
+
     if (!empty($entities)) {
-      return [current($entities)];
+      return [end($entities)];
     }
     $expand = ['meta', 'attachments'];
     $assets = $this->grediDamClient->getMultipleAsset($asset_ids, $expand);
