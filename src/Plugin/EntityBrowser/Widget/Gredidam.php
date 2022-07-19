@@ -3,13 +3,17 @@
 namespace Drupal\helfi_gredi_image\Plugin\EntityBrowser\Widget;
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Pager\PagerManagerInterface;
 use Drupal\entity_browser\WidgetBase;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\Form\GrediDamConfigForm;
+use Drupal\helfi_gredi_image\Service\GrediDamAuthService;
 use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\media\Entity\Media;
+use Drupal\user\Entity\User;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -131,6 +135,18 @@ class Gredidam extends WidgetBase {
   protected $currentCategory;
 
   /**
+   * Gredi dam auth service.
+   */
+  protected $grediDamAuthService;
+
+  /**
+   * Messenger var.
+   *
+   * @var MessengerInterface
+   */
+  protected $messenger;
+
+  /**
    * Gredidam constructor.
    *
    * {@inheritdoc}
@@ -152,7 +168,9 @@ class Gredidam extends WidgetBase {
     RequestStack $requestStack,
     ConfigFactoryInterface $config,
     ClientInterface $guzzleClient,
-    PagerManagerInterface $pagerManager
+    PagerManagerInterface $pagerManager,
+    GrediDamAuthService $grediDamAuthService,
+    MessengerInterface $messenger
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $event_dispatcher, $entity_type_manager, $validation_manager);
     $this->grediDamClient = $grediDamClient;
@@ -166,6 +184,8 @@ class Gredidam extends WidgetBase {
     $this->config = $config;
     $this->guzzleClient = $guzzleClient;
     $this->pagerManager = $pagerManager;
+    $this->grediDamAuthService = $grediDamAuthService;
+    $this->messenger = $messenger;
   }
 
   /**
@@ -189,7 +209,9 @@ class Gredidam extends WidgetBase {
       $container->get('request_stack'),
       $container->get('config.factory'),
       $container->get('http_client'),
-      $container->get('pager.manager')
+      $container->get('pager.manager'),
+      $container->get('helfi_gredi_image.auth_service'),
+      $container->get('messenger')
     );
   }
 
@@ -254,8 +276,18 @@ class Gredidam extends WidgetBase {
       // Return an empty array.
       return [];
     }
-
     $form = parent::getForm($original_form, $form_state, $additional_widget_parameters);
+
+    $user = User::load($this->user->id());
+
+    if (!isset($user->field_gredi_dam_username->getValue()[0]['value']) || !isset($user->field_gredi_dam_password->getValue()[0]['value'])) {
+      return $this->messenger->addError($this->t('You have to fill Gredi DAM Username and Password in @user_profile', [
+        '@user_profile' => Link::createFromRoute(t('user edit'), 'entity.user.edit_form', [
+          'user' => $this->user->id()])->toString()
+        ]));
+    }
+
+
     $config = $this->config->get('gredi_dam.settings');
 
     $modulePath = $this->moduleHandler->getModule('helfi_gredi_image')->getPath();

@@ -9,8 +9,6 @@ use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\GrediDamClientInterface;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Cookie\CookieJar;
-use GuzzleHttp\Exception\ClientException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -63,18 +61,23 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
   protected $config;
 
   /**
-   * The base URL of the Gredi DAM API.
-   *
-   * @var string
-   */
-  private $baseUrl;
-
-  /**
    * Customer ID.
    *
    * @var mixed
    */
   protected $customerId;
+
+  /**
+   * Gredi dam auth service.
+   */
+  protected $grediDamAuthService;
+
+  /**
+   * The base URL of the Gredi DAM API.
+   *
+   * @var string
+   */
+  private $baseUrl;
 
   /**
    * ClientFactory constructor.
@@ -83,13 +86,16 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
    *   A fully configured Guzzle client to pass to the dam client.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config
    *   Config factory var.
+   * @param \Drupal\helfi_gredi_image\Service\GrediDamAuthService $grediDamAuthService
+   *   Gredi dam auth service.
    */
-  public function __construct(ClientInterface $guzzleClient, ConfigFactoryInterface $config) {
+  public function __construct(ClientInterface $guzzleClient, ConfigFactoryInterface $config, GrediDamAuthService $grediDamAuthService) {
     $this->guzzleClient = $guzzleClient;
     $this->config = $config;
-    $this->cookieJar = $this->loginWithCredentials();
-    $this->customerId = $this->getClientId();
-
+    $this->grediDamAuthService = $grediDamAuthService;
+    $this->cookieJar = $this->grediDamAuthService->getCookieJar();
+    $this->customerId = $this->grediDamAuthService->getCustomerId();
+    $this->baseUrl = $this->grediDamAuthService->getConfig()->get('domain');
   }
 
   /**
@@ -98,83 +104,12 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('http_client'),
-      $container->get('config.factory')
+      $container->get('config.factory'),
+      $container->get('helfi_gredi_image.auth_service')
     );
   }
 
-  /**
-   * Gets a base DAM Client object using the specified credentials.
-   *
-   * @return \GuzzleHttp\Cookie\CookieJar
-   *   The Gredi DAM client.
-   */
-  public function loginWithCredentials(): ?CookieJar {
-    $config = $this->config->get('gredi_dam.settings');
-    $this->baseUrl = $config->get('domain');
-    $cookieDomain = parse_url($this->baseUrl)['host'];
-    $username = $config->get('user');
-    $password = $config->get('pass');
-    if (empty($data)) {
-      $data = [
-        'headers' => [
-          'Content-Type' => 'application/json',
-        ],
-        'body' => '{
-        "customer": "' . self::CUSTOMER . '",
-        "username": "' . $username . '",
-        "password": "' . $password . '"
-      }',
-      ];
-    }
 
-    try {
-      $response = $this->guzzleClient->request(
-        "POST",
-        $this->baseUrl . '/sessions',
-        $data
-      );
-
-      if ($response->getStatusCode() == 200 && $response->getReasonPhrase() == 'OK') {
-        $getCookie = $response->getHeader('Set-Cookie')[0];
-        $subtring_start = strpos($getCookie, '=');
-        $subtring_start += strlen('=');
-        $size = strpos($getCookie, ';', $subtring_start) - $subtring_start;
-        $result = substr($getCookie, $subtring_start, $size);
-
-        $cookieJar = CookieJar::fromArray([
-          'JSESSIONID' => $result,
-        ], $cookieDomain);
-
-        return $cookieJar;
-      }
-    }
-    catch (ClientException $e) {
-      $status_code = $e->getResponse()->getStatusCode();
-      \Drupal::logger('helfi_gredi_image')->error(
-        'Unable to authenticate. DAM API client returned a @code exception code with the following message: %message',
-        [
-          '@code' => $status_code,
-          '%message' => $e->getMessage(),
-        ]
-      );
-    }
-  }
-
-  /**
-   * Function to retrieve customer ID.
-   *
-   * @return mixed
-   *   Customer ID.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
-   */
-  public function getClientId() {
-    $apiCall = $this->guzzleClient->request('GET', $this->baseUrl . '/customerIds/' . self::CUSTOMER, [
-      'cookies' => $this->cookieJar,
-    ]);
-
-    return Json::decode($apiCall->getBody()->getContents())['id'];
-  }
 
   /**
    * {@inheritDoc}
