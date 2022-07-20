@@ -42,4 +42,3 @@ function helfi_gredi_image_cron()
     \Drupal::state()->set('helfi_gredi_image.last_run', $request_time);
   }
 }
-
