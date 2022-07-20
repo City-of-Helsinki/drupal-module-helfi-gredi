@@ -11,6 +11,9 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
 
+/**
+ * Gredi DAM authentication service.
+ */
 class GrediDamAuthService implements GrediDamAuthServiceInterface {
 
   /**
@@ -69,7 +72,17 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
    */
   protected $user;
 
-  public function __construct (ClientInterface $guzzleClient, AccountInterface $account) {
+  /**
+   * Class constructor.
+   *
+   * @param \GuzzleHttp\ClientInterface $guzzleClient
+   *   HTTP client.
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   User account.
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
+  public function __construct(ClientInterface $guzzleClient, AccountInterface $account) {
     $this->guzzleClient = $guzzleClient;
     $this->user = $account;
     $this->cookieJar = $this->loginWithCredentials();
@@ -165,8 +178,9 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
         );
 
       }
-    } else {
-      return null;
+    }
+    else {
+      return NULL;
     }
   }
 
@@ -185,4 +199,5 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
 
     return Json::decode($apiCall->getBody()->getContents())['id'];
   }
+
 }

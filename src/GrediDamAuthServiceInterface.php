@@ -5,6 +5,9 @@ namespace Drupal\helfi_gredi_image;
 use Drupal\Core\Config\ImmutableConfig;
 use GuzzleHttp\Cookie\CookieJar;
 
+/**
+ * Gredi DAM authentication service interface.
+ */
 interface GrediDamAuthServiceInterface {
 
   /**
@@ -18,7 +21,8 @@ interface GrediDamAuthServiceInterface {
   /**
    * Get cookie jar variable.
    *
-   * @return CookieJar|null
+   * @return \GuzzleHttp\Cookie\CookieJar|null
+   *   Authentication cookie.
    */
   public function getCookieJar(): ?CookieJar;
 
@@ -26,6 +30,7 @@ interface GrediDamAuthServiceInterface {
    * Get customer id.
    *
    * @return mixed
+   *   Customer ID.
    */
   public function getCustomerId();
 
@@ -38,4 +43,5 @@ interface GrediDamAuthServiceInterface {
    * Get Gredi DAM Password from user profile.
    */
   public function getGrediPassword();
+
 }

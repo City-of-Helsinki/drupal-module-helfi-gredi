@@ -136,13 +136,15 @@ class Gredidam extends WidgetBase {
 
   /**
    * Gredi dam auth service.
+   *
+   * @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService
    */
   protected $grediDamAuthService;
 
   /**
    * Messenger var.
    *
-   * @var MessengerInterface
+   * @var \Drupal\Core\Messenger\MessengerInterface
    */
   protected $messenger;
 
@@ -259,6 +261,7 @@ class Gredidam extends WidgetBase {
 
   /**
    * {@inheritdoc}
+   *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getForm(array &$original_form, FormStateInterface $form_state, array $additional_widget_parameters) {
@@ -283,10 +286,10 @@ class Gredidam extends WidgetBase {
     if (!isset($user->field_gredi_dam_username->getValue()[0]['value']) || !isset($user->field_gredi_dam_password->getValue()[0]['value'])) {
       return $this->messenger->addError($this->t('You have to fill Gredi DAM Username and Password in @user_profile', [
         '@user_profile' => Link::createFromRoute(t('user edit'), 'entity.user.edit_form', [
-          'user' => $this->user->id()])->toString()
-        ]));
+          'user' => $this->user->id(),
+        ])->toString(),
+      ]));
     }
-
 
     $config = $this->config->get('gredi_dam.settings');
 

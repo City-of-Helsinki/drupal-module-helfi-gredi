@@ -4,6 +4,9 @@ namespace Drupal\helfi_gredi_image;
 
 use Drupal\helfi_gredi_image\Entity\Asset;
 
+/**
+ * Gredi DAM client interface.
+ */
 interface GrediDamClientInterface {
 
   /**
@@ -53,7 +56,7 @@ interface GrediDamClientInterface {
    * @param string|null $folder_id
    *   Folder id.
    *
-   * @return Asset
+   * @return \Drupal\helfi_gredi_image\Entity\Asset
    *   The asset entity.
    */
   public function getAsset(string $id, array $expands = [], string $folder_id = NULL): Asset;
@@ -65,4 +68,5 @@ interface GrediDamClientInterface {
    *   A list of metadata fields.
    */
   public function getSpecificMetadataFields(): array;
+
 }
