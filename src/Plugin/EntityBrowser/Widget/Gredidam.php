@@ -292,10 +292,10 @@ class Gredidam extends WidgetBase {
     $user = User::load($this->user->id());
 
     if (!isset($user->field_gredi_dam_username->getValue()[0]['value']) || !isset($user->field_gredi_dam_password->getValue()[0]['value'])) {
-      return $this->messenger->addError($this->t('You have to fill Gredi DAM Username and Password in @user_profile', [
+      return ['#markup' => $this->t('You have to fill Gredi DAM Username and Password in @user_profile!', [
         '@user_profile' => Link::createFromRoute(t('user edit'), 'entity.user.edit_form', [
           'user' => $this->user->id()])->toString()
-        ]));
+        ])];
     }
 
 
