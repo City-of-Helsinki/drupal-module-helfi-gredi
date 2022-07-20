@@ -72,8 +72,6 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
   public function __construct (ClientInterface $guzzleClient, AccountInterface $account) {
     $this->guzzleClient = $guzzleClient;
     $this->user = $account;
-    $this->cookieJar = $this->loginWithCredentials();
-    $this->customerId = $this->getClientId();
   }
 
   /**
@@ -87,28 +85,34 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
    * {@inheritDoc}
    */
   public function getCookieJar(): ?CookieJar {
-    return $this->cookieJar;
+    return $this->loginWithCredentials();
   }
 
   /**
    * {@inheritDoc}
    */
   public function getCustomerId() {
-    return $this->customerId;
+    return $this->getClientId();
   }
 
   /**
    * {@inheritDoc}
    */
   public function getGrediUsername() {
-    return User::load($this->user->id())->field_gredi_dam_username->getValue()[0]['value'] ?? NULL;
+    if (User::load($this->user->id())->field_gredi_dam_username !== null) {
+      return User::load($this->user->id())->field_gredi_dam_username->getValue()[0]['value'] ?? NULL;
+    }
+    return FALSE;
   }
 
   /**
    * {@inheritDoc}
    */
   public function getGrediPassword() {
-    return User::load($this->user->id())->field_gredi_dam_password->getValue()[0]['value'] ?? NULL;
+    if (User::load($this->user->id())->field_gredi_dam_password !== null) {
+      return User::load($this->user->id())->field_gredi_dam_password->getValue()[0]['value'] ?? NULL;
+    }
+    return FALSE;
   }
 
   /**
@@ -120,7 +124,7 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
   public function loginWithCredentials() {
     $config = self::getConfig();
     $this->baseUrl = $config->get('domain');
-    $cookieDomain = parse_url($this->baseUrl)['host'];
+    $cookieDomain = parse_url($this->baseUrl);
     $username = $this->getGrediUsername();
     $password = $this->getGrediPassword();
     if (isset($username) && isset($password)) {
@@ -151,7 +155,7 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
 
           return CookieJar::fromArray([
             'JSESSIONID' => $result,
-          ], $cookieDomain);
+          ], $cookieDomain['host']);
         }
       }
       catch (ClientException $e) {
