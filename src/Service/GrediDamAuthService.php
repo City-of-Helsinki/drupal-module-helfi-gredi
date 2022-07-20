@@ -140,6 +140,7 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
     $cookieDomain = parse_url($this->baseUrl);
     $username = $this->getGrediUsername();
     $password = $this->getGrediPassword();
+
     if (isset($username) && isset($password)) {
 
       $data = [
@@ -197,8 +198,10 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getClientId() {
+    $config = self::getConfig();
+    $this->baseUrl = $config->get('domain');
     $apiCall = $this->guzzleClient->request('GET', $this->baseUrl . '/customerIds/' . self::CUSTOMER, [
-      'cookies' => $this->cookieJar,
+      'cookies' => $this->getCookieJar(),
     ]);
 
     return Json::decode($apiCall->getBody()->getContents())['id'];

@@ -2,6 +2,7 @@
 
 namespace Drupal\helfi_gredi_image\Plugin\EntityBrowser\Widget;
 
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -149,6 +150,13 @@ class Gredidam extends WidgetBase {
   protected $messenger;
 
   /**
+   * File system interfacer.
+   *
+   * @var FileSystemInterface
+   */
+  protected $fileSystem;
+
+  /**
    * Gredidam constructor.
    *
    * {@inheritdoc}
@@ -172,7 +180,8 @@ class Gredidam extends WidgetBase {
     ClientInterface $guzzleClient,
     PagerManagerInterface $pagerManager,
     GrediDamAuthService $grediDamAuthService,
-    MessengerInterface $messenger
+    MessengerInterface $messenger,
+    FileSystemInterface $file_system
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $event_dispatcher, $entity_type_manager, $validation_manager);
     $this->grediDamClient = $grediDamClient;
@@ -188,6 +197,7 @@ class Gredidam extends WidgetBase {
     $this->pagerManager = $pagerManager;
     $this->grediDamAuthService = $grediDamAuthService;
     $this->messenger = $messenger;
+    $this->fileSystem = $file_system;
   }
 
   /**
@@ -213,7 +223,8 @@ class Gredidam extends WidgetBase {
       $container->get('http_client'),
       $container->get('pager.manager'),
       $container->get('helfi_gredi_image.auth_service'),
-      $container->get('messenger')
+      $container->get('messenger'),
+      $container->get('file_system')
     );
   }
 
@@ -876,8 +887,11 @@ class Gredidam extends WidgetBase {
       if ($asset == NULL) {
         continue;
       }
+
+      $location = 'public://gredidam';
+      $this->fileSystem->prepareDirectory($location, FileSystemInterface::CREATE_DIRECTORY);
       $image_name = $asset->name . '.' . $this->getExtension($asset->mimeType);
-      $image_uri = 'public://gredidam/' . $image_name;
+      $image_uri = $location . $image_name;
       $resource = fopen($image_uri, 'w');
       $stream = Utils::streamFor($resource);
       $this->guzzleClient->request('GET', $asset->attachments, ['save_to' => $stream]);
