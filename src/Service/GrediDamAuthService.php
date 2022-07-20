@@ -112,8 +112,9 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
    * {@inheritDoc}
    */
   public function getGrediUsername() {
-    if (User::load($this->user->id())->field_gredi_dam_username !== null) {
-      return User::load($this->user->id())->field_gredi_dam_username->getValue()[0]['value'] ?? NULL;
+    $user_field = User::load($this->user->id())->field_gredi_dam_username;
+    if ($user_field !== NULL) {
+      return $user_field->getString() ?? NULL;
     }
     return FALSE;
   }
@@ -122,8 +123,9 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
    * {@inheritDoc}
    */
   public function getGrediPassword() {
-    if (User::load($this->user->id())->field_gredi_dam_password !== null) {
-      return User::load($this->user->id())->field_gredi_dam_password->getValue()[0]['value'] ?? NULL;
+    $pass_field = User::load($this->user->id())->field_gredi_dam_password;
+    if ($pass_field !== NULL) {
+      return $pass_field->getString() ?? NULL;
     }
     return FALSE;
   }
@@ -142,7 +144,6 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
     $password = $this->getGrediPassword();
 
     if (isset($username) && isset($password)) {
-
       $data = [
         'headers' => [
           'Content-Type' => 'application/json',

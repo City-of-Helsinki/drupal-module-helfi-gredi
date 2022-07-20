@@ -95,8 +95,8 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
     $this->guzzleClient = $guzzleClient;
     $this->config = $config;
     $this->grediDamAuthService = $grediDamAuthService;
-//    $this->cookieJar = $this->grediDamAuthService->getCookieJar();
-//    $this->customerId = $this->grediDamAuthService->getCustomerId();
+    // $this->cookieJar = $this->grediDamAuthService->getCookieJar();
+    // $this->customerId = $this->grediDamAuthService->getCustomerId();
     $this->baseUrl = $this->grediDamAuthService->getConfig()->get('domain');
   }
 

@@ -152,7 +152,7 @@ class Gredidam extends WidgetBase {
   /**
    * File system interfacer.
    *
-   * @var FileSystemInterface
+   * @var \Drupal\Core\File\FileSystemInterface
    */
   protected $fileSystem;
 
