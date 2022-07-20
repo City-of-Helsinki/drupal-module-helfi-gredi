@@ -89,19 +89,33 @@ class AssetUnitTest extends UnitTestCase {
 
     // Create Asset with the json input
     $result = $asset->fromJson($json);
-    // Transform the result to string to be able to compare.
-    $res_equals = json_encode($result);
 
-    // Assert if the returned object is of type Asset
+    // Assert if the returned object is of type Asset.
     $this->assertInstanceOf('\Drupal\helfi_gredi_image\Entity\Asset', $result, 'Object is of type Asset!');
-    // Assert if the properties from the Asset are identical with the JSON input === FAILING CASE
+
     $metadataHelperService = new AssetMetadataHelper(
       \Drupal::service('date.formatter'),
       \Drupal::service('helfi_gredi_image.dam_client')
     );
+
+    // Assertions for all return cases from AssetMetadataHelper.
     $this->assertEquals('1024', $metadataHelperService->getMetadataFromAsset($result, 'width'));
     $this->assertEquals('768', $metadataHelperService->getMetadataFromAsset($result, 'height'));
-    //$this->assertEquals($res_equals, $json);
+    // Resolution not available in the created asset => assertion fail.
+    $this->assertEquals('768', $metadataHelperService->getMetadataFromAsset($result, 'resolution'));
+    $this->assertEquals(NULL, $metadataHelperService->getMetadataFromAsset($result, 'keywords'));
+    $this->assertEquals(NULL, $metadataHelperService->getMetadataFromAsset($result, 'alt_text'));
+    $this->assertEquals('2982301', $metadataHelperService->getMetadataFromAsset($result, 'size'));
+    // Asset creates two ids: external_id and id => must be verified if needed both.
+    // For input 'id' assertion success.
+    $this->assertEquals('13584702', $metadataHelperService->getMetadataFromAsset($result, 'id'));
+    // For input 'external_id' assertion fail.
+    $this->assertEquals('13584702', $metadataHelperService->getMetadataFromAsset($result, 'external_id'));
+
+    $this->assertEquals('DSC00718_William_Velmala.JPG', $metadataHelperService->getMetadataFromAsset($result, 'name'));
+
+    // Dummy property must return NULL and shall not be created at all.
+    $this->assertEquals(NULL, $metadataHelperService->getMetadataFromAsset($result,'dummy'));
   }
 
 }
