@@ -172,7 +172,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
       $container->get('helfi_gredi_image.asset_media.factory'),
       $container->get('logger.factory'),
       $container->get('http_client'),
-      $container->get('helfi_gredi_image.asset_file.helper')
+      $container->get('helfi_gredi_image.auth_service')
     );
   }
 
