@@ -235,7 +235,7 @@ class Asset implements EntityInterface, \JsonSerializable {
           $asset->folderId = $folder_id;
         }
         elseif ($property == 'id') {
-          $asset->id = $json['id'];
+          $asset->external_id = $json['id'];
         }
         else {
           $asset->{$property} = $json[$property];

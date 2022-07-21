@@ -135,7 +135,7 @@ class AssetUnitTest extends UnitTestCase {
     $this->assertEquals(NULL, $metadataHelperService->getMetadataFromAsset($result, 'keywords'));
     $this->assertEquals(NULL, $metadataHelperService->getMetadataFromAsset($result, 'alt_text'));
     $this->assertEquals('2982301', $metadataHelperService->getMetadataFromAsset($result, 'size'));
-    $this->assertEquals('13584702', $metadataHelperService->getMetadataFromAsset($result, 'id'));
+    $this->assertEquals('13584702', $metadataHelperService->getMetadataFromAsset($result, 'external_id'));
     $this->assertEquals('DSC00718_William_Velmala.JPG', $metadataHelperService->getMetadataFromAsset($result, 'name'));
     // Dummy property must return NULL and shall not be created at all.
     $this->assertEquals(NULL, $metadataHelperService->getMetadataFromAsset($result,'dummy'));
