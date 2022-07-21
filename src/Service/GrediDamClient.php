@@ -58,7 +58,7 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
    *
    * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
-  protected $config;
+  protected ConfigFactoryInterface $config;
 
   /**
    * Customer ID.
@@ -69,8 +69,10 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
 
   /**
    * Gredi dam auth service.
+   *
+   * @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService
    */
-  protected $grediDamAuthService;
+  protected GrediDamAuthService $grediDamAuthService;
 
   /**
    * The base URL of the Gredi DAM API.
@@ -93,8 +95,8 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
     $this->guzzleClient = $guzzleClient;
     $this->config = $config;
     $this->grediDamAuthService = $grediDamAuthService;
-//    $this->cookieJar = $this->grediDamAuthService->getCookieJar();
-//    $this->customerId = $this->grediDamAuthService->getCustomerId();
+    // $this->cookieJar = $this->grediDamAuthService->getCookieJar();
+    // $this->customerId = $this->grediDamAuthService->getCustomerId();
     $this->baseUrl = $this->grediDamAuthService->getConfig()->get('domain');
   }
 
@@ -108,8 +110,6 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
       $container->get('helfi_gredi_image.auth_service')
     );
   }
-
-
 
   /**
    * {@inheritDoc}
