@@ -2,6 +2,8 @@
 
 namespace Drupal\helfi_gredi_image\Entity;
 
+use JetBrains\PhpStorm\ArrayShape;
+
 /**
  * Class Category.
  *

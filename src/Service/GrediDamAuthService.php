@@ -128,6 +128,7 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
     $username = $this->getGrediUsername();
     $password = $this->getGrediPassword();
 
+
     if (isset($username) && isset($password)) {
 
       $data = [
@@ -140,6 +141,7 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
         "password": "' . $password . '"
       }',
       ];
+
       try {
         $response = $this->guzzleClient->request(
           "POST",

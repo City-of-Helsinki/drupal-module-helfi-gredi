@@ -886,6 +886,8 @@ class Gredidam extends WidgetBase {
       }
 
       $location = 'public://gredidam';
+      \Drupal::service('helfi_gredi_image.asset_file.helper')->createNewFile($asset, $location);
+      die();
       $this->fileSystem->prepareDirectory($location, FileSystemInterface::CREATE_DIRECTORY);
       $image_name = $asset->name . '.' . $this->getExtension($asset->mimeType);
       $image_uri = $location . $image_name;

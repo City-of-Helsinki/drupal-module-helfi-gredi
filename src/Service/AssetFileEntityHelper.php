@@ -229,7 +229,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     // because the actual file format may differ than the file name (specially
     // for the images which are downloaded as png), we pass the filename
     // as a parameter so it can be overridden.
-    $filename = $asset->filename;
+    $filename = $asset->name;
     $file_contents = $this->fetchRemoteAssetData($asset, $filename);
     if ($file_contents === FALSE) {
       return FALSE;
@@ -269,33 +269,26 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
    */
   protected function fetchRemoteAssetData(Asset $asset, &$filename) {
     if ($this->config->get('transcode') === 'original') {
-      $download_url = $asset->links->download;
+      $download_url = $asset->attachments;
     }
-    elseif ($asset->file_properties->format_type === 'image') {
+    else {
       // If the module was configured to enforce an image size limit then we
       // need to grab the nearest matching pre-created size.
-      $size_limit = $this->config->get('size_limit');
 
-      $download_url = $this->assetImageHelper->getThumbnailUrlBySize($asset, $size_limit);
+      $download_url = $asset->apiContentLink;
 
       if (empty($download_url)) {
         $this->loggerChannel->warning(
           'Unable to save file for asset ID @asset_id.
            Thumbnail for request size (@size px) has not been found.', [
              '@asset_id' => $asset->external_id,
-             '@size' => $size_limit,
            ],
         );
         return FALSE;
       }
     }
-    else {
-      $original_url = $asset->embeds->original->url ?? '';
-      if ($original_url === '') {
-        return FALSE;
-      }
-      $download_url = str_replace('&download=true', '', $original_url);
-    }
+
+    dump($download_url);
 
     try {
       $response = $this->httpClient->get($download_url, [
