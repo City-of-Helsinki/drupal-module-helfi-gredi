@@ -14,7 +14,6 @@ source_configuration:
   source_field: field_external_id
 field_map:
   external_id: field_external_id
-  name: field_name
   width: field_width
   height: field_height
   resolution: field_resolution

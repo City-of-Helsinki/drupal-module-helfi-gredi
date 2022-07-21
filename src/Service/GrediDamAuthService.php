@@ -91,7 +91,7 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
    * {@inheritdoc}
    */
   public static function getConfig(): ImmutableConfig {
-    return \Drupal::config('gredi_dam.settings');
+    return \Drupal::config('helfi_gredi_image.settings');
   }
 
   /**

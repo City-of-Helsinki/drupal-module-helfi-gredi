@@ -321,7 +321,7 @@ class Gredidam extends WidgetBase {
       return ['#markup' => $markup];
     }
 
-    $config = $this->config->get('gredi_dam.settings');
+    $config = $this->config->get('helfi_gredi_image.settings');
 
     $modulePath = $this->moduleHandler->getModule('helfi_gredi_image')->getPath();
     // Attach the modal library.

@@ -253,7 +253,7 @@ class Asset implements EntityInterface, \JsonSerializable {
   public static function getAssetRemoteBaseUrl(): string {
     /** @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
     $config_factory = \Drupal::service('config.factory');
-    $module_config = $config_factory->get('gredi_dam.settings');
+    $module_config = $config_factory->get('helfi_gredi_image.settings');
     $base_url = trim($module_config->get('domain'));
     $base_url_parts = parse_url($base_url);
 
