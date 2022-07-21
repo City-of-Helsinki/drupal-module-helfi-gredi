@@ -9,7 +9,6 @@ dependencies:
     - field.field.media.gredi_dam_assets.field_height
     - field.field.media.gredi_dam_assets.field_keywords
     - field.field.media.gredi_dam_assets.field_media_image
-    - field.field.media.gredi_dam_assets.field_name
     - field.field.media.gredi_dam_assets.field_resolution
     - field.field.media.gredi_dam_assets.field_size
     - field.field.media.gredi_dam_assets.field_width
@@ -40,7 +39,6 @@ hidden:
   field_height: true
   field_keywords: true
   field_media_image: true
-  field_name: true
   field_resolution: true
   field_size: true
   field_width: true

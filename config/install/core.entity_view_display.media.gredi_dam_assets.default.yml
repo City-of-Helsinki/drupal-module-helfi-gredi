@@ -8,7 +8,6 @@ dependencies:
     - field.field.media.gredi_dam_assets.field_height
     - field.field.media.gredi_dam_assets.field_keywords
     - field.field.media.gredi_dam_assets.field_media_image
-    - field.field.media.gredi_dam_assets.field_name
     - field.field.media.gredi_dam_assets.field_resolution
     - field.field.media.gredi_dam_assets.field_size
     - field.field.media.gredi_dam_assets.field_width
@@ -61,14 +60,6 @@ content:
         attribute: lazy
     third_party_settings: {  }
     weight: 4
-    region: content
-  field_name:
-    type: string
-    label: above
-    settings:
-      link_to_entity: false
-    third_party_settings: {  }
-    weight: 6
     region: content
   field_resolution:
     type: string
