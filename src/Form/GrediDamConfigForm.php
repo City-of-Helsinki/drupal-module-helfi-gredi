@@ -58,7 +58,7 @@ class GrediDamConfigForm extends ConfigFormBase {
    */
   protected function getEditableConfigNames() {
     return [
-      'gredi_dam.settings',
+      'helfi_gredi_image.settings',
     ];
   }
 
@@ -66,7 +66,7 @@ class GrediDamConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
-    $config = $this->config('gredi_dam.settings');
+    $config = $this->config('helfi_gredi_image.settings');
 
     $form['domain'] = [
       '#type' => 'fieldset',
@@ -172,7 +172,7 @@ class GrediDamConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
-    $this->config('gredi_dam.settings')
+    $this->config('helfi_gredi_image.settings')
       ->set('domain', $form_state->getValue('domain_value'))
       ->set('user', $form_state->getValue('drupal_gredidam_user'))
       ->set('pass', $form_state->getValue('drupal_gredidam_password'))
