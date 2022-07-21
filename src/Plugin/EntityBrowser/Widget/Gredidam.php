@@ -2,6 +2,7 @@
 
 namespace Drupal\helfi_gredi_image\Plugin\EntityBrowser\Widget;
 
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -10,6 +11,7 @@ use Drupal\entity_browser\WidgetBase;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\Form\GrediDamConfigForm;
+use Drupal\helfi_gredi_image\Service\AssetFileEntityHelper;
 use Drupal\helfi_gredi_image\Service\GrediDamAuthService;
 use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\media\Entity\Media;
@@ -136,15 +138,29 @@ class Gredidam extends WidgetBase {
 
   /**
    * Gredi dam auth service.
+   *
+   * @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService
    */
   protected $grediDamAuthService;
 
   /**
    * Messenger var.
    *
-   * @var MessengerInterface
+   * @var \Drupal\Core\Messenger\MessengerInterface
    */
   protected $messenger;
+
+  /**
+   * File system interfacer.
+   *
+   * @var \Drupal\Core\File\FileSystemInterface
+   */
+  protected $fileSystem;
+
+  /**
+   * Gredi DAM File Helper.
+   */
+  protected $fileHelper;
 
   /**
    * Gredidam constructor.
@@ -170,7 +186,9 @@ class Gredidam extends WidgetBase {
     ClientInterface $guzzleClient,
     PagerManagerInterface $pagerManager,
     GrediDamAuthService $grediDamAuthService,
-    MessengerInterface $messenger
+    MessengerInterface $messenger,
+    FileSystemInterface $file_system,
+    AssetFileEntityHelper $assetFileEntityHelper
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $event_dispatcher, $entity_type_manager, $validation_manager);
     $this->grediDamClient = $grediDamClient;
@@ -186,6 +204,8 @@ class Gredidam extends WidgetBase {
     $this->pagerManager = $pagerManager;
     $this->grediDamAuthService = $grediDamAuthService;
     $this->messenger = $messenger;
+    $this->fileSystem = $file_system;
+    $this->fileHelper = $assetFileEntityHelper;
   }
 
   /**
@@ -211,7 +231,9 @@ class Gredidam extends WidgetBase {
       $container->get('http_client'),
       $container->get('pager.manager'),
       $container->get('helfi_gredi_image.auth_service'),
-      $container->get('messenger')
+      $container->get('messenger'),
+      $container->get('file_system'),
+      $container->get('helfi_gredi_image.asset_file.helper')
     );
   }
 
@@ -259,6 +281,7 @@ class Gredidam extends WidgetBase {
 
   /**
    * {@inheritdoc}
+   *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getForm(array &$original_form, FormStateInterface $form_state, array $additional_widget_parameters) {
@@ -281,12 +304,22 @@ class Gredidam extends WidgetBase {
     $user = User::load($this->user->id());
 
     if (!isset($user->field_gredi_dam_username->getValue()[0]['value']) || !isset($user->field_gredi_dam_password->getValue()[0]['value'])) {
-      return $this->messenger->addError($this->t('You have to fill Gredi DAM Username and Password in @user_profile', [
-        '@user_profile' => Link::createFromRoute(t('user edit'), 'entity.user.edit_form', [
-          'user' => $this->user->id()])->toString()
-        ]));
+      $userProfileEditLink = Link::createFromRoute(t('user edit'),
+        'entity.user.edit_form',
+        [
+          'user' => $this->user->id(),
+        ],
+        [
+          'attributes' => [
+            "target" => "_blank",
+          ],
+        ]
+      )->toString();
+      $markup = $this->t('You have to fill Gredi DAM Username and Password in @user_profile_edit_link!', [
+        '@user_profile_edit_link' => $userProfileEditLink,
+      ]);
+      return ['#markup' => $markup];
     }
-
 
     $config = $this->config->get('gredi_dam.settings');
 
@@ -873,19 +906,9 @@ class Gredidam extends WidgetBase {
       if ($asset == NULL) {
         continue;
       }
-      $image_name = $asset->name . '.' . $this->getExtension($asset->mimeType);
-      $image_uri = 'public://gredidam/' . $image_name;
-      $resource = fopen($image_uri, 'w');
-      $stream = Utils::streamFor($resource);
-      $this->guzzleClient->request('GET', $asset->attachments, ['save_to' => $stream]);
 
-      $file = File::create([
-        'uid' => $this->user->id(),
-        'filename' => $image_name,
-        'uri' => $image_uri,
-        'status' => 1,
-      ]);
-      $file->save();
+      $location = 'public://gredidam';
+      $file = $this->fileHelper->createNewFile($asset, $location);
 
       $entity = Media::create([
         'bundle' => $media_type->id(),

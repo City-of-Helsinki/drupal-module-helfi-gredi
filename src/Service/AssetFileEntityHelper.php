@@ -101,6 +101,13 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
   protected $httpClient;
 
   /**
+   * Gredi DAM Auth Service.
+   *
+   * @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService
+   */
+  protected $grediDamAuthService;
+
+  /**
    * AssetFileEntityHelper constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
@@ -134,7 +141,8 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     GrediDamClient $grediDamClient,
     AssetMediaFactory $assetMediaFactory,
     LoggerChannelFactoryInterface $loggerChannelFactory,
-    Client $client) {
+    Client $client,
+    GrediDamAuthService $authService) {
     $this->entityTypeManager = $entityTypeManager;
     $this->entityFieldManager = $entityFieldManager;
     $this->configFactory = $configFactory;
@@ -146,6 +154,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     $this->assetMediaFactory = $assetMediaFactory;
     $this->loggerChannel = $loggerChannelFactory->get('media_gredidam');
     $this->httpClient = $client;
+    $this->grediDamAuthService = $authService;
   }
 
   /**
@@ -162,7 +171,8 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
       $container->get('helfi_gredi_image.dam_client'),
       $container->get('helfi_gredi_image.asset_media.factory'),
       $container->get('logger.factory'),
-      $container->get('http_client')
+      $container->get('http_client'),
+      $container->get('helfi_gredi_image.auth_service')
     );
   }
 
@@ -229,7 +239,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     // because the actual file format may differ than the file name (specially
     // for the images which are downloaded as png), we pass the filename
     // as a parameter so it can be overridden.
-    $filename = $asset->filename;
+    $filename = $asset->name;
     $file_contents = $this->fetchRemoteAssetData($asset, $filename);
     if ($file_contents === FALSE) {
       return FALSE;
@@ -264,59 +274,52 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
    * @param string $filename
    *   The filename as a reference so it can be overridden.
    *
-   * @return false|string
+   * @return false|string[]
    *   The remote asset contents or FALSE on failure.
    */
   protected function fetchRemoteAssetData(Asset $asset, &$filename) {
     if ($this->config->get('transcode') === 'original') {
-      $download_url = $asset->links->download;
+      $download_url = $asset->attachments;
     }
-    elseif ($asset->file_properties->format_type === 'image') {
+    else {
       // If the module was configured to enforce an image size limit then we
       // need to grab the nearest matching pre-created size.
-      $size_limit = $this->config->get('size_limit');
-
-      $download_url = $this->assetImageHelper->getThumbnailUrlBySize($asset, $size_limit);
+      $remote_base_url = Asset::getAssetRemoteBaseUrl();
+      $download_url = $remote_base_url . $asset->apiContentLink;
 
       if (empty($download_url)) {
         $this->loggerChannel->warning(
           'Unable to save file for asset ID @asset_id.
-           Thumbnail for request size (@size px) has not been found.', [
+           Thumbnail has not been found.', [
              '@asset_id' => $asset->external_id,
-             '@size' => $size_limit,
            ],
         );
         return FALSE;
       }
     }
-    else {
-      $original_url = $asset->embeds->original->url ?? '';
-      if ($original_url === '') {
-        return FALSE;
-      }
-      $download_url = str_replace('&download=true', '', $original_url);
-    }
+
 
     try {
       $response = $this->httpClient->get($download_url, [
         'allow_redirects' => [
           'track_redirects' => TRUE,
         ],
+        'cookies' => $this->grediDamAuthService->getCookieJar(),
       ]);
 
       $size = $response->getBody()->getSize();
 
       if ($size === NULL || $size === 0) {
         $this->loggerChannel->error('Unable to download contents for asset ID @asset_id.
-        Received zero-byte response for download URL @url with redirects to @history',
+        Received zero-byte response for download URL @url',
         [
           '@asset_id' => $asset->external_id,
           '@url' => $download_url,
-          '@history' => $response->getHeaderLine('X-Guzzle-Redirect-History'),
         ]);
         return FALSE;
       }
       $file_contents = (string) $response->getBody();
+
       if ($response->hasHeader('Content-Disposition')) {
         $disposition = $response->getHeader('Content-Disposition')[0];
         preg_match('/filename="(.*)"/', $disposition, $matches);

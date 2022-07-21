@@ -58,7 +58,7 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
    *
    * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
-  protected $config;
+  protected ConfigFactoryInterface $config;
 
   /**
    * Customer ID.
@@ -69,8 +69,10 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
 
   /**
    * Gredi dam auth service.
+   *
+   * @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService
    */
-  protected $grediDamAuthService;
+  protected GrediDamAuthService $grediDamAuthService;
 
   /**
    * The base URL of the Gredi DAM API.
@@ -93,8 +95,8 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
     $this->guzzleClient = $guzzleClient;
     $this->config = $config;
     $this->grediDamAuthService = $grediDamAuthService;
-    $this->cookieJar = $this->grediDamAuthService->getCookieJar();
-    $this->customerId = $this->grediDamAuthService->getCustomerId();
+    // $this->cookieJar = $this->grediDamAuthService->getCookieJar();
+    // $this->customerId = $this->grediDamAuthService->getCustomerId();
     $this->baseUrl = $this->grediDamAuthService->getConfig()->get('domain');
   }
 
@@ -109,8 +111,6 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
     );
   }
 
-
-
   /**
    * {@inheritDoc}
    */
@@ -123,11 +123,11 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
       }
     }
 
-    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/customers/' . $this->customerId . '/contents?include=attachments' . $parameters, [
+    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/customers/' . $this->grediDamAuthService->getCustomerId() . '/contents?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
-      'cookies' => $this->cookieJar,
+      'cookies' => $this->grediDamAuthService->getCookieJar(),
     ]);
     $posts = $userContent->getBody()->getContents();
     $content = [];
@@ -163,7 +163,7 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
       'headers' => [
         'Content-Type' => 'application/json',
       ],
-      'cookies' => $this->cookieJar,
+      'cookies' => $this->grediDamAuthService->getCookieJar(),
     ]);
     $posts = $userContent->getBody()->getContents();
     $contents = [];
@@ -214,7 +214,7 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
         'headers' => [
           'Content-Type' => 'application/json',
         ],
-        'cookies' => $this->cookieJar,
+        'cookies' => $this->grediDamAuthService->getCookieJar(),
       ]
     );
 

@@ -145,6 +145,11 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $mimeType;
 
   /**
+   * Api content link
+   */
+  public $apiContentLink;
+
+  /**
    * A list of allowed values for the "expand" query attribute.
    *
    * @return string[]
@@ -209,6 +214,7 @@ class Asset implements EntityInterface, \JsonSerializable {
       'deleted_date',
       'released_and_not_expired',
       'attachments',
+      'apiContentLink',
     ];
     $remote_asset_url = self::getAssetRemoteBaseUrl();
     // Copy all the simple properties.
@@ -249,9 +255,13 @@ class Asset implements EntityInterface, \JsonSerializable {
     /** @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
     $config_factory = \Drupal::service('config.factory');
     $module_config = $config_factory->get('gredi_dam.settings');
-    $base_url = $module_config->get('domain');
+    $base_url = trim($module_config->get('domain'));
     $base_url_parts = parse_url($base_url);
-    return $base_url_parts['scheme'] . '://' . $base_url_parts['host'];
+
+    return sprintf("%s://%s",
+      $base_url_parts['scheme'],
+      $base_url_parts['host'],
+    );
   }
 
   /**
