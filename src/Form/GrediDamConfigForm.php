@@ -147,21 +147,19 @@ class GrediDamConfigForm extends ConfigFormBase {
         'domain_value',
         $this->t('Provided domain is not valid.')
       );
-
       return;
     }
 
     $user = Xss::filter($form_state->getValue('drupal_gredidam_user'));
-    $pass = Xss::filter($form_state->getValue('drupal_gredidam_password'));
     if (!$user) {
       $form_state->setErrorByName(
         'drupal_gredidam_user',
         $this->t('Provided username is not valid.')
       );
-
       return;
     }
 
+    $pass = Xss::filter($form_state->getValue('drupal_gredidam_password'));
     if (!$pass) {
       $form_state->setErrorByName(
         'drupal_gredidam_password',
@@ -180,14 +178,6 @@ class GrediDamConfigForm extends ConfigFormBase {
       ->set('pass', $form_state->getValue('drupal_gredidam_password'))
       ->set('num_assets_per_page', $form_state->getValue('num_assets_per_page'))
       ->save();
-    if (\Drupal::moduleHandler()->moduleExists('helfi_gredi_image')) {
-      $this->configFactory->getEditable('gredi_dam.settings')
-        ->set('domain', $form_state->getValue('domain_value'))
-        ->set('user', $form_state->getValue('drupal_gredidam_user'))
-        ->set('pass', $form_state->getValue('drupal_gredidam_password'))
-        ->set('num_assets_per_page', $form_state->getValue('num_assets_per_page'))
-        ->save();
-    }
 
     parent::submitForm($form, $form_state);
   }

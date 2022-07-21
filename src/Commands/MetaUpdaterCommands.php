@@ -88,7 +88,7 @@ class MetaUpdaterCommands extends DrushCommands implements ContainerInjectionInt
         watchdog_exception('GrediMetaData', $e);
       }
     }
-    echo $counter . ' Gredi Assets metadata Updated!' . PHP_EOL;
+    echo sprintf("%d Gredi asset metadata updated!", $counter) . PHP_EOL;
   }
 
 }

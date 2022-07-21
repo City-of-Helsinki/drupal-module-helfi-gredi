@@ -11,6 +11,9 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
 
+/**
+ * Gredi DAM authentication service.
+ */
 class GrediDamAuthService implements GrediDamAuthServiceInterface {
 
   /**
@@ -69,7 +72,17 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
    */
   protected $user;
 
-  public function __construct (ClientInterface $guzzleClient, AccountInterface $account) {
+  /**
+   * Class constructor.
+   *
+   * @param \GuzzleHttp\ClientInterface $guzzleClient
+   *   HTTP client.
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   User account.
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
+  public function __construct(ClientInterface $guzzleClient, AccountInterface $account) {
     $this->guzzleClient = $guzzleClient;
     $this->user = $account;
   }
@@ -90,17 +103,26 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
 
   /**
    * {@inheritDoc}
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getCustomerId() {
-    return $this->getClientId();
+    $config = self::getConfig();
+    $this->baseUrl = $config->get('domain');
+    $apiCall = $this->guzzleClient->request('GET', $this->baseUrl . '/customerIds/' . self::CUSTOMER, [
+      'cookies' => $this->getCookieJar(),
+    ]);
+
+    return Json::decode($apiCall->getBody()->getContents())['id'];
   }
 
   /**
    * {@inheritDoc}
    */
   public function getGrediUsername() {
-    if (User::load($this->user->id())->field_gredi_dam_username !== null) {
-      return User::load($this->user->id())->field_gredi_dam_username->getValue()[0]['value'] ?? NULL;
+    $user_field = User::load($this->user->id())->field_gredi_dam_username;
+    if ($user_field !== NULL) {
+      return $user_field->getString() ?? NULL;
     }
     return FALSE;
   }
@@ -109,8 +131,9 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
    * {@inheritDoc}
    */
   public function getGrediPassword() {
-    if (User::load($this->user->id())->field_gredi_dam_password !== null) {
-      return User::load($this->user->id())->field_gredi_dam_password->getValue()[0]['value'] ?? NULL;
+    $pass_field = User::load($this->user->id())->field_gredi_dam_password;
+    if ($pass_field !== NULL) {
+      return $pass_field->getString() ?? NULL;
     }
     return FALSE;
   }
@@ -130,7 +153,6 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
 
 
     if (isset($username) && isset($password)) {
-
       $data = [
         'headers' => [
           'Content-Type' => 'application/json',
@@ -172,8 +194,9 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
         );
 
       }
-    } else {
-      return null;
+    }
+    else {
+      return NULL;
     }
   }
 
@@ -186,12 +209,6 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getClientId() {
-    $config = self::getConfig();
-    $this->baseUrl = $config->get('domain');
-    $apiCall = $this->guzzleClient->request('GET', $this->baseUrl . '/customerIds/' . self::CUSTOMER, [
-      'cookies' => $this->getCookieJar(),
-    ]);
-
-    return Json::decode($apiCall->getBody()->getContents())['id'];
   }
+
 }
