@@ -198,7 +198,6 @@ class Asset implements EntityInterface, \JsonSerializable {
    * {@inheritdoc}
    */
   public static function fromJson($json, $folder_id = NULL) {
-
     if (is_string($json)) {
       $json = Json::decode($json);
     }
@@ -235,6 +234,7 @@ class Asset implements EntityInterface, \JsonSerializable {
           $asset->folderId = $folder_id;
         }
         elseif ($property == 'id') {
+          $asset->id = $json['id'];
           $asset->external_id = $json['id'];
         }
         else {
