@@ -200,15 +200,4 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
     }
   }
 
-  /**
-   * Function to retrieve customer ID.
-   *
-   * @return mixed
-   *   Customer ID.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
-   */
-  public function getClientId() {
-  }
-
 }

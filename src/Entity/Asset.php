@@ -257,10 +257,11 @@ class Asset implements EntityInterface, \JsonSerializable {
     $module_config = $config_factory->get('gredi_dam.settings');
     $base_url = trim($module_config->get('domain'));
     $base_url_parts = parse_url($base_url);
-    return sprintf("%s://%s", [
+
+    return sprintf("%s://%s",
       $base_url_parts['scheme'],
       $base_url_parts['host'],
-    ]);
+    );
   }
 
   /**
