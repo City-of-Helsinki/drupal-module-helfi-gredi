@@ -122,8 +122,8 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
         $parameters .= '&' . $key . '=' . $param;
       }
     }
-
-    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/customers/' . $this->grediDamAuthService->getCustomerId() . '/contents?include=attachments' . $parameters, [
+    $customerId = $this->grediDamAuthService->getCustomerId();
+    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/customers/' . $customerId . '/contents?include=attachments' . $parameters, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
