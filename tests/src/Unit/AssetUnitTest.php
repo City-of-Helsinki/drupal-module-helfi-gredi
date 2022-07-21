@@ -15,7 +15,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 class AssetUnitTest extends UnitTestCase {
 
   /**
-   * Set up for fromJson testing.
+   * Set up testing services.
    *
    * @return void
    */
@@ -49,7 +49,7 @@ class AssetUnitTest extends UnitTestCase {
   }
 
   /**
-   * Unit test for FromJson method.
+   * Unit test for fromJson method.
    *
    * @return void
    */
@@ -76,10 +76,40 @@ class AssetUnitTest extends UnitTestCase {
       "folder" => false,
       "attachments" => [
         [
-          "propertiesById" => [
-            "nibo:image-width" => "1024",
-            "nibo:image-height" => "768",
+          "id" => "original",
+          "type" => "original",
+          "profileUsage" => 0,
+          "publicTicket" => "1615665b1ff88abc6803030601a48318",
+          "publicLink" => "/NiboWEB/helsinki/getPublicFile.do?uuid=13584702&inline=false&ticket=1615665b1ff88abc6803030601a48318&type=original",
+          "namesByLang" => [
+          "fi" => "Originaali",
+              "en" => "Original"
           ],
+          "propertiesById" => [
+            "nibo:image-resolution-x" => "100",
+            "nibo:image-width" => "6000",
+            "nibo:image-resolution-y" => "100",
+            "nibo:image-height-pts" => "2880.0",
+            "nibo:name" => "DSC00718_William_Velmala.JPG",
+            "nibo:image-units" => "Undefined",
+            "nibo:image-colorspace" => "RGB",
+            "nibo:image-width-pts" => "4320.0",
+            "nibo:image-height" => "4000",
+            "nibo:image-height-px" => "4000",
+            "nibo:image-resolution" => "100x100",
+            "nibo:image-width-inches" => "60.0",
+            "nibo:image-height-inches" => "40.0",
+            "nibo:file-size" => "2982301",
+            "nibo:image-depth" => "8-bit",
+            "nibo:image-type" => "TrueColor",
+            "nibo:image-orientation" => "Undefined",
+            "nibo:image-class" => "DirectClass",
+            "nibo:mime-type" => "image/jpeg",
+            "nibo:image-format" => "JPEG (Joint Photographic Experts Group JFIF format)",
+            "nibo:image-height-mm" => "1016.0",
+            "nibo:image-width-px" => "6000",
+            "nibo:image-width-mm" => "1524.0"
+            ]
         ],
       ],
     ]);
@@ -99,21 +129,14 @@ class AssetUnitTest extends UnitTestCase {
     );
 
     // Assertions for all return cases from AssetMetadataHelper.
-    $this->assertEquals('1024', $metadataHelperService->getMetadataFromAsset($result, 'width'));
-    $this->assertEquals('768', $metadataHelperService->getMetadataFromAsset($result, 'height'));
-    // Resolution not available in the created asset => assertion fail.
-    $this->assertEquals('768', $metadataHelperService->getMetadataFromAsset($result, 'resolution'));
+    $this->assertEquals('6000', $metadataHelperService->getMetadataFromAsset($result, 'width'));
+    $this->assertEquals('4000', $metadataHelperService->getMetadataFromAsset($result, 'height'));
+    $this->assertEquals('100x100', $metadataHelperService->getMetadataFromAsset($result, 'resolution'));
     $this->assertEquals(NULL, $metadataHelperService->getMetadataFromAsset($result, 'keywords'));
     $this->assertEquals(NULL, $metadataHelperService->getMetadataFromAsset($result, 'alt_text'));
     $this->assertEquals('2982301', $metadataHelperService->getMetadataFromAsset($result, 'size'));
-    // Asset creates two ids: external_id and id => must be verified if needed both.
-    // For input 'id' assertion success.
     $this->assertEquals('13584702', $metadataHelperService->getMetadataFromAsset($result, 'id'));
-    // For input 'external_id' assertion fail.
-    $this->assertEquals('13584702', $metadataHelperService->getMetadataFromAsset($result, 'external_id'));
-
     $this->assertEquals('DSC00718_William_Velmala.JPG', $metadataHelperService->getMetadataFromAsset($result, 'name'));
-
     // Dummy property must return NULL and shall not be created at all.
     $this->assertEquals(NULL, $metadataHelperService->getMetadataFromAsset($result,'dummy'));
   }

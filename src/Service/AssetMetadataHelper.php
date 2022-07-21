@@ -162,8 +162,8 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
       case 'size':
         return $asset->size;
 
-      case 'external_id':
-        return $asset->external_id;
+      case 'id':
+        return $asset->id;
 
       case 'name':
         return $asset->name;
