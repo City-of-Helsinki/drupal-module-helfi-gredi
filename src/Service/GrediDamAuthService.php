@@ -151,6 +151,7 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
     $username = $this->getGrediUsername();
     $password = $this->getGrediPassword();
 
+
     if (isset($username) && isset($password)) {
       $data = [
         'headers' => [
@@ -162,6 +163,7 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
         "password": "' . $password . '"
       }',
       ];
+
       try {
         $response = $this->guzzleClient->request(
           "POST",
@@ -196,17 +198,6 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
     else {
       return NULL;
     }
-  }
-
-  /**
-   * Function to retrieve customer ID.
-   *
-   * @return mixed
-   *   Customer ID.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
-   */
-  public function getClientId() {
   }
 
 }
