@@ -30,8 +30,6 @@ use Drupal\user\UserDataInterface;
 use Drupal\media\MediaSourceManager;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Url;
-use GuzzleHttp\Psr7\Utils;
-use Drupal\file\Entity\File;
 
 /**
  * Uses a view to provide entity listing in a browser's widget.
@@ -159,6 +157,8 @@ class Gredidam extends WidgetBase {
 
   /**
    * Gredi DAM File Helper.
+   *
+   * @var \Drupal\helfi_gredi_image\Service\AssetFileEntityHelper
    */
   protected $fileHelper;
 

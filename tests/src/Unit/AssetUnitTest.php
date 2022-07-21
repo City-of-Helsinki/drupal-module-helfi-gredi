@@ -16,10 +16,8 @@ class AssetUnitTest extends UnitTestCase {
 
   /**
    * Set up testing services.
-   *
-   * @return void
    */
-  public function setUp():void {
+  public function setUp(): void {
     parent::setUp();
 
     $config_map = [
@@ -50,8 +48,6 @@ class AssetUnitTest extends UnitTestCase {
 
   /**
    * Unit test for fromJson method.
-   *
-   * @return void
    */
   public function testFromJson() {
     $json = json_encode([
@@ -65,15 +61,15 @@ class AssetUnitTest extends UnitTestCase {
       "mimeGroup" => "picture",
       "mimeType" => "image/jpeg",
       "entryType" => "concrete",
-      "archive" => false,
+      "archive" => FALSE,
       "apiLink" => "/api/v1/files/13584702",
       "apiContentLink" => "/api/v1/files/13584702/contents/original",
       "name" => "DSC00718_William_Velmala.JPG",
       "language" => "fi",
       "score" => 0.5,
-      "indicateSynkka" => false,
-      "hasPublicSharingValidityPeriod" => false,
-      "folder" => false,
+      "indicateSynkka" => FALSE,
+      "hasPublicSharingValidityPeriod" => FALSE,
+      "folder" => FALSE,
       "attachments" => [
         [
           "id" => "original",
@@ -82,8 +78,8 @@ class AssetUnitTest extends UnitTestCase {
           "publicTicket" => "1615665b1ff88abc6803030601a48318",
           "publicLink" => "/NiboWEB/helsinki/getPublicFile.do?uuid=13584702&inline=false&ticket=1615665b1ff88abc6803030601a48318&type=original",
           "namesByLang" => [
-          "fi" => "Originaali",
-              "en" => "Original"
+            "fi" => "Originaali",
+            "en" => "Original",
           ],
           "propertiesById" => [
             "nibo:image-resolution-x" => "100",
@@ -108,16 +104,16 @@ class AssetUnitTest extends UnitTestCase {
             "nibo:image-format" => "JPEG (Joint Photographic Experts Group JFIF format)",
             "nibo:image-height-mm" => "1016.0",
             "nibo:image-width-px" => "6000",
-            "nibo:image-width-mm" => "1524.0"
-            ]
+            "nibo:image-width-mm" => "1524.0",
+          ],
         ],
       ],
     ]);
 
-    //Create new Asset.
+    // Create new Asset.
     $asset = new Asset();
 
-    // Create Asset with the json input
+    // Create Asset with the json input.
     $result = $asset->fromJson($json);
 
     // Assert if the returned object is of type Asset.
@@ -138,7 +134,7 @@ class AssetUnitTest extends UnitTestCase {
     $this->assertEquals('13584702', $metadataHelperService->getMetadataFromAsset($result, 'external_id'));
     $this->assertEquals('DSC00718_William_Velmala.JPG', $metadataHelperService->getMetadataFromAsset($result, 'name'));
     // Dummy property must return NULL and shall not be created at all.
-    $this->assertEquals(NULL, $metadataHelperService->getMetadataFromAsset($result,'dummy'));
+    $this->assertEquals(NULL, $metadataHelperService->getMetadataFromAsset($result, 'dummy'));
   }
 
 }

@@ -145,7 +145,9 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $mimeType;
 
   /**
-   * Api content link
+   * Api content link.
+   *
+   * @var string
    */
   public $apiContentLink;
 

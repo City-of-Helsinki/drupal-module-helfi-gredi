@@ -151,7 +151,6 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
     $username = $this->getGrediUsername();
     $password = $this->getGrediPassword();
 
-
     if (isset($username) && isset($password)) {
       $data = [
         'headers' => [

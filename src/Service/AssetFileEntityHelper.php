@@ -130,6 +130,8 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
    *   The Drupal LoggerChannelFactory service.
    * @param \GuzzleHttp\Client $client
    *   The HTTP client.
+   * @param \Drupal\helfi_gredi_image\Service\GrediDamAuthService $authService
+   *   Authentication service.
    */
   public function __construct(
     EntityTypeManagerInterface $entityTypeManager,
@@ -297,7 +299,6 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
         return FALSE;
       }
     }
-
 
     try {
       $response = $this->httpClient->get($download_url, [
