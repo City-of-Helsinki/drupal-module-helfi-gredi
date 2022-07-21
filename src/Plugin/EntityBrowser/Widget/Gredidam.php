@@ -11,6 +11,7 @@ use Drupal\entity_browser\WidgetBase;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\Form\GrediDamConfigForm;
+use Drupal\helfi_gredi_image\Service\AssetFileEntityHelper;
 use Drupal\helfi_gredi_image\Service\GrediDamAuthService;
 use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\media\Entity\Media;
@@ -157,6 +158,11 @@ class Gredidam extends WidgetBase {
   protected $fileSystem;
 
   /**
+   * Gredi DAM File Helper.
+   */
+  protected $fileHelper;
+
+  /**
    * Gredidam constructor.
    *
    * {@inheritdoc}
@@ -181,7 +187,8 @@ class Gredidam extends WidgetBase {
     PagerManagerInterface $pagerManager,
     GrediDamAuthService $grediDamAuthService,
     MessengerInterface $messenger,
-    FileSystemInterface $file_system
+    FileSystemInterface $file_system,
+    AssetFileEntityHelper $assetFileEntityHelper
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $event_dispatcher, $entity_type_manager, $validation_manager);
     $this->grediDamClient = $grediDamClient;
@@ -198,6 +205,7 @@ class Gredidam extends WidgetBase {
     $this->grediDamAuthService = $grediDamAuthService;
     $this->messenger = $messenger;
     $this->fileSystem = $file_system;
+    $this->fileHelper = $assetFileEntityHelper;
   }
 
   /**
@@ -224,7 +232,8 @@ class Gredidam extends WidgetBase {
       $container->get('pager.manager'),
       $container->get('helfi_gredi_image.auth_service'),
       $container->get('messenger'),
-      $container->get('file_system')
+      $container->get('file_system'),
+      $container->get('helfi_gredi_image.asset_file.helper')
     );
   }
 
@@ -899,20 +908,7 @@ class Gredidam extends WidgetBase {
       }
 
       $location = 'public://gredidam';
-      $this->fileSystem->prepareDirectory($location, FileSystemInterface::CREATE_DIRECTORY);
-      $image_name = $asset->name . '.' . $this->getExtension($asset->mimeType);
-      $image_uri = $location . $image_name;
-      $resource = fopen($image_uri, 'w');
-      $stream = Utils::streamFor($resource);
-      $this->guzzleClient->request('GET', $asset->attachments, ['save_to' => $stream]);
-
-      $file = File::create([
-        'uid' => $this->user->id(),
-        'filename' => $image_name,
-        'uri' => $image_uri,
-        'status' => 1,
-      ]);
-      $file->save();
+      $file = $this->fileHelper->createNewFile($asset, $location);
 
       $entity = Media::create([
         'bundle' => $media_type->id(),

@@ -145,6 +145,11 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $mimeType;
 
   /**
+   * Api content link
+   */
+  public $apiContentLink;
+
+  /**
    * A list of allowed values for the "expand" query attribute.
    *
    * @return string[]
@@ -208,6 +213,7 @@ class Asset implements EntityInterface, \JsonSerializable {
       'deleted_date',
       'released_and_not_expired',
       'attachments',
+      'apiContentLink',
     ];
     $remote_asset_url = self::getAssetRemoteBaseUrl();
     // Copy all the simple properties.
