@@ -103,9 +103,17 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
 
   /**
    * {@inheritDoc}
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getCustomerId() {
-    return $this->getClientId();
+    $config = self::getConfig();
+    $this->baseUrl = $config->get('domain');
+    $apiCall = $this->guzzleClient->request('GET', $this->baseUrl . '/customerIds/' . self::CUSTOMER, [
+      'cookies' => $this->getCookieJar(),
+    ]);
+
+    return Json::decode($apiCall->getBody()->getContents())['id'];
   }
 
   /**
@@ -199,13 +207,6 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getClientId() {
-    $config = self::getConfig();
-    $this->baseUrl = $config->get('domain');
-    $apiCall = $this->guzzleClient->request('GET', $this->baseUrl . '/customerIds/' . self::CUSTOMER, [
-      'cookies' => $this->getCookieJar(),
-    ]);
-
-    return Json::decode($apiCall->getBody()->getContents())['id'];
   }
 
 }

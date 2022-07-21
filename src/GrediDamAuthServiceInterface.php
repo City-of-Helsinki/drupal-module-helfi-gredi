@@ -27,7 +27,7 @@ interface GrediDamAuthServiceInterface {
   public function getCookieJar(): ?CookieJar;
 
   /**
-   * Get customer id.
+   * Get customer ID.
    *
    * @return mixed
    *   Customer ID.
