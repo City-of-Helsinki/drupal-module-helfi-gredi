@@ -228,7 +228,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
       ->prepareDirectory($destination_folder, FileSystemInterface::CREATE_DIRECTORY)) {
       $this->loggerChannel->warning(
         'Unable to save file for asset ID @asset_id on directory @destination_folder.', [
-          '@asset_id' => $asset->id,
+          '@asset_id' => $asset->external_id,
           '@destination_folder' => $destination_folder,
         ]
       );
@@ -247,7 +247,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
 
     $destination_path = sprintf('%s/%s', $destination_folder, $filename);
 
-    $existing = $this->assetMediaFactory->getFileEntity($asset->id);
+    $existing = $this->assetMediaFactory->getFileEntity($asset->external_id);
 
     $file = $existing instanceof FileInterface ?
       $this->replaceExistingFile($existing, $file_contents, $destination_path) :
