@@ -10,6 +10,7 @@ use Drupal\user\Entity\User;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\GuzzleException;
 
 /**
  * Gredi DAM authentication service.
@@ -109,11 +110,18 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
   public function getCustomerId() {
     $config = self::getConfig();
     $this->baseUrl = $config->get('domain');
-    $apiCall = $this->guzzleClient->request('GET', $this->baseUrl . '/customerIds/' . self::CUSTOMER, [
-      'cookies' => $this->getCookieJar(),
-    ]);
-
-    return Json::decode($apiCall->getBody()->getContents())['id'];
+    try {
+      $apiCall = $this->guzzleClient->request('GET', $this->baseUrl . '/customerIds/' . self::CUSTOMER, [
+        'cookies' => $this->getCookieJar(),
+      ]);
+      return Json::decode($apiCall->getBody()->getContents())['id'];
+    }
+    catch (ClientException $e) {
+      $statusCode = $e->getResponse()->getStatusCode();
+      if ($statusCode === 401) {
+        throw new \Exception($statusCode);
+      }
+    }
   }
 
   /**
