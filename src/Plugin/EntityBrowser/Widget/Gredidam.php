@@ -427,7 +427,14 @@ class Gredidam extends WidgetBase {
         $contents[] = $assets['assets'];
       }
       else {
-        return ['#markup' => 'No data found!'];
+        return ['#markup' => '<div class="alert alert-warning" role="alert">
+  No data found!
+</div>',
+          '#attached' => [
+            'library' => [
+              'helfi_gredi_image/asset_browser',
+            ],
+          ],];
       }
       $folder_content = $this->grediDamClient->getFolderContent($this->currentCategory->id);
       if (isset($folder_content['folders'])) {
