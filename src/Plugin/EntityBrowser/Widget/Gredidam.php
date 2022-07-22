@@ -830,7 +830,7 @@ class Gredidam extends WidgetBase {
     else {
       $thumbnail = '<span class="gredidam-browser-empty">No preview available.</span>';
     }
-    $element = '<div class="js-form-item form-item js-form-type-checkbox form-type--checkbox
+    $element = '<div class="js-form-item form-item
      form-type--boolean js-form-item-assets-' .
       $key . ' form-item--assets-' . $key . '">
     <input data-drupal-selector="edit-assets-' .
