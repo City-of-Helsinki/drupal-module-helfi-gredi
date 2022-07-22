@@ -10,7 +10,6 @@ use Drupal\user\Entity\User;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\GuzzleException;
 
 /**
  * Gredi DAM authentication service.
@@ -99,6 +98,10 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
    * {@inheritDoc}
    */
   public function getCookieJar(): ?CookieJar {
+    var_dump('COOKIE_JAR');
+    if ($this->cookieJar) {
+      return $this->cookieJar;
+    }
     return $this->loginWithCredentials();
   }
 
@@ -122,28 +125,6 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
         throw new \Exception($statusCode);
       }
     }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function getGrediUsername() {
-    $user_field = User::load($this->user->id())->field_gredi_dam_username;
-    if ($user_field !== NULL) {
-      return $user_field->getString() ?? NULL;
-    }
-    return FALSE;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function getGrediPassword() {
-    $pass_field = User::load($this->user->id())->field_gredi_dam_password;
-    if ($pass_field !== NULL) {
-      return $pass_field->getString() ?? NULL;
-    }
-    return FALSE;
   }
 
   /**
@@ -185,9 +166,10 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
           $size = strpos($getCookie, ';', $subtring_start) - $subtring_start;
           $result = substr($getCookie, $subtring_start, $size);
 
-          return CookieJar::fromArray([
+          $this->cookieJar = CookieJar::fromArray([
             'JSESSIONID' => $result,
           ], $cookieDomain['host']);
+          return $this->cookieJar;
         }
       }
       catch (ClientException $e) {
@@ -205,6 +187,28 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
     else {
       return NULL;
     }
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getGrediUsername() {
+    $user_field = User::load($this->user->id())->field_gredi_dam_username;
+    if ($user_field !== NULL) {
+      return $user_field->getString() ?? NULL;
+    }
+    return FALSE;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getGrediPassword() {
+    $pass_field = User::load($this->user->id())->field_gredi_dam_password;
+    if ($pass_field !== NULL) {
+      return $pass_field->getString() ?? NULL;
+    }
+    return FALSE;
   }
 
 }

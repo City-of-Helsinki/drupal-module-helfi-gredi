@@ -12,7 +12,6 @@ use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\Form\GrediDamConfigForm;
 use Drupal\helfi_gredi_image\Service\AssetFileEntityHelper;
-use Drupal\helfi_gredi_image\Service\GrediDamAuthService;
 use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\media\Entity\Media;
 use GuzzleHttp\ClientInterface;
@@ -134,13 +133,6 @@ class Gredidam extends WidgetBase {
   protected $currentCategory;
 
   /**
-   * Gredi dam auth service.
-   *
-   * @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService
-   */
-  protected $grediDamAuthService;
-
-  /**
    * Messenger var.
    *
    * @var \Drupal\Core\Messenger\MessengerInterface
@@ -184,7 +176,6 @@ class Gredidam extends WidgetBase {
     ConfigFactoryInterface $config,
     ClientInterface $guzzleClient,
     PagerManagerInterface $pagerManager,
-    GrediDamAuthService $grediDamAuthService,
     MessengerInterface $messenger,
     FileSystemInterface $file_system,
     AssetFileEntityHelper $assetFileEntityHelper
@@ -201,7 +192,6 @@ class Gredidam extends WidgetBase {
     $this->config = $config;
     $this->guzzleClient = $guzzleClient;
     $this->pagerManager = $pagerManager;
-    $this->grediDamAuthService = $grediDamAuthService;
     $this->messenger = $messenger;
     $this->fileSystem = $file_system;
     $this->fileHelper = $assetFileEntityHelper;
@@ -229,7 +219,6 @@ class Gredidam extends WidgetBase {
       $container->get('config.factory'),
       $container->get('http_client'),
       $container->get('pager.manager'),
-      $container->get('helfi_gredi_image.auth_service'),
       $container->get('messenger'),
       $container->get('file_system'),
       $container->get('helfi_gredi_image.asset_file.helper')
@@ -312,8 +301,6 @@ class Gredidam extends WidgetBase {
     $this->currentCategory->id = NULL;
     $this->currentCategory->name = NULL;
     $this->currentCategory->parts = [];
-
-
 
     // Initialize pagination variables.
     $page = 0;
@@ -429,16 +416,14 @@ class Gredidam extends WidgetBase {
         $contents[] = $assets['assets'];
       }
       else {
-        $form['asset-container']['alert'] = ['#markup' => '<div class="alert alert-warning" role="alert">
-  No data found!
-</div>',
+        $form['asset-container']['alert'] = [
+          '#markup' => '<div class="alert alert-warning" role="alert">No data found!</div>',
           '#attached' => [
             'library' => [
               'helfi_gredi_image/asset_browser',
             ],
           ],
-          ];
-//        return  $form;
+        ];
       }
       $folder_content = $this->grediDamClient->getFolderContent($this->currentCategory->id);
       if (isset($folder_content['folders'])) {
