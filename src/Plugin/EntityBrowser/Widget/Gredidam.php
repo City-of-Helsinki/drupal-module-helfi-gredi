@@ -422,9 +422,21 @@ class Gredidam extends WidgetBase {
       $this->getCategoryFormElements($folders_content, $modulePath, $form);
     }
     else {
-      $assets = $this->grediDamClient->getFolderContent($this->currentCategory->id, $params)['assets'];
-      if (isset($assets)) {
-        $contents[] = $assets;
+      $assets = $this->grediDamClient->getFolderContent($this->currentCategory->id, $params);
+      if (isset($assets['assets'])) {
+        $contents[] = $assets['assets'];
+      }
+      else {
+        $form['asset-container']['alert'] = ['#markup' => '<div class="alert alert-warning" role="alert">
+  No data found!
+</div>',
+          '#attached' => [
+            'library' => [
+              'helfi_gredi_image/asset_browser',
+            ],
+          ],
+          ];
+        return  $form;
       }
       $folder_content = $this->grediDamClient->getFolderContent($this->currentCategory->id);
       if (isset($folder_content['folders'])) {
