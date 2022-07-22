@@ -13,7 +13,6 @@ use Drupal\Core\Utility\Token;
 use Drupal\file\FileInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -242,7 +241,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     // for the images which are downloaded as png), we pass the filename
     // as a parameter so it can be overridden.
     $filename = $asset->name;
-    $file_contents = $this->fetchRemoteAssetData($asset, $filename);
+    $file_contents = $this->grediDamClient->fetchRemoteAssetData($asset, $filename);
     if ($file_contents === FALSE) {
       return FALSE;
     }
@@ -266,87 +265,6 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     );
 
     return FALSE;
-  }
-
-  /**
-   * Fetches binary asset data from a remote source.
-   *
-   * @param \Drupal\helfi_gredi_image\Entity\Asset $asset
-   *   The asset to fetch data for.
-   * @param string $filename
-   *   The filename as a reference so it can be overridden.
-   *
-   * @return false|string[]
-   *   The remote asset contents or FALSE on failure.
-   */
-  protected function fetchRemoteAssetData(Asset $asset, &$filename) {
-    if ($this->config->get('transcode') === 'original') {
-      $download_url = $asset->attachments;
-    }
-    else {
-      // If the module was configured to enforce an image size limit then we
-      // need to grab the nearest matching pre-created size.
-      $remote_base_url = Asset::getAssetRemoteBaseUrl();
-      $download_url = $remote_base_url . $asset->apiContentLink;
-
-      if (empty($download_url)) {
-        $this->loggerChannel->warning(
-          'Unable to save file for asset ID @asset_id.
-           Thumbnail has not been found.', [
-             '@asset_id' => $asset->external_id,
-           ],
-        );
-        return FALSE;
-      }
-    }
-
-    try {
-      $response = $this->httpClient->get($download_url, [
-        'allow_redirects' => [
-          'track_redirects' => TRUE,
-        ],
-        'cookies' => $this->grediDamAuthService->getCookieJar(),
-      ]);
-
-      $size = $response->getBody()->getSize();
-
-      if ($size === NULL || $size === 0) {
-        $this->loggerChannel->error('Unable to download contents for asset ID @asset_id.
-        Received zero-byte response for download URL @url',
-        [
-          '@asset_id' => $asset->external_id,
-          '@url' => $download_url,
-        ]);
-        return FALSE;
-      }
-      $file_contents = (string) $response->getBody();
-
-      if ($response->hasHeader('Content-Disposition')) {
-        $disposition = $response->getHeader('Content-Disposition')[0];
-        preg_match('/filename="(.*)"/', $disposition, $matches);
-        if (count($matches) > 1) {
-          $filename = $matches[1];
-        }
-      }
-    }
-    catch (RequestException $exception) {
-      $message = 'Unable to download contents for asset ID @asset_id: %message.
-      Attempted download URL @url with redirects to @history';
-      $context = [
-        '@asset_id' => $asset->external_id,
-        '%message' => $exception->getMessage(),
-        '@url' => $download_url,
-        '@history' => '[empty request, cannot determine redirects]',
-      ];
-      $response = $exception->getResponse();
-      if ($response) {
-        $context['@history'] = $response->getHeaderLine('X-Guzzle-Redirect-History');
-      }
-      $this->loggerChannel->error($message, $context);
-      return FALSE;
-    }
-
-    return $file_contents;
   }
 
   /**
