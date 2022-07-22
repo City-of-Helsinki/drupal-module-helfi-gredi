@@ -100,13 +100,6 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
   protected $httpClient;
 
   /**
-   * Gredi DAM Auth Service.
-   *
-   * @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService
-   */
-  protected $grediDamAuthService;
-
-  /**
    * AssetFileEntityHelper constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager

@@ -1,7 +1,7 @@
 services:
   helfi_gredi_image.dam_client:
     class: Drupal\helfi_gredi_image\Service\GrediDamClient
-    arguments: [ '@http_client', '@config.factory', '@helfi_gredi_image.auth_service' ]
+    arguments: [ '@http_client', '@config.factory', '@helfi_gredi_image.auth_service', '@logger.factory' ]
   helfi_gredi_image.asset_media.factory:
     class: Drupal\helfi_gredi_image\Service\AssetMediaFactory
     arguments: [ '@entity_type.manager' ]

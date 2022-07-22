@@ -98,10 +98,11 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
    * {@inheritDoc}
    */
   public function getCookieJar(): ?CookieJar {
-    var_dump('COOKIE_JAR');
     if ($this->cookieJar) {
       return $this->cookieJar;
     }
+
+    var_dump('COOKIE_JAR');
     return $this->loginWithCredentials();
   }
 

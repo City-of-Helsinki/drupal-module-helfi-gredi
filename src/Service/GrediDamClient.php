@@ -5,6 +5,8 @@ namespace Drupal\helfi_gredi_image\Service;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\GrediDamClientInterface;
@@ -41,13 +43,6 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
   protected $guzzleClient;
 
   /**
-   * CookieJar for authentication.
-   *
-   * @var \GuzzleHttp\Cookie\CookieJar
-   */
-  protected $cookieJar;
-
-  /**
    * Datastore for the specific metadata fields.
    *
    * @var array
@@ -76,6 +71,13 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
   protected GrediDamAuthService $grediDamAuthService;
 
   /**
+   * Gredi DAM logger channel.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelInterface
+   */
+  protected LoggerChannelInterface $loggerChannel;
+
+  /**
    * The base URL of the Gredi DAM API.
    *
    * @var string
@@ -91,12 +93,19 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
    *   Config factory var.
    * @param \Drupal\helfi_gredi_image\Service\GrediDamAuthService $grediDamAuthService
    *   Gredi dam auth service.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
+   *   The Drupal LoggerChannelFactory service.
    */
-  public function __construct(ClientInterface $guzzleClient, ConfigFactoryInterface $config, GrediDamAuthService $grediDamAuthService) {
+  public function __construct(
+    ClientInterface $guzzleClient,
+    ConfigFactoryInterface $config,
+    GrediDamAuthService $grediDamAuthService,
+    LoggerChannelFactoryInterface $loggerChannelFactory
+  ) {
     $this->guzzleClient = $guzzleClient;
     $this->config = $config;
     $this->grediDamAuthService = $grediDamAuthService;
-    // $this->cookieJar = $this->grediDamAuthService->getCookieJar();
+    $this->loggerChannel = $loggerChannelFactory->get('media_gredidam');
     // $this->customerId = $this->grediDamAuthService->getCustomerId();
     $this->baseUrl = $this->grediDamAuthService->getConfig()->get('domain');
   }
@@ -108,7 +117,8 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
     return new static(
       $container->get('http_client'),
       $container->get('config.factory'),
-      $container->get('helfi_gredi_image.auth_service')
+      $container->get('helfi_gredi_image.auth_service'),
+      $container->get('logger.factory')
     );
   }
 
@@ -294,15 +304,15 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
       $remote_base_url = Asset::getAssetRemoteBaseUrl();
       $download_url = $remote_base_url . $asset->apiContentLink;
 
-//      if (empty($download_url)) {
-//        $this->loggerChannel->warning(
-//          'Unable to save file for asset ID @asset_id.
-//           Thumbnail has not been found.', [
-//          '@asset_id' => $asset->external_id,
-//        ],
-//        );
-//        return FALSE;
-//      }
+      if (empty($download_url)) {
+        $this->loggerChannel->warning(
+          'Unable to save file for asset ID @asset_id.
+           Thumbnail has not been found.', [
+          '@asset_id' => $asset->external_id,
+        ],
+        );
+        return FALSE;
+      }
     }
 
     try {
@@ -320,12 +330,12 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
       $size = $response->getBody()->getSize();
 
       if ($size === NULL || $size === 0) {
-//        $this->loggerChannel->error('Unable to download contents for asset ID @asset_id.
-//        Received zero-byte response for download URL @url',
-//          [
-//            '@asset_id' => $asset->external_id,
-//            '@url' => $download_url,
-//          ]);
+        $this->loggerChannel->error('Unable to download contents for asset ID @asset_id.
+        Received zero-byte response for download URL @url',
+          [
+            '@asset_id' => $asset->external_id,
+            '@url' => $download_url,
+          ]);
         return FALSE;
       }
       $file_contents = (string) $response->getBody();
@@ -351,7 +361,7 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
       if ($response) {
         $context['@history'] = $response->getHeaderLine('X-Guzzle-Redirect-History');
       }
-//      $this->loggerChannel->error($message, $context);
+      $this->loggerChannel->error($message, $context);
       return FALSE;
     }
 
