@@ -129,8 +129,6 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
    *   The Drupal LoggerChannelFactory service.
    * @param \GuzzleHttp\Client $client
    *   The HTTP client.
-   * @param \Drupal\helfi_gredi_image\Service\GrediDamAuthService $authService
-   *   Authentication service.
    */
   public function __construct(
     EntityTypeManagerInterface $entityTypeManager,
@@ -142,8 +140,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     GrediDamClient $grediDamClient,
     AssetMediaFactory $assetMediaFactory,
     LoggerChannelFactoryInterface $loggerChannelFactory,
-    Client $client,
-    GrediDamAuthService $authService) {
+    Client $client) {
     $this->entityTypeManager = $entityTypeManager;
     $this->entityFieldManager = $entityFieldManager;
     $this->configFactory = $configFactory;
@@ -155,7 +152,6 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     $this->assetMediaFactory = $assetMediaFactory;
     $this->loggerChannel = $loggerChannelFactory->get('media_gredidam');
     $this->httpClient = $client;
-    $this->grediDamAuthService = $authService;
   }
 
   /**
@@ -173,7 +169,6 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
       $container->get('helfi_gredi_image.asset_media.factory'),
       $container->get('logger.factory'),
       $container->get('http_client'),
-      $container->get('helfi_gredi_image.auth_service')
     );
   }
 
