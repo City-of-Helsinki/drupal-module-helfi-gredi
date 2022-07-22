@@ -8,8 +8,8 @@ name: gredi_dam
 label: 'Gredi DAM Entity Browser'
 display: modal
 display_configuration:
-  width: '650'
-  height: '500'
+  width: '950'
+  height: '800'
   link_text: 'Select entities'
   auto_open: false
 selection_display: no_display
