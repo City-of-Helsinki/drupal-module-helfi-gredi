@@ -15,7 +15,6 @@ use Drupal\helfi_gredi_image\Service\AssetFileEntityHelper;
 use Drupal\helfi_gredi_image\Service\GrediDamAuthService;
 use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\media\Entity\Media;
-use Drupal\user\Entity\User;
 use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -307,11 +306,14 @@ class Gredidam extends WidgetBase {
     // Attach the modal library.
     $form['#attached']['library'][] = 'core/drupal.dialog.ajax';
     $trigger_elem = $form_state->getTriggeringElement();
+
     $this->currentCategory = new Category();
     // Default current category name to NULL which will act as root category.
     $this->currentCategory->id = NULL;
     $this->currentCategory->name = NULL;
     $this->currentCategory->parts = [];
+
+
 
     // Initialize pagination variables.
     $page = 0;
@@ -333,7 +335,6 @@ class Gredidam extends WidgetBase {
         // Set current category to the value stored in the form state.
         $this->currentCategory->id = $widget['asset-container']['#gredidam_category']['id'];
         $this->currentCategory->parts[] = $trigger_elem['#gredidam_category']['name'];
-
       }
       if ($form_state->getValue('assets')) {
         $current_selections = $form_state
@@ -351,20 +352,21 @@ class Gredidam extends WidgetBase {
         // Update the required information of selected category.
         $this->currentCategory->id = $trigger_elem['#gredidam_category']['id'];
         $this->currentCategory->name = $trigger_elem['#gredidam_category']['name'];
+        $this->breadcrumb[] = $trigger_elem['#gredidam_category']['name'];
         $this->currentCategory->parts[] = $trigger_elem['#gredidam_category']['name'];
       }
 
       if ($trigger_elem['#name'] === 'gredidam_pager') {
         $this->currentCategory->name = $trigger_elem['#current_category']->name ?? NULL;
-        $this->currentCategory->parts[] = $trigger_elem['#gredidam_category']['name'] ?? NULL;
 
         // Set the current category id to the id of the category, was clicked.
         $page = intval($trigger_elem['#gredidam_page']);
+        $this->currentCategory->parts[] = 'Page ' . ($page + 1) ?? NULL;
         $offset = $num_per_page * $page;
       }
 
       if ($trigger_elem['#name'] === 'breadcrumb') {
-        $this->currentCategory->name = $trigger_elem["#category_name"];
+        $this->currentCategory->name = $trigger_elem['#gredidam_category']["#category_name"];
         $this->currentCategory->parts[] = $trigger_elem['#gredidam_category']['name'];
       }
     }
@@ -436,10 +438,11 @@ class Gredidam extends WidgetBase {
             ],
           ],
           ];
-        return  $form;
+//        return  $form;
       }
       $folder_content = $this->grediDamClient->getFolderContent($this->currentCategory->id);
       if (isset($folder_content['folders'])) {
+        $form['asset-container']['alert'] = [];
         $this->getCategoryFormElements($folder_content['folders'], $modulePath, $form);
       }
     }
