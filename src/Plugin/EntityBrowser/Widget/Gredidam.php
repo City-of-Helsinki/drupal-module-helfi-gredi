@@ -301,26 +301,6 @@ class Gredidam extends WidgetBase {
     }
     $form = parent::getForm($original_form, $form_state, $additional_widget_parameters);
 
-    $user = User::load($this->user->id());
-
-    if (!isset($user->field_gredi_dam_username->getValue()[0]['value']) || !isset($user->field_gredi_dam_password->getValue()[0]['value'])) {
-      $userProfileEditLink = Link::createFromRoute(t('user edit'),
-        'entity.user.edit_form',
-        [
-          'user' => $this->user->id(),
-        ],
-        [
-          'attributes' => [
-            "target" => "_blank",
-          ],
-        ]
-      )->toString();
-      $markup = $this->t('You have to fill Gredi DAM Username and Password in @user_profile_edit_link!', [
-        '@user_profile_edit_link' => $userProfileEditLink,
-      ]);
-      return ['#markup' => $markup];
-    }
-
     $config = $this->config->get('helfi_gredi_image.settings');
 
     $modulePath = $this->moduleHandler->getModule('helfi_gredi_image')->getPath();
@@ -396,8 +376,28 @@ class Gredidam extends WidgetBase {
     $form += $this->getFilterSort();
 
     // Get folders content from customer id.
-    $folders_content = $this->grediDamClient->getCustomerContent()['folders'];
-
+    try {
+      $folders_content = $this->grediDamClient->getCustomerContent()['folders'];
+    }
+    catch (\Exception $e) {
+      if ($e->getMessage() == '401') {
+        $userProfileEditLink = Link::createFromRoute(t('user edit'),
+          'entity.user.edit_form',
+          [
+            'user' => $this->user->id(),
+          ],
+          [
+            'attributes' => [
+              "target" => "_blank",
+            ],
+          ]
+        )->toString();
+        $markup = $this->t('Wrong credentials! Go to @user_profile_edit_link and check the username and password are the correct ones!', [
+          '@user_profile_edit_link' => $userProfileEditLink,
+        ]);
+        return ['#markup' => $markup];
+      }
+    }
     $contents = [];
 
     $form['asset-container'] = [
