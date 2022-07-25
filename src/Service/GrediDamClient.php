@@ -22,13 +22,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInterface {
 
   /**
-   * The customer of the Gredi DAM API.
-   *
-   * @var string
-   */
-  const CUSTOMER = "helsinki";
-
-  /**
    * The version of this client. Used in User-Agent string for API requests.
    *
    * @var string
@@ -106,7 +99,6 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
     $this->config = $config;
     $this->grediDamAuthService = $grediDamAuthService;
     $this->loggerChannel = $loggerChannelFactory->get('media_gredidam');
-    // $this->customerId = $this->grediDamAuthService->getCustomerId();
     $this->baseUrl = $this->grediDamAuthService->getConfig()->get('domain');
   }
 
@@ -139,7 +131,8 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
     catch (\Exception $e) {
       throw $e;
     }
-    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/customers/' . $customerId . '/contents?include=attachments' . $parameters, [
+    $url = sprintf("%s/customers/%d/contents?include=attachments%s", $this->baseUrl, $customerId, $parameters);
+    $userContent = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
@@ -174,8 +167,8 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
         $parameters .= '&' . $key . '=' . $param;
       }
     }
-
-    $userContent = $this->guzzleClient->request('GET', $this->baseUrl . '/folders/' . $folder_id . '/files/?include=attachments' . $parameters, [
+    $url = sprintf("%s/folders/%d/files/?include=attachments%s", $this->baseUrl, $folder_id, $parameters);
+    $userContent = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
@@ -223,9 +216,10 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
     $allowed_expands = Asset::getAllowedExpands();
     $expands = array_intersect(array_unique($expands + $required_expands), $allowed_expands);
 
+    $url = sprintf("%s/files/%s?include=%s", $this->baseUrl, $id, implode('%2C', $expands));
     $response = $this->guzzleClient->request(
       "GET",
-      $this->baseUrl . '/files/' . $id . '?include=' . implode('%2C', $expands),
+      $url,
       [
         'headers' => [
           'Content-Type' => 'application/json',
