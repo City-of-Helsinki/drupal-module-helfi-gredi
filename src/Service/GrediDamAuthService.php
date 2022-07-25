@@ -17,11 +17,11 @@ use GuzzleHttp\Exception\ClientException;
 class GrediDamAuthService implements GrediDamAuthServiceInterface {
 
   /**
-   * Client id to identify the Gredi Dam client.
+   * Client id to identify the Gredi DAM client.
    *
    * @var string
    */
-  const CUSTOMER = 'helsinki';
+  const CUSTOMER = "helsinki";
 
   /**
    * The base URL of the Gredi DAM API.
@@ -114,7 +114,8 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
     $config = self::getConfig();
     $this->baseUrl = $config->get('domain');
     try {
-      $apiCall = $this->guzzleClient->request('GET', $this->baseUrl . '/customerIds/' . self::CUSTOMER, [
+      $url = sprintf("%s/customerIds/%s", $this->baseUrl, self::CUSTOMER);
+      $apiCall = $this->guzzleClient->request('GET', $url, [
         'cookies' => $this->getCookieJar(),
       ]);
       return Json::decode($apiCall->getBody()->getContents())['id'];
@@ -153,11 +154,8 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
       ];
 
       try {
-        $response = $this->guzzleClient->request(
-          "POST",
-          $this->baseUrl . '/sessions',
-          $data
-        );
+        $url = sprintf("%s/sessions", $this->baseUrl);
+        $response = $this->guzzleClient->request("POST", $url, $data);
 
         if ($response->getStatusCode() == 200 && $response->getReasonPhrase() == 'OK') {
           $getCookie = $response->getHeader('Set-Cookie')[0];
