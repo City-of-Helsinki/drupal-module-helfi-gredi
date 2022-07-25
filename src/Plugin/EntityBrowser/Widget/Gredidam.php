@@ -776,15 +776,11 @@ class Gredidam extends WidgetBase {
    *
    * @var string $gredidamAsset
    */
-  public function layoutMediaEntity(Asset $gredidamAsset, $key) {
+  private function layoutMediaEntity(Asset $gredidamAsset, $key) {
     $assetName = $gredidamAsset->name;
-    if (!empty($gredidamAsset->attachments)) {
-      $thumbnail = '<div class="gredidam-asset-thumb"><img src="' . $gredidamAsset->attachments
-        . '" width="150px" height="150px" /></div>';
-    }
-    else {
-      $thumbnail = '<span class="gredidam-browser-empty">No preview available.</span>';
-    }
+    $thumbnail = ($thumbUrl = $gredidamAsset->getThumbnail()) ?
+      '<div class="gredidam-asset-thumb"><img src="' . $thumbUrl . '" width="150px" height="150px" /></div>' :
+      '<span class="gredidam-browser-empty">No preview available.</span>';
     $element = '<div class="js-form-item form-item
      form-type--boolean js-form-item-assets-' .
       $key . ' form-item--assets-' . $key . '">

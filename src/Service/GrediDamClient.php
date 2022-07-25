@@ -296,7 +296,7 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
    */
   public function fetchRemoteAssetData(Asset $asset, &$filename) {
     if ($this->config->get('transcode') === 'original') {
-      $download_url = $asset->attachments;
+      $download_url = $asset->attachments[Asset::ATTACHMENT_TYPE_ORIGINAL];
     }
     else {
       // If the module was configured to enforce an image size limit then we
