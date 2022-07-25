@@ -6,13 +6,11 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Utility\Token;
 use Drupal\file\FileInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
-use GuzzleHttp\Client;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -21,13 +19,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Abstracts out primarily file entity and system file related functionality.
  */
 class AssetFileEntityHelper implements ContainerInjectionInterface {
-
-  /**
-   * Entity Type Manager service.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
 
   /**
    * Entity Field Manager service.
@@ -65,13 +56,6 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
   protected $token;
 
   /**
-   * Gredi DAM asset image helper service.
-   *
-   * @var \Drupal\helfi_gredi_image\Service\AssetImageHelper
-   */
-  protected $assetImageHelper;
-
-  /**
    * Gredi DAM client.
    *
    * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
@@ -93,17 +77,8 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
   protected $loggerChannel;
 
   /**
-   * The HTTP client.
-   *
-   * @var \GuzzleHttp\Client
-   */
-  protected $httpClient;
-
-  /**
    * AssetFileEntityHelper constructor.
    *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
-   *   Entity Type Manager service.
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
    *   Entity Field Manager service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
@@ -112,39 +87,29 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
    *   Drupal filesystem service.
    * @param \Drupal\Core\Utility\Token $token
    *   Drupal token service.
-   * @param \Drupal\helfi_gredi_image\Service\AssetImageHelper $assetImageHelper
-   *   Gredi DAM asset image helper service.
    * @param \Drupal\helfi_gredi_image\Service\GrediDamClient $grediDamClient
    *   Gredi DAM client.
    * @param \Drupal\helfi_gredi_image\Service\AssetMediaFactory $assetMediaFactory
    *   Gredi DAM Asset Media Factory service.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
    *   The Drupal LoggerChannelFactory service.
-   * @param \GuzzleHttp\Client $client
-   *   The HTTP client.
    */
   public function __construct(
-    EntityTypeManagerInterface $entityTypeManager,
     EntityFieldManagerInterface $entityFieldManager,
     ConfigFactoryInterface $configFactory,
     FileSystemInterface $fileSystem,
     Token $token,
-    AssetImageHelper $assetImageHelper,
     GrediDamClient $grediDamClient,
     AssetMediaFactory $assetMediaFactory,
-    LoggerChannelFactoryInterface $loggerChannelFactory,
-    Client $client) {
-    $this->entityTypeManager = $entityTypeManager;
+    LoggerChannelFactoryInterface $loggerChannelFactory) {
     $this->entityFieldManager = $entityFieldManager;
     $this->configFactory = $configFactory;
     $this->config = $configFactory->get('media_gredidam.settings');
     $this->fileSystem = $fileSystem;
     $this->token = $token;
-    $this->assetImageHelper = $assetImageHelper;
     $this->grediDamClient = $grediDamClient;
     $this->assetMediaFactory = $assetMediaFactory;
     $this->loggerChannel = $loggerChannelFactory->get('media_gredidam');
-    $this->httpClient = $client;
   }
 
   /**
@@ -152,16 +117,13 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity_type.manager'),
       $container->get('entity_field.manager'),
       $container->get('config.factory'),
       $container->get('file_system'),
       $container->get('token'),
-      $container->get('helfi_gredi_image.asset_image.helper'),
       $container->get('helfi_gredi_image.dam_client'),
       $container->get('helfi_gredi_image.asset_media.factory'),
       $container->get('logger.factory'),
-      $container->get('http_client'),
     );
   }
 
