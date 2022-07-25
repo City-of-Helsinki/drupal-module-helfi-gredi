@@ -99,7 +99,6 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
     $this->config = $config;
     $this->grediDamAuthService = $grediDamAuthService;
     $this->loggerChannel = $loggerChannelFactory->get('media_gredidam');
-    // $this->customerId = $this->grediDamAuthService->getCustomerId();
     $this->baseUrl = $this->grediDamAuthService->getConfig()->get('domain');
   }
 

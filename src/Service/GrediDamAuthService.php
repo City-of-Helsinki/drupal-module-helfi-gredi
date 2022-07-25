@@ -52,23 +52,9 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
   protected $customerId;
 
   /**
-   * Gredi DAM Username.
-   *
-   * @var string
-   */
-  protected $grediUsername;
-
-  /**
-   * Gredi DAM Password.
-   *
-   * @var string
-   */
-  protected $grediPassword;
-
-  /**
    * The current user account.
    *
-   * @var \Drupal\Core\Session\AccountInterface
+   * @var \Drupal\user\Entity\User
    */
   protected $user;
 
@@ -84,7 +70,7 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
    */
   public function __construct(ClientInterface $guzzleClient, AccountInterface $account) {
     $this->guzzleClient = $guzzleClient;
-    $this->user = $account;
+    $this->user = User::load($account->id());
   }
 
   /**
@@ -191,7 +177,7 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
    * {@inheritDoc}
    */
   public function getGrediUsername() {
-    $user_field = User::load($this->user->id())->field_gredi_dam_username;
+    $user_field = $this->user->field_gredi_dam_username;
     if ($user_field !== NULL) {
       return $user_field->getString() ?? NULL;
     }
@@ -202,7 +188,7 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
    * {@inheritDoc}
    */
   public function getGrediPassword() {
-    $pass_field = User::load($this->user->id())->field_gredi_dam_password;
+    $pass_field = $this->user->field_gredi_dam_password;
     if ($pass_field !== NULL) {
       return $pass_field->getString() ?? NULL;
     }
