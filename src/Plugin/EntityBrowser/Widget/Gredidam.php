@@ -295,7 +295,6 @@ class Gredidam extends WidgetBase {
         // Update the required information of selected category.
         $this->currentCategory->id = $trigger_elem['#gredidam_category']['id'];
         $this->currentCategory->name = $trigger_elem['#gredidam_category']['name'];
-        $this->breadcrumb[] = $trigger_elem['#gredidam_category']['name'];
         $this->currentCategory->parts[] = $trigger_elem['#gredidam_category']['name'];
       }
 
