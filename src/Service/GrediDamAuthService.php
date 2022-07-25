@@ -102,7 +102,6 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
       return $this->cookieJar;
     }
 
-    var_dump('COOKIE_JAR');
     return $this->loginWithCredentials();
   }
 

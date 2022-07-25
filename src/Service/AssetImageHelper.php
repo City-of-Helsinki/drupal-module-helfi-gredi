@@ -6,12 +6,11 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\File\MimeType\MimeTypeGuesser;
+use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\Image\ImageFactory;
 use Drupal\Core\Url;
 use Drupal\file\FileInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
-use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -21,13 +20,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * retrieving thumbnails for assets.
  */
 class AssetImageHelper implements ContainerInjectionInterface {
-
-  /**
-   * Guzzle HTTP Client.
-   *
-   * @var \GuzzleHttp\Client
-   */
-  protected $httpClient;
 
   /**
    * Drupal config service.
@@ -71,18 +63,19 @@ class AssetImageHelper implements ContainerInjectionInterface {
    *   Drupal config service.
    * @param \Drupal\Core\File\FileSystemInterface $fileSystem
    *   Drupal filesystem wrapper.
-   * @param \GuzzleHttp\ClientInterface $httpClient
-   *   Guzzle HTTP Client.
-   * @param \Drupal\Core\File\MimeType\MimeTypeGuesser $mimeTypeGuesser
+   * @param \Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser $mimeTypeGuesser
    *   Drupal MIME type guesser.
    * @param \Drupal\Core\Image\ImageFactory $imageFactory
    *   Drupal ImageFactory service.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
    */
-  // phpcs:ignore
-  public function __construct(ConfigFactoryInterface $configFactory, FileSystemInterface $fileSystem, ClientInterface $httpClient, $mimeTypeGuesser, ImageFactory $imageFactory, EntityTypeManagerInterface $entityTypeManager) {
-    $this->httpClient = $httpClient;
+  public function __construct(
+    ConfigFactoryInterface $configFactory,
+    FileSystemInterface $fileSystem,
+    MimeTypeGuesser $mimeTypeGuesser,
+    ImageFactory $imageFactory,
+    EntityTypeManagerInterface $entityTypeManager) {
     $this->configFactory = $configFactory;
     $this->fileSystem = $fileSystem;
     $this->mimeTypeGuesser = $mimeTypeGuesser;
@@ -97,7 +90,6 @@ class AssetImageHelper implements ContainerInjectionInterface {
     return new static(
       $container->get('config.factory'),
       $container->get('file_system'),
-      $container->get('http_client'),
       $container->get('file.mime_type.guesser'),
       $container->get('image.factory'),
       $container->get('entity_type.manager')

@@ -7,7 +7,7 @@ services:
     arguments: [ '@entity_type.manager' ]
   helfi_gredi_image.asset_image.helper:
     class: Drupal\helfi_gredi_image\Service\AssetImageHelper
-    arguments: [ '@config.factory', '@file_system', '@http_client', '@file.mime_type.guesser', '@image.factory', '@entity_type.manager' ]
+    arguments: [ '@config.factory', '@file_system', '@file.mime_type.guesser', '@image.factory', '@entity_type.manager' ]
   helfi_gredi_image.asset_metadata.helper:
     class: Drupal\helfi_gredi_image\Service\AssetMetadataHelper
     arguments: [ '@date.formatter', '@helfi_gredi_image.dam_client' ]
