@@ -11,6 +11,10 @@ use Drupal\Component\Serialization\Json;
  */
 class Asset implements EntityInterface, \JsonSerializable {
 
+  const ATTACHMENT_TYPE_ORIGINAL = 'original';
+  const ATTACHMENT_TYPE_PREVIEW = 'preview';
+  const ATTACHMENT_TYPE_THUMBNAIL = 'thumbnail';
+
   /**
    * The ID of the asset.
    *
@@ -82,9 +86,9 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $released_and_not_expired;
 
   /**
-   * The link to download the asset.
+   * The links to download the asset.
    *
-   * @var string
+   * @var array
    */
   public $attachments;
 
@@ -223,14 +227,18 @@ class Asset implements EntityInterface, \JsonSerializable {
     foreach ($properties as $property) {
       if (isset($json[$property])) {
         if ($property === 'attachments') {
-          $asset->width = $json['attachments'][0]['propertiesById']['nibo:image-width'];
-          $asset->height = $json['attachments'][0]['propertiesById']['nibo:image-height'];
-          $asset->resolution = $json['attachments'][0]['propertiesById']['nibo:image-resolution'];
-          $asset->keywords = NULL;
-          $asset->alt_text = NULL;
-          $asset->size = $json['attachments'][0]['propertiesById']['nibo:file-size'];
-          $asset->mimeType = $json['attachments'][0]['propertiesById']['nibo:mime-type'];
-          $asset->attachments = $remote_asset_url . $json['attachments'][0]['publicLink'];
+          foreach ($json['attachments'] as $attachment) {
+            if ($attachment['type'] === self::ATTACHMENT_TYPE_ORIGINAL) {
+              $asset->width = $attachment['propertiesById']['nibo:image-width'];
+              $asset->height = $attachment['propertiesById']['nibo:image-height'];
+              $asset->resolution = $attachment['propertiesById']['nibo:image-resolution'];
+              $asset->keywords = NULL;
+              $asset->alt_text = NULL;
+              $asset->size = $attachment['propertiesById']['nibo:file-size'];
+              $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
+            }
+            $asset->attachments[$attachment['type']] = $remote_asset_url . $attachment['publicLink'];
+          }
         }
         elseif ($property === 'folderId') {
           $asset->folderId = $folder_id;
@@ -276,6 +284,27 @@ class Asset implements EntityInterface, \JsonSerializable {
       'released_and_not_expired' => $this->released_and_not_expired,
       'attachments' => $this->attachments,
     ];
+  }
+
+  /**
+   * Function to retreve thumbnail URL.
+   *
+   * @return string|null
+   *   Thumbnail URL.
+   */
+  public function getThumbnail(): ?string {
+    if (!empty($this->attachments)) {
+      if (array_key_exists(self::ATTACHMENT_TYPE_THUMBNAIL, $this->attachments)) {
+        return $this->attachments[self::ATTACHMENT_TYPE_THUMBNAIL];
+      }
+      if (array_key_exists(self::ATTACHMENT_TYPE_PREVIEW, $this->attachments)) {
+        return $this->attachments[self::ATTACHMENT_TYPE_PREVIEW];
+      }
+      if (array_key_exists(self::ATTACHMENT_TYPE_ORIGINAL, $this->attachments)) {
+        return $this->attachments[self::ATTACHMENT_TYPE_ORIGINAL];
+      }
+    }
+    return NULL;
   }
 
 }
