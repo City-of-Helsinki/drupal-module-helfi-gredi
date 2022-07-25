@@ -214,24 +214,12 @@ class AssetImageHelper implements ContainerInjectionInterface {
    *   The Drupal image path to use.
    */
   public function getFallbackThumbnail() {
-    $fallback = $this->configFactory->get('media_gredidam.settings')->get(
-      'fallback_thumbnail'
-    );
 
-    // There was no configured fallback image, so we should use the one bundled
-    // with the module.
-    if (empty($fallback)) {
-      // @BUG: Can default to any image named widen.png, not necessarily ours.
-      $default_scheme = $this->configFactory->get('system.file')->get(
-        'default_scheme'
-      );
-      $fallback = sprintf('%s://widen.png', $default_scheme);
-      if (!$this->phpFileExists($fallback)) {
-        $fallback = $this->setFallbackThumbnail($fallback);
-      }
-    }
+    // @BUG: Can default to any image named widen.png, not necessarily ours.
+    $default_scheme = $this->configFactory->get('system.file')->get('default_scheme');
 
-    return $fallback;
+    $fallback = sprintf('%s://widen.png', $default_scheme);
+    return $this->setFallbackThumbnail($fallback);
   }
 
   /**
