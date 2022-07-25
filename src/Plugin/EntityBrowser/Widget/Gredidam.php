@@ -5,7 +5,6 @@ namespace Drupal\helfi_gredi_image\Plugin\EntityBrowser\Widget;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
-use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Pager\PagerManagerInterface;
 use Drupal\entity_browser\WidgetBase;
 use Drupal\helfi_gredi_image\Entity\Asset;
@@ -14,17 +13,14 @@ use Drupal\helfi_gredi_image\Form\GrediDamConfigForm;
 use Drupal\helfi_gredi_image\Service\AssetFileEntityHelper;
 use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\media\Entity\Media;
-use GuzzleHttp\ClientInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\entity_browser\WidgetValidationManager;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
-use Drupal\user\UserDataInterface;
 use Drupal\media\MediaSourceManager;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Url;
@@ -84,32 +80,11 @@ class Gredidam extends WidgetBase {
   protected $entityFieldManager;
 
   /**
-   * User data manager.
-   *
-   * @var \Drupal\user\UserDataInterface
-   */
-  protected $userData;
-
-  /**
-   * Drupal RequestStack service.
-   *
-   * @var \Symfony\Component\HttpFoundation\RequestStack
-   */
-  protected $requestStack;
-
-  /**
    * Config factory instance.
    *
    * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $config;
-
-  /**
-   * A fully-configured Guzzle client to pass to the dam client.
-   *
-   * @var \GuzzleHttp\ClientInterface
-   */
-  protected $guzzleClient;
 
   /**
    * The pager manager.
@@ -131,13 +106,6 @@ class Gredidam extends WidgetBase {
    * @var \Drupal\helfi_gredi_image\Entity\Category
    */
   protected $currentCategory;
-
-  /**
-   * Messenger var.
-   *
-   * @var \Drupal\Core\Messenger\MessengerInterface
-   */
-  protected $messenger;
 
   /**
    * File system interfacer.
@@ -171,12 +139,8 @@ class Gredidam extends WidgetBase {
     LanguageManagerInterface $languageManager,
     ModuleHandlerInterface $moduleHandler,
     MediaSourceManager $sourceManager,
-    UserDataInterface $userData,
-    RequestStack $requestStack,
     ConfigFactoryInterface $config,
-    ClientInterface $guzzleClient,
     PagerManagerInterface $pagerManager,
-    MessengerInterface $messenger,
     FileSystemInterface $file_system,
     AssetFileEntityHelper $assetFileEntityHelper
   ) {
@@ -187,12 +151,8 @@ class Gredidam extends WidgetBase {
     $this->moduleHandler = $moduleHandler;
     $this->sourceManager = $sourceManager;
     $this->entityFieldManager = $entity_field_manager;
-    $this->userData = $userData;
-    $this->requestStack = $requestStack;
     $this->config = $config;
-    $this->guzzleClient = $guzzleClient;
     $this->pagerManager = $pagerManager;
-    $this->messenger = $messenger;
     $this->fileSystem = $file_system;
     $this->fileHelper = $assetFileEntityHelper;
   }
@@ -214,12 +174,8 @@ class Gredidam extends WidgetBase {
       $container->get('language_manager'),
       $container->get('module_handler'),
       $container->get('plugin.manager.media.source'),
-      $container->get('user.data'),
-      $container->get('request_stack'),
       $container->get('config.factory'),
-      $container->get('http_client'),
       $container->get('pager.manager'),
-      $container->get('messenger'),
       $container->get('file_system'),
       $container->get('helfi_gredi_image.asset_file.helper')
     );

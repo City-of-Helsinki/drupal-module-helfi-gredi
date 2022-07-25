@@ -6,14 +6,11 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Utility\Token;
 use Drupal\file\FileInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -22,13 +19,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Abstracts out primarily file entity and system file related functionality.
  */
 class AssetFileEntityHelper implements ContainerInjectionInterface {
-
-  /**
-   * Entity Type Manager service.
-   *
-   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
-   */
-  protected $entityTypeManager;
 
   /**
    * Entity Field Manager service.
@@ -66,13 +56,6 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
   protected $token;
 
   /**
-   * Gredi DAM asset image helper service.
-   *
-   * @var \Drupal\helfi_gredi_image\Service\AssetImageHelper
-   */
-  protected $assetImageHelper;
-
-  /**
    * Gredi DAM client.
    *
    * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
@@ -94,24 +77,8 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
   protected $loggerChannel;
 
   /**
-   * The HTTP client.
-   *
-   * @var \GuzzleHttp\Client
-   */
-  protected $httpClient;
-
-  /**
-   * Gredi DAM Auth Service.
-   *
-   * @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService
-   */
-  protected $grediDamAuthService;
-
-  /**
    * AssetFileEntityHelper constructor.
    *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
-   *   Entity Type Manager service.
    * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
    *   Entity Field Manager service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
@@ -120,43 +87,29 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
    *   Drupal filesystem service.
    * @param \Drupal\Core\Utility\Token $token
    *   Drupal token service.
-   * @param \Drupal\helfi_gredi_image\Service\AssetImageHelper $assetImageHelper
-   *   Gredi DAM asset image helper service.
    * @param \Drupal\helfi_gredi_image\Service\GrediDamClient $grediDamClient
    *   Gredi DAM client.
    * @param \Drupal\helfi_gredi_image\Service\AssetMediaFactory $assetMediaFactory
    *   Gredi DAM Asset Media Factory service.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
    *   The Drupal LoggerChannelFactory service.
-   * @param \GuzzleHttp\Client $client
-   *   The HTTP client.
-   * @param \Drupal\helfi_gredi_image\Service\GrediDamAuthService $authService
-   *   Authentication service.
    */
   public function __construct(
-    EntityTypeManagerInterface $entityTypeManager,
     EntityFieldManagerInterface $entityFieldManager,
     ConfigFactoryInterface $configFactory,
     FileSystemInterface $fileSystem,
     Token $token,
-    AssetImageHelper $assetImageHelper,
     GrediDamClient $grediDamClient,
     AssetMediaFactory $assetMediaFactory,
-    LoggerChannelFactoryInterface $loggerChannelFactory,
-    Client $client,
-    GrediDamAuthService $authService) {
-    $this->entityTypeManager = $entityTypeManager;
+    LoggerChannelFactoryInterface $loggerChannelFactory) {
     $this->entityFieldManager = $entityFieldManager;
     $this->configFactory = $configFactory;
     $this->config = $configFactory->get('media_gredidam.settings');
     $this->fileSystem = $fileSystem;
     $this->token = $token;
-    $this->assetImageHelper = $assetImageHelper;
     $this->grediDamClient = $grediDamClient;
     $this->assetMediaFactory = $assetMediaFactory;
     $this->loggerChannel = $loggerChannelFactory->get('media_gredidam');
-    $this->httpClient = $client;
-    $this->grediDamAuthService = $authService;
   }
 
   /**
@@ -164,17 +117,13 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity_type.manager'),
       $container->get('entity_field.manager'),
       $container->get('config.factory'),
       $container->get('file_system'),
       $container->get('token'),
-      $container->get('helfi_gredi_image.asset_image.helper'),
       $container->get('helfi_gredi_image.dam_client'),
       $container->get('helfi_gredi_image.asset_media.factory'),
       $container->get('logger.factory'),
-      $container->get('http_client'),
-      $container->get('helfi_gredi_image.auth_service')
     );
   }
 
@@ -242,7 +191,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     // for the images which are downloaded as png), we pass the filename
     // as a parameter so it can be overridden.
     $filename = $asset->name;
-    $file_contents = $this->fetchRemoteAssetData($asset, $filename);
+    $file_contents = $this->grediDamClient->fetchRemoteAssetData($asset, $filename);
     if ($file_contents === FALSE) {
       return FALSE;
     }
@@ -266,87 +215,6 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     );
 
     return FALSE;
-  }
-
-  /**
-   * Fetches binary asset data from a remote source.
-   *
-   * @param \Drupal\helfi_gredi_image\Entity\Asset $asset
-   *   The asset to fetch data for.
-   * @param string $filename
-   *   The filename as a reference so it can be overridden.
-   *
-   * @return false|string[]
-   *   The remote asset contents or FALSE on failure.
-   */
-  protected function fetchRemoteAssetData(Asset $asset, &$filename) {
-    if ($this->config->get('transcode') === 'original') {
-      $download_url = $asset->attachments;
-    }
-    else {
-      // If the module was configured to enforce an image size limit then we
-      // need to grab the nearest matching pre-created size.
-      $remote_base_url = Asset::getAssetRemoteBaseUrl();
-      $download_url = $remote_base_url . $asset->apiContentLink;
-
-      if (empty($download_url)) {
-        $this->loggerChannel->warning(
-          'Unable to save file for asset ID @asset_id.
-           Thumbnail has not been found.', [
-             '@asset_id' => $asset->external_id,
-           ],
-        );
-        return FALSE;
-      }
-    }
-
-    try {
-      $response = $this->httpClient->get($download_url, [
-        'allow_redirects' => [
-          'track_redirects' => TRUE,
-        ],
-        'cookies' => $this->grediDamAuthService->getCookieJar(),
-      ]);
-
-      $size = $response->getBody()->getSize();
-
-      if ($size === NULL || $size === 0) {
-        $this->loggerChannel->error('Unable to download contents for asset ID @asset_id.
-        Received zero-byte response for download URL @url',
-        [
-          '@asset_id' => $asset->external_id,
-          '@url' => $download_url,
-        ]);
-        return FALSE;
-      }
-      $file_contents = (string) $response->getBody();
-
-      if ($response->hasHeader('Content-Disposition')) {
-        $disposition = $response->getHeader('Content-Disposition')[0];
-        preg_match('/filename="(.*)"/', $disposition, $matches);
-        if (count($matches) > 1) {
-          $filename = $matches[1];
-        }
-      }
-    }
-    catch (RequestException $exception) {
-      $message = 'Unable to download contents for asset ID @asset_id: %message.
-      Attempted download URL @url with redirects to @history';
-      $context = [
-        '@asset_id' => $asset->external_id,
-        '%message' => $exception->getMessage(),
-        '@url' => $download_url,
-        '@history' => '[empty request, cannot determine redirects]',
-      ];
-      $response = $exception->getResponse();
-      if ($response) {
-        $context['@history'] = $response->getHeaderLine('X-Guzzle-Redirect-History');
-      }
-      $this->loggerChannel->error($message, $context);
-      return FALSE;
-    }
-
-    return $file_contents;
   }
 
   /**
