@@ -307,9 +307,9 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
       if (empty($download_url)) {
         $this->loggerChannel->warning(
           'Unable to save file for asset ID @asset_id.
-           Thumbnail has not been found.', [
-          '@asset_id' => $asset->external_id,
-        ],
+          Thumbnail has not been found.', [
+            '@asset_id' => $asset->external_id,
+          ],
         );
         return FALSE;
       }
