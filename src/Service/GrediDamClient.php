@@ -158,7 +158,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * {@inheritDoc}
    */
   public function getFolderId(string $path = ""): ?int {
-    $url = sprintf("%s/fields/helsinki/%s", $this->baseUrl, $path);
+    $url = sprintf("%s/fileIds/%s", $this->baseUrl, $path);
     try {
       $apiCall = $this->guzzleClient->request('GET', $url, [
         'headers' => [
@@ -199,7 +199,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
 
     foreach (Json::decode($posts) as $post) {
       if (!$post['folder']) {
-        $contents['assets'][] = Asset::fromJson($post, $folder_id);
+        $contents['assets'][] = Asset::fromJson($post);
       }
       else {
         $contents['folders'][] = Category::fromJson($post);
@@ -247,8 +247,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         'cookies' => $this->grediDamAuthService->getCookieJar(),
       ]
     );
-
-    return Asset::fromJson($response->getBody()->getContents(), $folder_id);
+    return Asset::fromJson($response->getBody()->getContents());
   }
 
   /**
