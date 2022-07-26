@@ -9,8 +9,9 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
-use Drupal\helfi_gredi_image\GrediDamClientInterface;
+use Drupal\helfi_gredi_image\DamClientInterface;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -19,7 +20,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * Factory class for Client.
  */
-class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInterface {
+class GrediDamClient implements ContainerInjectionInterface, DamClientInterface {
 
   /**
    * The version of this client. Used in User-Agent string for API requests.
@@ -151,6 +152,25 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
     }
 
     return $content;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getFolderId(string $path = ""): ?int {
+    $url = sprintf("%s/fields/helsinki/%s", $this->baseUrl, $path);
+    try {
+      $apiCall = $this->guzzleClient->request('GET', $url, [
+        'headers' => [
+          'Content-Type' => 'application/json',
+        ],
+        'cookies' => $this->grediDamAuthService->getCookieJar(),
+      ]);
+      return Json::decode($apiCall->getBody()->getContents())['id'];
+    }
+    catch (ClientException $e) {
+      return NULL;
+    }
   }
 
   /**

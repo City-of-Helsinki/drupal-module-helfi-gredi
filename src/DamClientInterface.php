@@ -7,7 +7,7 @@ use Drupal\helfi_gredi_image\Entity\Asset;
 /**
  * Gredi DAM client interface.
  */
-interface GrediDamClientInterface {
+interface DamClientInterface {
 
   /**
    * Get folders and assets from Customer id.
@@ -19,6 +19,17 @@ interface GrediDamClientInterface {
    *   Customer content.
    */
   public function getCustomerContent(array $params = []): array;
+
+  /**
+   * Get folder ID by path.
+   *
+   * @param string $path
+   *   Folder oath.
+   *
+   * @return int|null
+   *   Folder ID.
+   */
+  public function getFolderId(string $path = ""): ?int;
 
   /**
    * Get assets and sub-folders from folders.

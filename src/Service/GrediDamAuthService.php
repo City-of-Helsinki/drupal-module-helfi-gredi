@@ -5,7 +5,7 @@ namespace Drupal\helfi_gredi_image\Service;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\helfi_gredi_image\GrediDamAuthServiceInterface;
+use Drupal\helfi_gredi_image\DamAuthServiceInterface;
 use Drupal\user\Entity\User;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Cookie\CookieJar;
@@ -14,7 +14,7 @@ use GuzzleHttp\Exception\ClientException;
 /**
  * Gredi DAM authentication service.
  */
-class GrediDamAuthService implements GrediDamAuthServiceInterface {
+class GrediDamAuthService implements DamAuthServiceInterface {
 
   /**
    * Client id to identify the Gredi DAM client.
@@ -124,8 +124,8 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
     $config = self::getConfig();
     $this->baseUrl = $config->get('domain');
     $cookieDomain = parse_url($this->baseUrl);
-    $username = $this->getGrediUsername();
-    $password = $this->getGrediPassword();
+    $username = $this->getUsername();
+    $password = $this->getPassword();
 
     if (isset($username) && isset($password)) {
       $data = [
@@ -176,23 +176,23 @@ class GrediDamAuthService implements GrediDamAuthServiceInterface {
   /**
    * {@inheritDoc}
    */
-  public function getGrediUsername() {
+  public function getUsername(): ?string {
     $user_field = $this->user->field_gredi_dam_username;
     if ($user_field !== NULL) {
       return $user_field->getString() ?? NULL;
     }
-    return FALSE;
+    return NULL;
   }
 
   /**
    * {@inheritDoc}
    */
-  public function getGrediPassword() {
+  public function getPassword(): ?string {
     $pass_field = $this->user->field_gredi_dam_password;
     if ($pass_field !== NULL) {
       return $pass_field->getString() ?? NULL;
     }
-    return FALSE;
+    return NULL;
   }
 
 }

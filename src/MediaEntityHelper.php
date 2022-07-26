@@ -35,7 +35,7 @@ class MediaEntityHelper {
   /**
    * Gredi DAM client.
    *
-   * @var \Drupal\helfi_gredi_image\Service\GredidamClient
+   * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
    */
   protected $grediDamClient;
 
