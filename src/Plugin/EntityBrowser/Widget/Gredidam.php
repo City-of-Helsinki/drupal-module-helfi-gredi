@@ -2,10 +2,17 @@
 
 namespace Drupal\helfi_gredi_image\Plugin\EntityBrowser\Widget;
 
-use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
 use Drupal\Core\Pager\PagerManagerInterface;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\entity_browser\WidgetValidationManager;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Url;
 use Drupal\entity_browser\WidgetBase;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
@@ -15,15 +22,6 @@ use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\media\Entity\Media;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Drupal\Core\Entity\EntityFieldManagerInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
-use Drupal\entity_browser\WidgetValidationManager;
-use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\Language\LanguageManagerInterface;
-use Drupal\media\MediaSourceManager;
-use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Url;
 
 /**
  * Uses a view to provide entity listing in a browser's widget.
@@ -66,13 +64,6 @@ class Gredidam extends WidgetBase {
   protected $moduleHandler;
 
   /**
-   * A media source manager.
-   *
-   * @var \Drupal\media\MediaSourceManager
-   */
-  protected $sourceManager;
-
-  /**
    * An entity field manager.
    *
    * @var \Drupal\Core\Entity\EntityFieldManagerInterface
@@ -108,13 +99,6 @@ class Gredidam extends WidgetBase {
   protected $currentCategory;
 
   /**
-   * File system interfacer.
-   *
-   * @var \Drupal\Core\File\FileSystemInterface
-   */
-  protected $fileSystem;
-
-  /**
    * Gredi DAM File Helper.
    *
    * @var \Drupal\helfi_gredi_image\Service\AssetFileEntityHelper
@@ -138,10 +122,8 @@ class Gredidam extends WidgetBase {
     AccountInterface $account,
     LanguageManagerInterface $languageManager,
     ModuleHandlerInterface $moduleHandler,
-    MediaSourceManager $sourceManager,
     ConfigFactoryInterface $config,
     PagerManagerInterface $pagerManager,
-    FileSystemInterface $file_system,
     AssetFileEntityHelper $assetFileEntityHelper
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $event_dispatcher, $entity_type_manager, $validation_manager);
@@ -149,11 +131,9 @@ class Gredidam extends WidgetBase {
     $this->user = $account;
     $this->languageManager = $languageManager;
     $this->moduleHandler = $moduleHandler;
-    $this->sourceManager = $sourceManager;
     $this->entityFieldManager = $entity_field_manager;
     $this->config = $config;
     $this->pagerManager = $pagerManager;
-    $this->fileSystem = $file_system;
     $this->fileHelper = $assetFileEntityHelper;
   }
 
@@ -173,10 +153,8 @@ class Gredidam extends WidgetBase {
       $container->get('current_user'),
       $container->get('language_manager'),
       $container->get('module_handler'),
-      $container->get('plugin.manager.media.source'),
       $container->get('config.factory'),
       $container->get('pager.manager'),
-      $container->get('file_system'),
       $container->get('helfi_gredi_image.asset_file.helper')
     );
   }
@@ -865,7 +843,7 @@ class Gredidam extends WidgetBase {
         'bundle' => $media_type->id(),
         'uid' => $this->user->id(),
         'langcode' => $this->languageManager->getCurrentLanguage()->getId(),
-        // @todo Find out if we can use status from Gredi Dam.
+        // @todo Find out if we can use status from Gredi DAM.
         'status' => 1,
         'name' => $asset->name,
         'field_media_image' => [
