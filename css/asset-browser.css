@@ -300,8 +300,11 @@ input.gredidam-browser-breadcrumb:focus {
   top: 0.37rem !important;
 }
 
-.alert+.alert, .nav+.nav, .navbar+.navbar,
-.progress+.btn, .progress+.progress {
+.alert+.alert,
+.nav+.nav,
+.navbar+.navbar,
+.progress+.btn,
+.progress+.progress {
   margin-top: 1rem;
 }
 
