@@ -5,7 +5,6 @@
     "license": "GPL-2.0-or-later",
     "minimum-stability": "dev",
     "require": {
-        "php": "^8.0",
         "drupal/helfi_api_base": "^2.2.0",
         "twistor/stream-util": "dev-master",
         "drupal/media_entity_browser": "^2.0"
