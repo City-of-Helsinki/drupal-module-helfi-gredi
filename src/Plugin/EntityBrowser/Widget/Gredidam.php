@@ -231,7 +231,8 @@ class Gredidam extends WidgetBase {
     $trigger_elem = $form_state->getTriggeringElement();
 
     $this->currentCategory = new Category();
-    // Default current category id and sname to NULL which will act as root category.
+    // Default current category id and name to NULL
+    // which will act as root category.
     $this->currentCategory->id = NULL;
     $this->currentCategory->name = NULL;
     $this->currentCategory->parts = [];

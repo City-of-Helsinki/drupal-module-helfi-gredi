@@ -8,7 +8,7 @@ use GuzzleHttp\Cookie\CookieJar;
 /**
  * Gredi DAM authentication service interface.
  */
-interface GrediDamAuthServiceInterface {
+interface DamAuthServiceInterface {
 
   /**
    * Return the Gredi DAM configs.
@@ -35,13 +35,19 @@ interface GrediDamAuthServiceInterface {
   public function getCustomerId();
 
   /**
-   * Get Gredi DAM Username from user profile.
+   * Get DAM Username from user profile.
+   *
+   * @return string|null
+   *   Username.
    */
-  public function getGrediUsername();
+  public function getUsername(): ?string;
 
   /**
-   * Get Gredi DAM Password from user profile.
+   * Get DAM Password from user profile.
+   *
+   * @return string|null
+   *   Password.
    */
-  public function getGrediPassword();
+  public function getPassword(): ?string;
 
 }
