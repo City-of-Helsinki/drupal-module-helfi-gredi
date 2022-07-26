@@ -30,11 +30,11 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $external_id;
 
   /**
-   * The Folder ID of the asset.
+   * The Parent ID of the asset.
    *
    * @var string
    */
-  public $folderId;
+  public $parentId;
 
   /**
    * The external ID of the asset.
@@ -203,14 +203,14 @@ class Asset implements EntityInterface, \JsonSerializable {
   /**
    * {@inheritdoc}
    */
-  public static function fromJson($json, $folder_id = NULL) {
+  public static function fromJson($json) {
     if (is_string($json)) {
       $json = Json::decode($json);
     }
 
     $properties = [
       'id',
-      'folderId',
+      'parentId',
       'linkFileId',
       'name',
       'created',
@@ -239,9 +239,6 @@ class Asset implements EntityInterface, \JsonSerializable {
             }
             $asset->attachments[$attachment['type']] = $remote_asset_url . $attachment['publicLink'];
           }
-        }
-        elseif ($property === 'folderId') {
-          $asset->folderId = $folder_id;
         }
         elseif ($property == 'id') {
           $asset->external_id = $json['id'];
@@ -275,6 +272,7 @@ class Asset implements EntityInterface, \JsonSerializable {
   public function jsonSerialize() {
     return [
       'id' => $this->id,
+      'parentId' => $this->parentId,
       'linkFileId' => $this->linkFileId,
       'name' => $this->name,
       'created' => $this->created,

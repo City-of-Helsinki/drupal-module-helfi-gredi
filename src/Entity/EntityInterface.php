@@ -12,12 +12,10 @@ interface EntityInterface {
    *
    * @param string|object $json
    *   Either a JSON string or a json_decode()'d object.
-   * @param string $folder_id
-   *   Parent folder id.
    *
    * @return static
    *   An instance of whatever class this method is being called on.
    */
-  public static function fromJson($json, $folder_id = NULL);
+  public static function fromJson($json);
 
 }
