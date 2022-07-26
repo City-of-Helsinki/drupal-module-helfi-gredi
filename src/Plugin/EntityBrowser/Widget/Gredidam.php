@@ -221,17 +221,17 @@ class Gredidam extends WidgetBase {
       // Return an empty array.
       return [];
     }
+
     $form = parent::getForm($original_form, $form_state, $additional_widget_parameters);
-
-    $config = $this->config->get('helfi_gredi_image.settings');
-
-    $modulePath = $this->moduleHandler->getModule('helfi_gredi_image')->getPath();
     // Attach the modal library.
     $form['#attached']['library'][] = 'core/drupal.dialog.ajax';
+
+    $config = $this->config->get('helfi_gredi_image.settings');
+    $modulePath = $this->moduleHandler->getModule('helfi_gredi_image')->getPath();
     $trigger_elem = $form_state->getTriggeringElement();
 
     $this->currentCategory = new Category();
-    // Default current category name to NULL which will act as root category.
+    // Default current category id and sname to NULL which will act as root category.
     $this->currentCategory->id = NULL;
     $this->currentCategory->name = NULL;
     $this->currentCategory->parts = [];
@@ -390,12 +390,9 @@ class Gredidam extends WidgetBase {
       ],
     ];
 
-    if (isset($this->currentCategory->id)) {
-      $totalAssets = count($this->grediDamClient->getFolderContent($this->currentCategory->id));
-    }
-    else {
-      $totalAssets = count($this->grediDamClient->getCustomerContent()['assets']);
-    }
+    $totalAssets = isset($this->currentCategory->id) ?
+      count($this->grediDamClient->getFolderContent($this->currentCategory->id)) :
+      count($this->grediDamClient->getCustomerContent()['assets']);
 
     if ($totalAssets > $num_per_page) {
       // Add the pager to the form.
@@ -726,20 +723,20 @@ class Gredidam extends WidgetBase {
           'class' => ['gredidam-browser-category-link'],
           'style' => 'background-image:url("/' . $modulePath . '/images/category.png")',
         ],
-      ];
-      $form['asset-container']['categories'][$category->name][$category->id] = [
-        '#type' => 'button',
-        '#value' => $category->name,
-        '#name' => 'gredidam_category',
-        '#gredidam_category' => $category->jsonSerialize(),
-        '#attributes' => [
-          'class' => ['gredidam-category-link-button'],
+        $category->id => [
+          '#type' => 'button',
+          '#value' => $category->name,
+          '#name' => 'gredidam_category',
+          '#gredidam_category' => $category->jsonSerialize(),
+          '#attributes' => [
+            'class' => ['gredidam-category-link-button'],
+          ],
         ],
-      ];
-      $form['asset-container']['categories'][$category->name]['title'] = [
-        '#type' => 'html_tag',
-        '#tag' => 'p',
-        '#value' => $category->name,
+        'title' => [
+          '#type' => 'html_tag',
+          '#tag' => 'p',
+          '#value' => $category->name,
+        ],
       ];
     }
 
