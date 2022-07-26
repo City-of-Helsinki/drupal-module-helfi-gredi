@@ -17,6 +17,13 @@ class Category implements EntityInterface, \JsonSerializable {
   public $id;
 
   /**
+   * The Parent ID of the asset.
+   *
+   * @var string
+   */
+  public $parentId;
+
+  /**
    * Name of the Category.
    *
    * @var string
@@ -68,7 +75,7 @@ class Category implements EntityInterface, \JsonSerializable {
   /**
    * {@inheritdoc}
    */
-  public static function fromJson($json, $folder_id = NULL) {
+  public static function fromJson($json) {
     if (is_string($json)) {
       $json = json_decode($json);
     }
@@ -88,6 +95,7 @@ class Category implements EntityInterface, \JsonSerializable {
     }
     $properties = [
       'id',
+      'parentId',
       'name',
       'description',
       'apiContentLink',
@@ -111,6 +119,7 @@ class Category implements EntityInterface, \JsonSerializable {
   public function jsonSerialize() {
     $properties = [
       'id' => $this->id,
+      'parentId' => $this->parentId,
       'name' => $this->name,
       'description' => 'category',
       'parts' => $this->parts,
