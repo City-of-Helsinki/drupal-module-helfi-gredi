@@ -869,24 +869,4 @@ class Gredidam extends WidgetBase {
     return $entities;
   }
 
-  /**
-   * Get file extension.
-   *
-   * @param string $mime_type
-   *   Mime type.
-   *
-   * @return string
-   *   File extension.
-   */
-  public function getExtension(string $mime_type) {
-    $extensions = [
-      'image/jpeg' => 'jpg',
-      'image/jpg' => 'jpg',
-      'image/png' => 'png',
-    ];
-
-    // Add as many other Mime Types / File Extensions as you like.
-    return $extensions[$mime_type];
-  }
-
 }
