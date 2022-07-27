@@ -285,7 +285,6 @@ class Gredidam extends WidgetBase {
         $this->currentCategory->parts[] = 'Page ' . ($page + 1) ?? NULL;
         $offset = $num_per_page * $page;
       }
-
     }
 
     // Get breadcrumb.
@@ -307,7 +306,7 @@ class Gredidam extends WidgetBase {
     try {
       $contents = $this->currentCategory->id ?
         $this->grediDamClient->getFolderContent($this->currentCategory->id, $params) :
-        $this->grediDamClient->getRootContent();
+        $this->grediDamClient->getRootContent($params['limit'], $params['offset']);
     }
     catch (\Exception $e) {
       if ($e->getMessage() == '401') {
@@ -373,6 +372,9 @@ class Gredidam extends WidgetBase {
         ],
       ];
     }
+    var_dump($totalAssets);
+
+    var_dump($num_per_page);
     if ($totalAssets > $num_per_page) {
       // Add the pager to the form.
       $form['actions'] += $this
