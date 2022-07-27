@@ -407,113 +407,6 @@ class Gredidam extends WidgetBase {
   }
 
   /**
-   * Create pagination and set current page.
-   *
-   * @param int $total_count
-   *   Total count.
-   * @param int $page
-   *   Page.
-   * @param int $num_per_page
-   *   Number per page.
-   * @param string $page_type
-   *   Page type.
-   * @param \Drupal\helfi_gredi_image\Entity\Category|null $category
-   *   Category.
-   *
-   * @return array
-   *   Form.
-   */
-  public function getPager(int $total_count, int $page, int $num_per_page, string $page_type = "listing", Category $category = NULL) {
-    // Add container for pager.
-    $form['pager-container'] = [
-      '#type' => 'container',
-      // Store page number in container so it can be retrieved from form state.
-      '#page' => $page,
-      '#attributes' => [
-        'class' => ['gredidam-asset-browser-pager'],
-      ],
-    ];
-    // If not on the first page.
-    if ($page > 0) {
-      // Add a button to go to the first page.
-      $form['pager-container']['first'] = [
-        '#type' => 'button',
-        '#value' => '<<',
-        '#name' => 'gredidam_pager',
-        '#page_type' => $page_type,
-        '#current_category' => $category,
-        '#gredidam_page' => 0,
-        '#attributes' => [
-          'class' => ['page-button', 'page-first'],
-        ],
-      ];
-      // Add a button to go to the previous page.
-      $form['pager-container']['previous'] = [
-        '#type' => 'button',
-        '#value' => '<',
-        '#name' => 'gredidam_pager',
-        '#page_type' => $page_type,
-        '#gredidam_page' => $page - 1,
-        '#current_category' => $category,
-        '#attributes' => [
-          'class' => ['page-button', 'page-previous'],
-        ],
-      ];
-    }
-    // Last available page based on number of assets in category
-    // divided by number of assets to show per page.
-    $last_page = floor(($total_count - 1) / $num_per_page);
-    // First page to show in the pager.
-    // Try to put the button for the current page in the middle by starting at
-    // the current page number minus 4.
-    $start_page = max(0, $page - 4);
-    // Last page to show in the pager.  Don't go beyond the last available page.
-    $end_page = min($start_page + 9, $last_page);
-    // Create buttons for pages from start to end.
-    for ($i = $start_page; $i <= $end_page; $i++) {
-      $form['pager-container']['page_' . $i] = [
-        '#type' => 'button',
-        '#value' => $i + 1,
-        '#name' => 'gredidam_pager',
-        '#page_type' => $page_type,
-        '#gredidam_page' => $i,
-        '#current_category' => $category,
-        '#attributes' => [
-          'class' => [($i == $page ? 'page-current' : ''), 'page-button'],
-        ],
-      ];
-    }
-    // If not on the last page.
-    if ($end_page > $page) {
-      // Add a button to go to the next page.
-      $form['pager-container']['next'] = [
-        '#type' => 'button',
-        '#value' => '>',
-        '#name' => 'gredidam_pager',
-        '#current_category' => $category,
-        '#page_type' => $page_type,
-        '#gredidam_page' => $page + 1,
-        '#attributes' => [
-          'class' => ['page-button', 'page-next'],
-        ],
-      ];
-      // Add a button to go to the last page.
-      $form['pager-container']['last'] = [
-        '#type' => 'button',
-        '#value' => '>>',
-        '#name' => 'gredidam_pager',
-        '#current_category' => $category,
-        '#gredidam_page' => $last_page,
-        '#page_type' => $page_type,
-        '#attributes' => [
-          'class' => ['page-button', 'page-last'],
-        ],
-      ];
-    }
-    return $form;
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function validate(array &$form, FormStateInterface $form_state) {
@@ -602,117 +495,6 @@ class Gredidam extends WidgetBase {
         }
       }
     }
-  }
-
-  /**
-   * Create form elements for sorting and filtering/searching.
-   */
-  public function getFilterSort() {
-    // Add container for pager.
-    $form['filter-sort-container'] = [
-      '#type' => 'container',
-      '#attributes' => [
-        'class' => ['filter-sort-container'],
-      ],
-    ];
-    // Add dropdown for sort by.
-    $form['filter-sort-container']['sortby'] = [
-      '#type' => 'select',
-      '#title' => 'Sort by',
-      '#options' => [
-        'filename' => $this->t('File name'),
-        'size' => $this->t('File size'),
-        'created_date' => $this->t('Date created'),
-        'last_update_date' => $this->t('Date modified'),
-      ],
-      '#default_value' => 'created_date',
-    ];
-    // Add dropdown for sort direction.
-    $form['filter-sort-container']['sortdir'] = [
-      '#type' => 'select',
-      '#title' => 'Sort direction',
-      '#options' => [
-        'asc' => $this->t('Ascending'),
-        'desc' => $this->t('Descending'),
-      ],
-      '#default_value' => 'asc',
-    ];
-    // Add dropdown for filtering on asset type.
-    // $form['filter-sort-container']['format_type'] = [
-    // '#type' => 'select',
-    // '#title' => 'File format',
-    // '#options' => Asset::getFileFormats(),
-    // '#default_value' => 0,
-    // ];
-    // Add textfield for keyword search.
-    $form['filter-sort-container']['query'] = [
-      '#type' => 'textfield',
-      '#title' => 'Search',
-      '#size' => 24,
-    ];
-    // Add submit button to apply sort/filter criteria.
-    $form['filter-sort-container']['filter-sort-submit'] = [
-      '#type' => 'button',
-      '#value' => 'Apply',
-      '#name' => 'filter_sort_submit',
-    ];
-    // Add form reset button.
-    $form['filter-sort-container']['filter-sort-reset'] = [
-      '#type' => 'button',
-      '#value' => 'Reset',
-      '#name' => 'filter_sort_reset',
-    ];
-
-    return $form;
-  }
-
-  /**
-   * Get Breadcrumb.
-   */
-  public function getBreadcrumb(Category $category) {
-    // Create a container for the breadcrumb.
-    $form['breadcrumb-container'] = [
-      '#type' => 'container',
-      '#attributes' => [
-        'class' => ['breadcrumb gredidam-browser-breadcrumb-container'],
-      ],
-    ];
-    // Placeholder to keep parts information for breadcrumbs.
-    $level = [];
-    // Add the home breadcrumb buttons to the form.
-    $form['breadcrumb-container'][0] = [
-      '#type' => 'button',
-      '#value' => "Home",
-      '#name' => 'breadcrumb',
-      '#category_name' => NULL,
-      '#parts' => $level,
-      '#prefix' => '<li>',
-      '#suffix' => '</li>',
-      '#attributes' => [
-        'class' => ['gredidam-browser-breadcrumb'],
-      ],
-    ];
-
-    // Add the breadcrumb buttons to the form.
-    foreach ($category->parts as $key => $category_name) {
-      $level[] = $category_name;
-      // Increment it so doesn't overwrite the home.
-      $key++;
-      $form['breadcrumb-container'][$key] = [
-        '#type' => 'button',
-        '#value' => $category_name,
-        '#category_name' => $category_name,
-        '#name' => 'breadcrumb',
-        '#parts' => $level,
-        '#prefix' => '<li>',
-        '#suffix' => '</li>',
-        '#attributes' => [
-          'class' => ['gredidam-browser-breadcrumb'],
-        ],
-      ];
-    }
-
-    return $form;
   }
 
   /**
@@ -807,6 +589,224 @@ class Gredidam extends WidgetBase {
     }
 
     return $entities;
+  }
+
+  /**
+   * Get Breadcrumb.
+   */
+  public function getBreadcrumb(Category $category) {
+    // Create a container for the breadcrumb.
+    $form['breadcrumb-container'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['breadcrumb gredidam-browser-breadcrumb-container'],
+      ],
+    ];
+    // Placeholder to keep parts information for breadcrumbs.
+    $level = [];
+    // Add the home breadcrumb buttons to the form.
+    $form['breadcrumb-container'][0] = [
+      '#type' => 'button',
+      '#value' => "Home",
+      '#name' => 'breadcrumb',
+      '#category_name' => NULL,
+      '#parts' => $level,
+      '#prefix' => '<li>',
+      '#suffix' => '</li>',
+      '#attributes' => [
+        'class' => ['gredidam-browser-breadcrumb'],
+      ],
+    ];
+
+    // Add the breadcrumb buttons to the form.
+    foreach ($category->parts as $key => $category_name) {
+      $level[] = $category_name;
+      // Increment it so doesn't overwrite the home.
+      $key++;
+      $form['breadcrumb-container'][$key] = [
+        '#type' => 'button',
+        '#value' => $category_name,
+        '#category_name' => $category_name,
+        '#name' => 'breadcrumb',
+        '#parts' => $level,
+        '#prefix' => '<li>',
+        '#suffix' => '</li>',
+        '#attributes' => [
+          'class' => ['gredidam-browser-breadcrumb'],
+        ],
+      ];
+    }
+
+    return $form;
+  }
+
+  /**
+   * Create form elements for sorting and filtering/searching.
+   */
+  private function getFilterSort() {
+    // Add container for pager.
+    $form['filter-sort-container'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'class' => ['filter-sort-container'],
+      ],
+    ];
+    // Add dropdown for sort by.
+    $form['filter-sort-container']['sortby'] = [
+      '#type' => 'select',
+      '#title' => 'Sort by',
+      '#options' => [
+        'filename' => $this->t('File name'),
+        'size' => $this->t('File size'),
+        'created_date' => $this->t('Date created'),
+        'last_update_date' => $this->t('Date modified'),
+      ],
+      '#default_value' => 'created_date',
+    ];
+    // Add dropdown for sort direction.
+    $form['filter-sort-container']['sortdir'] = [
+      '#type' => 'select',
+      '#title' => 'Sort direction',
+      '#options' => [
+        'asc' => $this->t('Ascending'),
+        'desc' => $this->t('Descending'),
+      ],
+      '#default_value' => 'asc',
+    ];
+    // Add dropdown for filtering on asset type.
+    // $form['filter-sort-container']['format_type'] = [
+    // '#type' => 'select',
+    // '#title' => 'File format',
+    // '#options' => Asset::getFileFormats(),
+    // '#default_value' => 0,
+    // ];
+    // Add textfield for keyword search.
+    $form['filter-sort-container']['query'] = [
+      '#type' => 'textfield',
+      '#title' => 'Search',
+      '#size' => 24,
+    ];
+    // Add submit button to apply sort/filter criteria.
+    $form['filter-sort-container']['filter-sort-submit'] = [
+      '#type' => 'button',
+      '#value' => 'Apply',
+      '#name' => 'filter_sort_submit',
+    ];
+    // Add form reset button.
+    $form['filter-sort-container']['filter-sort-reset'] = [
+      '#type' => 'button',
+      '#value' => 'Reset',
+      '#name' => 'filter_sort_reset',
+    ];
+
+    return $form;
+  }
+
+  /**
+   * Create pagination and set current page.
+   *
+   * @param int $total_count
+   *   Total count.
+   * @param int $page
+   *   Page.
+   * @param int $num_per_page
+   *   Number per page.
+   * @param string $page_type
+   *   Page type.
+   * @param \Drupal\helfi_gredi_image\Entity\Category|null $category
+   *   Category.
+   *
+   * @return array
+   *   Form.
+   */
+  private function getPager(int $total_count, int $page, int $num_per_page, string $page_type = "listing", Category $category = NULL) {
+    // Add container for pager.
+    $form['pager-container'] = [
+      '#type' => 'container',
+      // Store page number in container so it can be retrieved from form state.
+      '#page' => $page,
+      '#attributes' => [
+        'class' => ['gredidam-asset-browser-pager'],
+      ],
+    ];
+    // If not on the first page.
+    if ($page > 0) {
+      // Add a button to go to the first page.
+      $form['pager-container']['first'] = [
+        '#type' => 'button',
+        '#value' => '<<',
+        '#name' => 'gredidam_pager',
+        '#page_type' => $page_type,
+        '#current_category' => $category,
+        '#gredidam_page' => 0,
+        '#attributes' => [
+          'class' => ['page-button', 'page-first'],
+        ],
+      ];
+      // Add a button to go to the previous page.
+      $form['pager-container']['previous'] = [
+        '#type' => 'button',
+        '#value' => '<',
+        '#name' => 'gredidam_pager',
+        '#page_type' => $page_type,
+        '#gredidam_page' => $page - 1,
+        '#current_category' => $category,
+        '#attributes' => [
+          'class' => ['page-button', 'page-previous'],
+        ],
+      ];
+    }
+    // Last available page based on number of assets in category
+    // divided by number of assets to show per page.
+    $last_page = floor(($total_count - 1) / $num_per_page);
+    // First page to show in the pager.
+    // Try to put the button for the current page in the middle by starting at
+    // the current page number minus 4.
+    $start_page = max(0, $page - 4);
+    // Last page to show in the pager.  Don't go beyond the last available page.
+    $end_page = min($start_page + 9, $last_page);
+    // Create buttons for pages from start to end.
+    for ($i = $start_page; $i <= $end_page; $i++) {
+      $form['pager-container']['page_' . $i] = [
+        '#type' => 'button',
+        '#value' => $i + 1,
+        '#name' => 'gredidam_pager',
+        '#page_type' => $page_type,
+        '#gredidam_page' => $i,
+        '#current_category' => $category,
+        '#attributes' => [
+          'class' => [($i == $page ? 'page-current' : ''), 'page-button'],
+        ],
+      ];
+    }
+    // If not on the last page.
+    if ($end_page > $page) {
+      // Add a button to go to the next page.
+      $form['pager-container']['next'] = [
+        '#type' => 'button',
+        '#value' => '>',
+        '#name' => 'gredidam_pager',
+        '#current_category' => $category,
+        '#page_type' => $page_type,
+        '#gredidam_page' => $page + 1,
+        '#attributes' => [
+          'class' => ['page-button', 'page-next'],
+        ],
+      ];
+      // Add a button to go to the last page.
+      $form['pager-container']['last'] = [
+        '#type' => 'button',
+        '#value' => '>>',
+        '#name' => 'gredidam_pager',
+        '#current_category' => $category,
+        '#gredidam_page' => $last_page,
+        '#page_type' => $page_type,
+        '#attributes' => [
+          'class' => ['page-button', 'page-last'],
+        ],
+      ];
+    }
+    return $form;
   }
 
   /**
