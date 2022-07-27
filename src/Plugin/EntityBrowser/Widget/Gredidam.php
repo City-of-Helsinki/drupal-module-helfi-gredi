@@ -300,7 +300,9 @@ class Gredidam extends WidgetBase {
 
     // Get folders content from customer id.
     try {
-      $folders_content = $this->grediDamClient->getCustomerContent()['folders'];
+      $folders_content = $this->currentCategory->id ?
+        $this->grediDamClient->getCustomerContent()['folders'] :
+        $this->grediDamClient->getRootContent()['folders'];
     }
     catch (\Exception $e) {
       if ($e->getMessage() == '401') {
@@ -714,66 +716,6 @@ class Gredidam extends WidgetBase {
   }
 
   /**
-   * Get categories.
-   */
-  public function getCategoryFormElements($categories, $modulePath, &$form) {
-    foreach ($categories as $category) {
-      $form['asset-container']['categories'][$category->name] = [
-        '#type' => 'container',
-        '#attributes' => [
-          'class' => ['gredidam-browser-category-link'],
-          'style' => 'background-image:url("/' . $modulePath . '/images/category.png")',
-        ],
-        $category->id => [
-          '#type' => 'button',
-          '#value' => $category->name,
-          '#name' => 'gredidam_category',
-          '#gredidam_category' => $category->jsonSerialize(),
-          '#attributes' => [
-            'class' => ['gredidam-category-link-button'],
-          ],
-        ],
-        'title' => [
-          '#type' => 'html_tag',
-          '#tag' => 'p',
-          '#value' => $category->name,
-        ],
-      ];
-    }
-
-    return $form;
-  }
-
-  /**
-   * Format display of one asset in media browser.
-   *
-   * @return string
-   *   Element HTML markup.
-   *
-   * @var string $gredidamAsset
-   */
-  private function layoutMediaEntity(Asset $gredidamAsset, $key) {
-    $assetName = $gredidamAsset->name;
-    $thumbnail = ($thumbUrl = $gredidamAsset->getThumbnail()) ?
-      '<div class="gredidam-asset-thumb"><img src="' . $thumbUrl . '" width="150px" height="150px" /></div>' :
-      '<span class="gredidam-browser-empty">No preview available.</span>';
-    $element = '<div class="js-form-item form-item
-     form-type--boolean js-form-item-assets-' .
-      $key . ' form-item--assets-' . $key . '">
-    <input data-drupal-selector="edit-assets-' .
-      $key . '" type="checkbox" id="edit-assets-' .
-      $key . '" name="assets[' . $key . ']" value="' .
-      $gredidamAsset->external_id . '" class="form-checkbox form-boolean form-boolean--type-checkbox">';
-
-    $element .= '<label for="edit-assets-' . $key . '"><div class="gredidam-asset-checkbox">' .
-      $thumbnail . '<div class="gredidam-asset-details"><p class="gredidam-asset-filename">' .
-      $assetName . '</p></div></label></div>';
-    $element .= '</div>';
-
-    return $element;
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function submit(array &$element, array &$form, FormStateInterface $form_state) {
@@ -865,6 +807,66 @@ class Gredidam extends WidgetBase {
     }
 
     return $entities;
+  }
+
+  /**
+   * Get categories.
+   */
+  private function getCategoryFormElements($categories, $modulePath, &$form) {
+    foreach ($categories as $category) {
+      $form['asset-container']['categories'][$category->name] = [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['gredidam-browser-category-link'],
+          'style' => 'background-image:url("/' . $modulePath . '/images/category.png")',
+        ],
+        $category->id => [
+          '#type' => 'button',
+          '#value' => $category->name,
+          '#name' => 'gredidam_category',
+          '#gredidam_category' => $category->jsonSerialize(),
+          '#attributes' => [
+            'class' => ['gredidam-category-link-button'],
+          ],
+        ],
+        'title' => [
+          '#type' => 'html_tag',
+          '#tag' => 'p',
+          '#value' => $category->name,
+        ],
+      ];
+    }
+
+    return $form;
+  }
+
+  /**
+   * Format display of one asset in media browser.
+   *
+   * @return string
+   *   Element HTML markup.
+   *
+   * @var string $gredidamAsset
+   */
+  private function layoutMediaEntity(Asset $gredidamAsset, $key) {
+    $assetName = $gredidamAsset->name;
+    $thumbnail = ($thumbUrl = $gredidamAsset->getThumbnail()) ?
+      '<div class="gredidam-asset-thumb"><img src="' . $thumbUrl . '" width="150px" height="150px" /></div>' :
+      '<span class="gredidam-browser-empty">No preview available.</span>';
+    $element = '<div class="js-form-item form-item
+     form-type--boolean js-form-item-assets-' .
+      $key . ' form-item--assets-' . $key . '">
+    <input data-drupal-selector="edit-assets-' .
+      $key . '" type="checkbox" id="edit-assets-' .
+      $key . '" name="assets[' . $key . ']" value="' .
+      $gredidamAsset->external_id . '" class="form-checkbox form-boolean form-boolean--type-checkbox">';
+
+    $element .= '<label for="edit-assets-' . $key . '"><div class="gredidam-asset-checkbox">' .
+      $thumbnail . '<div class="gredidam-asset-details"><p class="gredidam-asset-filename">' .
+      $assetName . '</p></div></label></div>';
+    $element .= '</div>';
+
+    return $element;
   }
 
 }

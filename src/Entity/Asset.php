@@ -241,6 +241,7 @@ class Asset implements EntityInterface, \JsonSerializable {
           }
         }
         elseif ($property == 'id') {
+          $asset->id = $json['id'];
           $asset->external_id = $json['id'];
         }
         else {

@@ -10,7 +10,7 @@ use Drupal\helfi_gredi_image\Entity\Asset;
 interface DamClientInterface {
 
   /**
-   * Get folders and assets from Customer id.
+   * Get folders and assets from Customer ID.
    *
    * @param array $params
    *   Parameters.
@@ -19,6 +19,14 @@ interface DamClientInterface {
    *   Customer content.
    */
   public function getCustomerContent(array $params = []): array;
+
+  /**
+   * Get folders and assets from Customer's root.
+   *
+   * @return array
+   *   Customer root content.
+   */
+  public function getRootContent(): array;
 
   /**
    * Get folder ID by path.
