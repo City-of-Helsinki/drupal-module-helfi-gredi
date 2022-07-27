@@ -300,7 +300,9 @@ class Gredidam extends WidgetBase {
 
     // Get folders content from customer id.
     try {
-      $folders_content = $this->grediDamClient->getCustomerContent()['folders'];
+      $folders_content = $this->currentCategory->id ?
+        $this->grediDamClient->getCustomerContent()['folders'] :
+        $this->grediDamClient->getRootContent()['folders'];
     }
     catch (\Exception $e) {
       if ($e->getMessage() == '401') {

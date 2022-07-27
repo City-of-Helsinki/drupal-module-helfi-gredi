@@ -157,6 +157,46 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * {@inheritDoc}
    */
+  public function getRootContent(): array {
+    try {
+      $customerId = $this->grediDamAuthService->getCustomerId();
+    }
+    catch (\Exception $e) {
+      throw $e;
+    }
+    $url = sprintf("%s/customers/%d/contents?include=attachments", $this->baseUrl, $customerId);
+    $userContent = $this->guzzleClient->request('GET', $url, [
+      'headers' => [
+        'Content-Type' => 'application/json',
+      ],
+      'cookies' => $this->grediDamAuthService->getCookieJar(),
+    ]);
+    $posts = $userContent->getBody()->getContents();
+    $content = [];
+    $parentCandidates = [];
+    $decodedPosts = Json::decode($posts);
+    foreach ($decodedPosts as $post) {
+      if ($post['fileType'] == 'folder') {
+        $parentCandidates[] = $post["id"];
+      }
+    }
+    foreach ($decodedPosts as $post) {
+      if (!in_array($post["parentId"], $parentCandidates)) {
+        if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
+          $expands = ['meta', 'attachments'];
+          $content['assets'][] = $this->getAsset($post['id'], $expands, $post['parentId']);
+        }
+        elseif ($post['fileType'] == 'folder') {
+          $content['folders'][] = Category::fromJson($post);
+        }
+      }
+    }
+    return $content;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   public function getFolderId(string $path = ""): ?int {
     $url = sprintf("%s/fileIds/%s", $this->baseUrl, $path);
     try {
