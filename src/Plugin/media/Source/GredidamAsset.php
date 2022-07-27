@@ -14,7 +14,6 @@ use Drupal\helfi_gredi_image\Service\AssetMediaFactory;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\helfi_gredi_image\Service\GrediDamClient;
 
 /**
  * Provides media type plugin for Gredi DAM assets.
@@ -58,18 +57,21 @@ class GredidamAsset extends MediaSourceBase {
   protected $assetMediaFactory;
 
   /**
-   * The dam interface.
-   *
-   * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
-   */
-  protected $grediDamClient;
-
-  /**
    * GredidamAsset constructor.
    *
    * {@inheritdoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager, EntityFieldManagerInterface $entity_field_manager, FieldTypePluginManagerInterface $field_type_manager, ConfigFactoryInterface $config_factory, AssetImageHelper $assetImageHelper, AssetMetadataHelper $assetMetadataHelper, AssetMediaFactory $assetMediaFactory, GrediDamClient $grediDamClient) {
+  public function __construct(
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    EntityTypeManagerInterface $entity_type_manager,
+    EntityFieldManagerInterface $entity_field_manager,
+    FieldTypePluginManagerInterface $field_type_manager,
+    ConfigFactoryInterface $config_factory,
+    AssetImageHelper $assetImageHelper,
+    AssetMetadataHelper $assetMetadataHelper,
+    AssetMediaFactory $assetMediaFactory) {
     parent::__construct(
       $configuration,
       $plugin_id,
@@ -83,7 +85,6 @@ class GredidamAsset extends MediaSourceBase {
     $this->assetImageHelper = $assetImageHelper;
     $this->assetMetadataHelper = $assetMetadataHelper;
     $this->assetMediaFactory = $assetMediaFactory;
-    $this->grediDamClient = $grediDamClient;
   }
 
   /**
@@ -109,8 +110,7 @@ class GredidamAsset extends MediaSourceBase {
       $container->get('config.factory'),
       $container->get('helfi_gredi_image.asset_image.helper'),
       $container->get('helfi_gredi_image.asset_metadata.helper'),
-      $container->get('helfi_gredi_image.asset_media.factory'),
-      $container->get('helfi_gredi_image.dam_client')
+      $container->get('helfi_gredi_image.asset_media.factory')
     );
   }
 

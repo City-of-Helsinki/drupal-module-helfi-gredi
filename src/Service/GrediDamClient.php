@@ -120,7 +120,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    */
   public function getCustomerContent(array $params = []): array {
     $parameters = '';
-
     if (isset($params)) {
       foreach ($params as $key => $param) {
         $parameters .= '&' . $key . '=' . $param;
@@ -160,7 +159,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * {@inheritDoc}
    */
-  public function getRootContent(): array {
+  public function getRootContent(int $limit, int $offset): array {
     try {
       $customerId = $this->grediDamAuthService->getCustomerId();
     }
@@ -195,7 +194,21 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         }
       }
     }
-    return $content;
+    $allContent = array_merge($content['folders'], $content['assets']);
+    $window = array_slice($allContent, $offset, $limit);
+    $pageContent = [
+      'folders' => [],
+      'assets' => [],
+    ];
+    foreach ($window as $item) {
+      if ($item instanceof Asset) {
+        $pageContent['assets'][] = $item;
+      }
+      if ($item instanceof Category) {
+        $pageContent['folders'][] = $item;
+      }
+    }
+    return $pageContent;
   }
 
   /**

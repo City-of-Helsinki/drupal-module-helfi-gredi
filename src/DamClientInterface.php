@@ -23,10 +23,16 @@ interface DamClientInterface {
   /**
    * Get folders and assets from Customer's root.
    *
+   * @param int $limit
+   *   Limit.
+   *
+   * @param int $offset
+   *   Offset.
+   *
    * @return array
    *   Customer root content.
    */
-  public function getRootContent(): array;
+  public function getRootContent(int $limit, int $offset): array;
 
   /**
    * Get folder ID by path.
