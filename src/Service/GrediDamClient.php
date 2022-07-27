@@ -171,16 +171,14 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       ],
       'cookies' => $this->grediDamAuthService->getCookieJar(),
     ]);
-    $posts = $userContent->getBody()->getContents();
-    $content = [];
-    $parentCandidates = [];
-    $decodedPosts = Json::decode($posts);
-    foreach ($decodedPosts as $post) {
-      if ($post['fileType'] == 'folder') {
-        $parentCandidates[] = $post["id"];
+    $posts = Json::decode($userContent->getBody()->getContents());
+    $parentCandidates = array_map(function ($p) {
+      if ($p["fileType"] === "folder") {
+        return $p["id"];
       }
-    }
-    foreach ($decodedPosts as $post) {
+    }, $posts);
+    $content = [];
+    foreach ($posts as $post) {
       if (!in_array($post["parentId"], $parentCandidates)) {
         if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
           $expands = ['meta', 'attachments'];
