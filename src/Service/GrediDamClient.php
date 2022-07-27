@@ -140,7 +140,10 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       'cookies' => $this->grediDamAuthService->getCookieJar(),
     ]);
     $posts = $userContent->getBody()->getContents();
-    $content = [];
+    $content = [
+      'folders' => [],
+      'assets' => [],
+    ];
     foreach (Json::decode($posts) as $post) {
       if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
         $expands = ['meta', 'attachments'];
@@ -177,7 +180,10 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         return $p["id"];
       }
     }, $posts);
-    $content = [];
+    $content = [
+      'folders' => [],
+      'assets' => [],
+    ];
     foreach ($posts as $post) {
       if (!in_array($post["parentId"], $parentCandidates)) {
         if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
@@ -232,19 +238,22 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       ],
       'cookies' => $this->grediDamAuthService->getCookieJar(),
     ]);
-    $posts = $userContent->getBody()->getContents();
-    $contents = [];
+    $posts = Json::decode($userContent->getBody()->getContents());
+    $content = [
+      'folders' => [],
+      'assets' => [],
+    ];
 
-    foreach (Json::decode($posts) as $post) {
+    foreach ($posts as $post) {
       if (!$post['folder']) {
-        $contents['assets'][] = Asset::fromJson($post);
+        $content['assets'][] = Asset::fromJson($post);
       }
       else {
-        $contents['folders'][] = Category::fromJson($post);
+        $content['folders'][] = Category::fromJson($post);
       }
     }
 
-    return $contents;
+    return $content;
   }
 
   /**

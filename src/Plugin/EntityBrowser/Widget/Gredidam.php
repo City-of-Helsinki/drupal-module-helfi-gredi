@@ -294,11 +294,17 @@ class Gredidam extends WidgetBase {
     // Add the filter and sort options to the form.
     $form += $this->getFilterSort();
 
+    $contents = [];
+    // Parameters for pagination.
+    $params = [
+      'limit' => $num_per_page,
+      'offset' => $offset,
+    ];
     // Get folders content from customer id.
     try {
-      $folders_content = $this->currentCategory->id ?
-        $this->grediDamClient->getCustomerContent()['folders'] :
-        $this->grediDamClient->getRootContent()['folders'];
+      $contents = $this->currentCategory->id ?
+        $this->grediDamClient->getFolderContent($this->currentCategory->id, $params) :
+        $this->grediDamClient->getRootContent();
     }
     catch (\Exception $e) {
       if ($e->getMessage() == '401') {
@@ -319,7 +325,6 @@ class Gredidam extends WidgetBase {
         return ['#markup' => $markup];
       }
     }
-    $contents = [];
 
     $form['asset-container'] = [
       '#type' => 'container',
@@ -330,48 +335,24 @@ class Gredidam extends WidgetBase {
         'class' => ['gredidam-asset-browser row'],
       ],
     ];
-
-    // Parameters for pagination.
-    $params = [
-      'limit' => $num_per_page,
-      'offset' => $offset,
-    ];
-
-    if ($this->currentCategory->id == NULL) {
-      $contents[] = $this->grediDamClient->getCustomerContent($params)['assets'];
-
-      $this->getCategoryFormElements($folders_content, $modulePath, $form);
+    if (!empty($contents['folders'])) {
+      $form['asset-container']['alert'] = [];
+      $this->getCategoryFormElements($contents['folders'], $modulePath, $form);
+    }
+    if (!array_key_exists('assets', $contents) || empty($contents['assets'])) {
+      $form['asset-container']['alert'] = [
+        '#markup' => '<div class="alert alert-warning" role="alert">No data found!</div>',
+        '#attached' => [
+          'library' => [
+            'helfi_gredi_image/asset_browser',
+          ],
+        ],
+      ];
     }
     else {
-      $assets = $this->grediDamClient->getFolderContent($this->currentCategory->id, $params);
-      if (isset($assets['assets'])) {
-        $contents[] = $assets['assets'];
-      }
-      else {
-        $form['asset-container']['alert'] = [
-          '#markup' => '<div class="alert alert-warning" role="alert">No data found!</div>',
-          '#attached' => [
-            'library' => [
-              'helfi_gredi_image/asset_browser',
-            ],
-          ],
-        ];
-      }
-      $folder_content = $this->grediDamClient->getFolderContent($this->currentCategory->id);
-      if (isset($folder_content['folders'])) {
-        $form['asset-container']['alert'] = [];
-        $this->getCategoryFormElements($folder_content['folders'], $modulePath, $form);
-      }
-    }
-
-    $initial_key = 0;
-    $this->assets = [];
-
-    foreach ($contents as $content) {
-      if (empty($content)) {
-        continue;
-      }
-      foreach ($content as $asset) {
+      $initial_key = 0;
+      $this->assets = [];
+      foreach ($contents["assets"] as $asset) {
         $this->assets[$asset->external_id] = $this->layoutMediaEntity($asset, $initial_key);
         $initial_key++;
       }
@@ -389,10 +370,7 @@ class Gredidam extends WidgetBase {
       ],
     ];
 
-    $totalAssets = isset($this->currentCategory->id) ?
-      count($this->grediDamClient->getFolderContent($this->currentCategory->id)) :
-      count($this->grediDamClient->getCustomerContent()['assets']);
-
+    $totalAssets = count($contents['folders']) + count($contents['assets']);
     if ($totalAssets > $num_per_page) {
       // Add the pager to the form.
       $form['actions'] += $this
