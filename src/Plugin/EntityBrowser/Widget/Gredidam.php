@@ -286,10 +286,6 @@ class Gredidam extends WidgetBase {
         $offset = $num_per_page * $page;
       }
 
-      if ($trigger_elem['#name'] === 'breadcrumb') {
-        $this->currentCategory->name = $trigger_elem['#gredidam_category']["#category_name"];
-        $this->currentCategory->parts[] = $trigger_elem['#gredidam_category']['name'];
-      }
     }
 
     // Get breadcrumb.
