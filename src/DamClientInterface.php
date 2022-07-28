@@ -49,13 +49,15 @@ interface DamClientInterface {
    *
    * @param int $folder_id
    *   Folder ID.
-   * @param array $params
-   *   Parameters.
+   * @param int $limit
+   *   Limit.
+   * @param int $offset
+   *   Offset.
    *
    * @return array|null
    *   Content.
    */
-  public function getFolderContent(int $folder_id, array $params = []): ?array;
+  public function getFolderContent(int $folder_id, int $limit, int $offset): ?array;
 
   /**
    * Get a list of Assets given an array of Asset ID's.

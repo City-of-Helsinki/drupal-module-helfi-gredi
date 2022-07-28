@@ -240,7 +240,7 @@ class Gredidam extends WidgetBase {
     // Initialize pagination variables.
     $page = 0;
     $offset = 0;
-    $num_per_page = $config->get('num_assets_per_page') ?? GrediDamConfigForm::NUM_ASSETS_PER_PAGE;
+    $limit = $config->get('num_assets_per_page') ?? GrediDamConfigForm::NUM_ASSETS_PER_PAGE;
 
     if (isset($form_state->getCompleteForm()['widget'])
       && isset($trigger_elem) && $trigger_elem['#name'] != 'filter_sort_reset') {
@@ -282,7 +282,7 @@ class Gredidam extends WidgetBase {
 
         // Set the current category id to the id of the category, was clicked.
         $page = intval($trigger_elem['#gredidam_page']);
-        $offset = $num_per_page * $page;
+        $offset = $limit * $page;
       }
     }
 
@@ -297,16 +297,12 @@ class Gredidam extends WidgetBase {
       "assets" => [],
     ];
     $totalAssets = 0;
-    // Parameters for pagination.
-    $params = [
-      'limit' => $num_per_page,
-      'offset' => $offset,
-    ];
+
     // Get folders content from customer id.
     try {
       $response = $this->currentCategory->id ?
-        $this->grediDamClient->getFolderContent($this->currentCategory->id, $params) :
-        $this->grediDamClient->getRootContent($params['limit'], $params['offset']);
+        $this->grediDamClient->getFolderContent($this->currentCategory->id, $limit, $offset) :
+        $this->grediDamClient->getRootContent($limit, $offset);
       $content = $response['content'];
       $totalAssets = $response['total'];
     }
@@ -373,10 +369,10 @@ class Gredidam extends WidgetBase {
         ],
       ];
     }
-    if ($totalAssets > $num_per_page) {
+    if ($totalAssets > $limit) {
       // Add the pager to the form.
       $form['actions'] += $this
-        ->getPager($totalAssets, $page, $num_per_page, 'listing', $this->currentCategory);
+        ->getPager($totalAssets, $page, $limit, 'listing', $this->currentCategory);
     }
 
     return $form;
@@ -685,7 +681,7 @@ class Gredidam extends WidgetBase {
    *   Total count.
    * @param int $page
    *   Page.
-   * @param int $num_per_page
+   * @param int $limit
    *   Number per page.
    * @param string $page_type
    *   Page type.
@@ -695,7 +691,7 @@ class Gredidam extends WidgetBase {
    * @return array
    *   Form.
    */
-  private function getPager(int $total_count, int $page, int $num_per_page, string $page_type = "listing", Category $category = NULL) {
+  private function getPager(int $total_count, int $page, int $limit, string $page_type = "listing", Category $category = NULL) {
     // Add container for pager.
     $form['pager-container'] = [
       '#type' => 'container',
@@ -734,7 +730,7 @@ class Gredidam extends WidgetBase {
     }
     // Last available page based on number of assets in category
     // divided by number of assets to show per page.
-    $last_page = floor(($total_count - 1) / $num_per_page);
+    $last_page = floor(($total_count - 1) / $limit);
     // First page to show in the pager.
     // Try to put the button for the current page in the middle by starting at
     // the current page number minus 4.
