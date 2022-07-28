@@ -18,11 +18,11 @@ use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 class MetaUpdate extends QueueWorkerBase {
 
   /**
-   * Gredi client.
+   * DAM client.
    *
-   * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
+   * @var \Drupal\helfi_gredi_image\DamClientInterface
    */
-  private $grediDamClient;
+  private $damClient;
 
   /**
    * Metadata helper.
@@ -43,7 +43,7 @@ class MetaUpdate extends QueueWorkerBase {
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->grediDamClient = \Drupal::service('helfi_gredi_image.dam_client');
+    $this->damClient = \Drupal::service('helfi_gredi_image.dam_client');
     $this->metadataHelper = \Drupal::service('helfi_gredi_image.asset_metadata.helper');
   }
 
@@ -52,7 +52,7 @@ class MetaUpdate extends QueueWorkerBase {
    */
   public function processItem($data) {
     /** @var \Drupal\helfi_gredi_image\Entity\Asset $external_gredi_asset */
-    $external_gredi_asset = $this->grediDamClient->getAsset($data->external_id);
+    $external_gredi_asset = $this->damClient->getAsset($data->external_id);
     /** @var \Drupal\media\Entity\Media $internal_gredi_asset */
     $internal_gredi_asset = Media::load($data->media_id);
     $this->metadataHelper->performMetadataUpdate($internal_gredi_asset, $external_gredi_asset);

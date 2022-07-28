@@ -10,6 +10,7 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Utility\Token;
 use Drupal\file\FileInterface;
+use Drupal\helfi_gredi_image\DamClientInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -58,9 +59,9 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
   /**
    * Gredi DAM client.
    *
-   * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
+   * @var \Drupal\helfi_gredi_image\DamClientInterface
    */
-  protected $grediDamClient;
+  protected $damClient;
 
   /**
    * Gredi DAM factory for wrapping media entities.
@@ -87,7 +88,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
    *   Drupal filesystem service.
    * @param \Drupal\Core\Utility\Token $token
    *   Drupal token service.
-   * @param \Drupal\helfi_gredi_image\Service\GrediDamClient $grediDamClient
+   * @param \Drupal\helfi_gredi_image\DamClientInterface $damClient
    *   Gredi DAM client.
    * @param \Drupal\helfi_gredi_image\Service\AssetMediaFactory $assetMediaFactory
    *   Gredi DAM Asset Media Factory service.
@@ -99,7 +100,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     ConfigFactoryInterface $configFactory,
     FileSystemInterface $fileSystem,
     Token $token,
-    GrediDamClient $grediDamClient,
+    DamClientInterface $damClient,
     AssetMediaFactory $assetMediaFactory,
     LoggerChannelFactoryInterface $loggerChannelFactory) {
     $this->entityFieldManager = $entityFieldManager;
@@ -107,7 +108,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     $this->config = $configFactory->get('media_gredidam.settings');
     $this->fileSystem = $fileSystem;
     $this->token = $token;
-    $this->grediDamClient = $grediDamClient;
+    $this->damClient = $damClient;
     $this->assetMediaFactory = $assetMediaFactory;
     $this->loggerChannel = $loggerChannelFactory->get('media_gredidam');
   }
@@ -191,7 +192,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     // for the images which are downloaded as png), we pass the filename
     // as a parameter so it can be overridden.
     $filename = $asset->name;
-    $file_contents = $this->grediDamClient->fetchRemoteAssetData($asset, $filename);
+    $file_contents = $this->damClient->fetchRemoteAssetData($asset, $filename);
     if ($file_contents === FALSE) {
       return FALSE;
     }
