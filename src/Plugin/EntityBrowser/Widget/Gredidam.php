@@ -240,8 +240,8 @@ class Gredidam extends WidgetBase {
     // Initialize pagination variables.
     $page = 0;
     $offset = 0;
-
     $num_per_page = $config->get('num_assets_per_page') ?? GrediDamConfigForm::NUM_ASSETS_PER_PAGE;
+
     if (isset($form_state->getCompleteForm()['widget'])
       && isset($trigger_elem) && $trigger_elem['#name'] != 'filter_sort_reset') {
       // Assign $widget for convenience.
@@ -282,7 +282,6 @@ class Gredidam extends WidgetBase {
 
         // Set the current category id to the id of the category, was clicked.
         $page = intval($trigger_elem['#gredidam_page']);
-        $this->currentCategory->parts[] = 'Page ' . ($page + 1) ?? NULL;
         $offset = $num_per_page * $page;
       }
     }
@@ -293,10 +292,11 @@ class Gredidam extends WidgetBase {
     // Add the filter and sort options to the form.
     $form += $this->getFilterSort();
 
-    $contents = [
+    $content = [
       "folders" => [],
       "assets" => [],
     ];
+    $totalAssets = 0;
     // Parameters for pagination.
     $params = [
       'limit' => $num_per_page,
@@ -304,9 +304,11 @@ class Gredidam extends WidgetBase {
     ];
     // Get folders content from customer id.
     try {
-      $contents = $this->currentCategory->id ?
+      $response = $this->currentCategory->id ?
         $this->grediDamClient->getFolderContent($this->currentCategory->id, $params) :
         $this->grediDamClient->getRootContent($params['limit'], $params['offset']);
+      $content = $response['content'];
+      $totalAssets = $response['total'];
     }
     catch (\Exception $e) {
       if ($e->getMessage() == '401') {
@@ -337,14 +339,14 @@ class Gredidam extends WidgetBase {
         'class' => ['gredidam-asset-browser row'],
       ],
     ];
-    if (!empty($contents['folders'])) {
+    if (!empty($content['folders'])) {
       $form['asset-container']['alert'] = [];
-      $this->getCategoryFormElements($contents['folders'], $modulePath, $form);
+      $this->getCategoryFormElements($content['folders'], $modulePath, $form);
     }
     $this->assets = [];
-    if (array_key_exists('assets', $contents) && !empty($contents['assets'])) {
+    if (array_key_exists('assets', $content) && !empty($content['assets'])) {
       $initial_key = 0;
-      foreach ($contents["assets"] as $asset) {
+      foreach ($content["assets"] as $asset) {
         $this->assets[$asset->external_id] = $this->layoutMediaEntity($asset, $initial_key);
         $initial_key++;
       }
@@ -361,7 +363,6 @@ class Gredidam extends WidgetBase {
         ],
       ],
     ];
-    $totalAssets = count($contents['folders']) + count($contents['assets']);
     if ($totalAssets === 0) {
       $form['asset-container']['alert'] = [
         '#markup' => '<div class="alert alert-warning" role="alert">No data found!</div>',
@@ -372,9 +373,6 @@ class Gredidam extends WidgetBase {
         ],
       ];
     }
-    var_dump($totalAssets);
-
-    var_dump($num_per_page);
     if ($totalAssets > $num_per_page) {
       // Add the pager to the form.
       $form['actions'] += $this

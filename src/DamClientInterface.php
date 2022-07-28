@@ -25,7 +25,6 @@ interface DamClientInterface {
    *
    * @param int $limit
    *   Limit.
-   *
    * @param int $offset
    *   Offset.
    *

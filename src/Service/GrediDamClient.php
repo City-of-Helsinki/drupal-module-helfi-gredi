@@ -153,7 +153,10 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       }
     }
 
-    return $content;
+    return [
+      'content' => $content,
+      'total' => count($content),
+    ];
   }
 
   /**
@@ -174,41 +177,34 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       'cookies' => $this->grediDamAuthService->getCookieJar(),
     ]);
     $posts = Json::decode($userContent->getBody()->getContents());
-    $parentCandidates = array_map(function ($p) {
+    $parentCandidates = array_filter(array_map(function ($p) {
       if ($p["fileType"] === "folder") {
         return $p["id"];
       }
-    }, $posts);
+    }, $posts));
+    $allContent = array_filter(array_map(function ($p) use ($parentCandidates) {
+      if (!in_array($p["parentId"], $parentCandidates)) {
+        return $p;
+      }
+    }, $posts));
+    $pageContent = array_slice($allContent, $offset, $limit);
     $content = [
       'folders' => [],
       'assets' => [],
     ];
-    foreach ($posts as $post) {
-      if (!in_array($post["parentId"], $parentCandidates)) {
-        if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
-          $expands = ['meta', 'attachments'];
-          $content['assets'][] = $this->getAsset($post['id'], $expands, $post['parentId']);
-        }
-        elseif ($post['fileType'] == 'folder') {
-          $content['folders'][] = Category::fromJson($post);
-        }
+    foreach ($pageContent as $post) {
+      if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
+        $expands = ['meta', 'attachments'];
+        $content['assets'][] = $this->getAsset($post['id'], $expands, $post['parentId']);
+      }
+      elseif ($post['fileType'] == 'folder') {
+        $content['folders'][] = Category::fromJson($post);
       }
     }
-    $allContent = array_merge($content['folders'], $content['assets']);
-    $window = array_slice($allContent, $offset, $limit);
-    $pageContent = [
-      'folders' => [],
-      'assets' => [],
+    return [
+      'content' => $content,
+      'total' => count($allContent),
     ];
-    foreach ($window as $item) {
-      if ($item instanceof Asset) {
-        $pageContent['assets'][] = $item;
-      }
-      if ($item instanceof Category) {
-        $pageContent['folders'][] = $item;
-      }
-    }
-    return $pageContent;
   }
 
   /**
@@ -256,7 +252,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       'folders' => [],
       'assets' => [],
     ];
-
     foreach ($posts as $post) {
       if (!$post['folder']) {
         $content['assets'][] = Asset::fromJson($post);
@@ -266,7 +261,10 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       }
     }
 
-    return $content;
+    return [
+      'content' => $content,
+      'total' => count($content),
+    ];
   }
 
   /**
