@@ -14,11 +14,11 @@ use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Url;
 use Drupal\entity_browser\WidgetBase;
+use Drupal\helfi_gredi_image\DamClientInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\Form\GrediDamConfigForm;
 use Drupal\helfi_gredi_image\Service\AssetFileEntityHelper;
-use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\media\Entity\Media;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -38,9 +38,9 @@ class Gredidam extends WidgetBase {
   /**
    * The dam interface.
    *
-   * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
+   * @var \Drupal\helfi_gredi_image\DamClientInterface
    */
-  protected $grediDamClient;
+  protected $damClient;
 
   /**
    * The current user account.
@@ -118,7 +118,7 @@ class Gredidam extends WidgetBase {
     EntityTypeManagerInterface $entity_type_manager,
     EntityFieldManagerInterface $entity_field_manager,
     WidgetValidationManager $validation_manager,
-    GrediDamClient $grediDamClient,
+    DamClientInterface $damClient,
     AccountInterface $account,
     LanguageManagerInterface $languageManager,
     ModuleHandlerInterface $moduleHandler,
@@ -127,7 +127,7 @@ class Gredidam extends WidgetBase {
     AssetFileEntityHelper $assetFileEntityHelper
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $event_dispatcher, $entity_type_manager, $validation_manager);
-    $this->grediDamClient = $grediDamClient;
+    $this->damClient = $damClient;
     $this->user = $account;
     $this->languageManager = $languageManager;
     $this->moduleHandler = $moduleHandler;
@@ -301,8 +301,8 @@ class Gredidam extends WidgetBase {
     // Get folders content from customer id.
     try {
       $response = $this->currentCategory->id ?
-        $this->grediDamClient->getFolderContent($this->currentCategory->id, $limit, $offset) :
-        $this->grediDamClient->getRootContent($limit, $offset);
+        $this->damClient->getFolderContent($this->currentCategory->id, $limit, $offset) :
+        $this->damClient->getRootContent($limit, $offset);
       $content = $response['content'];
       $totalAssets = $response['total'];
     }
@@ -441,7 +441,7 @@ class Gredidam extends WidgetBase {
 
       // Invoke the API to get all the information about the selected assets.
       $expand = ['meta', 'attachments'];
-      $dam_assets = $this->grediDamClient->getMultipleAsset($content, $expand);
+      $dam_assets = $this->damClient->getMultipleAsset($content, $expand);
 
       // If the media is only referencing images, we only validate that
       // referenced assets are images. We don't check the extension as we are
@@ -523,7 +523,7 @@ class Gredidam extends WidgetBase {
       return [end($entities)];
     }
     $expand = ['meta', 'attachments'];
-    $assets = $this->grediDamClient->getMultipleAsset($asset_ids, $expand);
+    $assets = $this->damClient->getMultipleAsset($asset_ids, $expand);
 
     foreach ($assets as $asset) {
       if ($asset == NULL) {
