@@ -5,7 +5,6 @@ namespace Drupal\helfi_gredi_image;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\helfi_gredi_image\Service\AssetData;
 use Drupal\helfi_gredi_image\Service\AssetFileEntityHelper;
-use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\media\MediaInterface;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -35,9 +34,9 @@ class MediaEntityHelper {
   /**
    * Gredi DAM client.
    *
-   * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
+   * @var \Drupal\helfi_gredi_image\DamClientInterface
    */
-  protected $grediDamClient;
+  protected $damClient;
 
   /**
    * Gredi DAM asset file helper service.
@@ -62,16 +61,16 @@ class MediaEntityHelper {
    *   Entity Type Manager service.
    * @param \Drupal\helfi_gredi_image\Service\AssetData $assetData
    *   Gredi DAM asset data service.
-   * @param \Drupal\helfi_gredi_image\Service\GrediDamClient $grediDamClient
+   * @param \Drupal\helfi_gredi_image\DamClientInterface $damClient
    *   Gredi DAM client.
    * @param \Drupal\helfi_gredi_image\Service\AssetFileEntityHelper $assetFileHelper
    *   Gredi DAM file entity helper service.
    */
-  public function __construct(MediaInterface $media, EntityTypeManagerInterface $entityTypeManager, AssetData $assetData, GrediDamClient $grediDamClient, AssetFileEntityHelper $assetFileHelper) {
+  public function __construct(MediaInterface $media, EntityTypeManagerInterface $entityTypeManager, AssetData $assetData, DamClientInterface $damClient, AssetFileEntityHelper $assetFileHelper) {
     $this->mediaEntity = $media;
     $this->entityTypeManager = $entityTypeManager;
     $this->assetData = $assetData;
-    $this->grediDamClient = $grediDamClient;
+    $this->damClient = $damClient;
     $this->assetFileHelper = $assetFileHelper;
   }
 
@@ -174,7 +173,7 @@ class MediaEntityHelper {
     if (empty($assetId)) {
       return NULL;
     }
-    return $this->grediDamClient->getAsset($assetId, ['meta', 'attachments']);
+    return $this->damClient->getAsset($assetId, ['meta', 'attachments']);
   }
 
   /**

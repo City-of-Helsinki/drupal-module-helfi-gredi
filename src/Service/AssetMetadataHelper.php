@@ -5,6 +5,7 @@ namespace Drupal\helfi_gredi_image\Service;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\helfi_gredi_image\DamClientInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\media\Entity\Media;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -28,9 +29,9 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
   /**
    * A configured API object.
    *
-   * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
+   * @var \Drupal\helfi_gredi_image\DamClientInterface
    */
-  protected $grediDamClient;
+  protected $damClient;
 
   /**
    * Specific metadata fields.
@@ -44,12 +45,12 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
    *
    * @param \Drupal\Core\Datetime\DateFormatterInterface $dateFormatter
    *   A Drupal date formatter service.
-   * @param \Drupal\helfi_gredi_image\Service\GrediDamClient $grediDamClient
+   * @param \Drupal\helfi_gredi_image\DamClientInterface $damClient
    *   A configured API object.
    */
-  public function __construct(DateFormatterInterface $dateFormatter, GrediDamClient $grediDamClient) {
+  public function __construct(DateFormatterInterface $dateFormatter, DamClientInterface $damClient) {
     $this->dateFormatter = $dateFormatter;
-    $this->grediDamClient = $grediDamClient;
+    $this->damClient = $damClient;
   }
 
   /**
@@ -94,7 +95,7 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
   public function getSpecificMetadataFields() {
     if (empty($this->specificMetadataFields)) {
       $this->setSpecificMetadataFields(
-        $this->grediDamClient->getSpecificMetadataFields()
+        $this->damClient->getSpecificMetadataFields()
       );
     }
 
