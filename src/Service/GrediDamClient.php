@@ -229,18 +229,11 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * {@inheritDoc}
    */
-  public function getFolderContent(int $folder_id, array $params = []): ?array {
+  public function getFolderContent(int $folder_id, int $limit, int $offset): ?array {
     if (empty($folder_id)) {
       return NULL;
     }
-    $parameters = '';
-
-    if (isset($params)) {
-      foreach ($params as $key => $param) {
-        $parameters .= '&' . $key . '=' . $param;
-      }
-    }
-    $url = sprintf("%s/folders/%d/files/?include=attachments%s", $this->baseUrl, $folder_id, $parameters);
+    $url = sprintf("%s/folders/%d/files/?include=attachments", $this->baseUrl, $folder_id);
     $userContent = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
@@ -248,11 +241,12 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       'cookies' => $this->grediDamAuthService->getCookieJar(),
     ]);
     $posts = Json::decode($userContent->getBody()->getContents());
+    $pageContent = array_slice($posts, $offset, $limit);
     $content = [
       'folders' => [],
       'assets' => [],
     ];
-    foreach ($posts as $post) {
+    foreach ($pageContent as $post) {
       if (!$post['folder']) {
         $content['assets'][] = Asset::fromJson($post);
       }
@@ -260,10 +254,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         $content['folders'][] = Category::fromJson($post);
       }
     }
-
     return [
       'content' => $content,
-      'total' => count($content),
+      'total' => count($posts),
     ];
   }
 
