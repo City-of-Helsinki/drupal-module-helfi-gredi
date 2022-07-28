@@ -45,13 +45,6 @@ class GrediDamAuthService implements DamAuthServiceInterface {
   protected $cookieJar;
 
   /**
-   * Customer ID.
-   *
-   * @var mixed
-   */
-  protected $customerId;
-
-  /**
    * The current user account.
    *
    * @var \Drupal\user\Entity\User
