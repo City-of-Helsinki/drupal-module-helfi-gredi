@@ -279,7 +279,6 @@ class Gredidam extends WidgetBase {
 
       if ($trigger_elem['#name'] === 'gredidam_pager') {
         $this->currentCategory->name = $trigger_elem['#current_category']->name ?? NULL;
-
         // Set the current category id to the id of the category, was clicked.
         $page = intval($trigger_elem['#gredidam_page']);
         $offset = $limit * $page;
@@ -730,15 +729,15 @@ class Gredidam extends WidgetBase {
     }
     // Last available page based on number of assets in category
     // divided by number of assets to show per page.
-    $last_page = floor(($total_count - 1) / $limit);
+    $lastPage = floor(($total_count - 1) / $limit);
     // First page to show in the pager.
     // Try to put the button for the current page in the middle by starting at
     // the current page number minus 4.
-    $start_page = max(0, $page - 4);
-    // Last page to show in the pager.  Don't go beyond the last available page.
-    $end_page = min($start_page + 9, $last_page);
+    $startPage = max(0, $page - 4);
+    // Last page to show in the pager. Don't go beyond the last available page.
+    $endPage = min($startPage + 9, $lastPage);
     // Create buttons for pages from start to end.
-    for ($i = $start_page; $i <= $end_page; $i++) {
+    for ($i = $startPage; $i <= $endPage; $i++) {
       $form['pager-container']['page_' . $i] = [
         '#type' => 'button',
         '#value' => $i + 1,
@@ -752,7 +751,7 @@ class Gredidam extends WidgetBase {
       ];
     }
     // If not on the last page.
-    if ($end_page > $page) {
+    if ($endPage > $page) {
       // Add a button to go to the next page.
       $form['pager-container']['next'] = [
         '#type' => 'button',
@@ -771,7 +770,7 @@ class Gredidam extends WidgetBase {
         '#value' => '>>',
         '#name' => 'gredidam_pager',
         '#current_category' => $category,
-        '#gredidam_page' => $last_page,
+        '#gredidam_page' => $lastPage,
         '#page_type' => $page_type,
         '#attributes' => [
           'class' => ['page-button', 'page-last'],
