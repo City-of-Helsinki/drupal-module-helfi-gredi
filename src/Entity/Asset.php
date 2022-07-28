@@ -65,27 +65,6 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $modified;
 
   /**
-   * The date the file has been uploaded (format: YYYY-MM-DDTHH:MM:SSZ).
-   *
-   * @var string
-   */
-  public $file_upload_date;
-
-  /**
-   * The date the asset has been deleted (format: YYYY-MM-DDTHH:MM:SSZ).
-   *
-   * @var string
-   */
-  public $deleted_date;
-
-  /**
-   * Flag assets which are released and not expired.
-   *
-   * @var bool
-   */
-  public $released_and_not_expired;
-
-  /**
    * The links to download the asset.
    *
    * @var array
@@ -215,9 +194,6 @@ class Asset implements EntityInterface, \JsonSerializable {
       'name',
       'created',
       'modified',
-      'file_upload_date',
-      'deleted_date',
-      'released_and_not_expired',
       'attachments',
       'apiContentLink',
     ];
@@ -278,9 +254,6 @@ class Asset implements EntityInterface, \JsonSerializable {
       'name' => $this->name,
       'created' => $this->created,
       'modified' => $this->modified,
-      'file_upload_date' => $this->file_upload_date,
-      'deleted_date' => $this->deleted_date,
-      'released_and_not_expired' => $this->released_and_not_expired,
       'attachments' => $this->attachments,
     ];
   }

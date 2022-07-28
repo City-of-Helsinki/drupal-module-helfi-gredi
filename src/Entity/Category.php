@@ -38,13 +38,6 @@ class Category implements EntityInterface, \JsonSerializable {
   public $description;
 
   /**
-   * Path of files from the category.
-   *
-   * @var string
-   */
-  public $apiContentLink;
-
-  /**
    * Created time.
    *
    * @var string
@@ -98,7 +91,6 @@ class Category implements EntityInterface, \JsonSerializable {
       'parentId',
       'name',
       'description',
-      'apiContentLink',
       'created',
       'modified',
     ];
@@ -123,7 +115,6 @@ class Category implements EntityInterface, \JsonSerializable {
       'name' => $this->name,
       'description' => 'category',
       'parts' => $this->parts,
-      'apiContentLink' => $this->apiContentLink,
       'created' => $this->created,
       'modified' => $this->modified,
     ];
