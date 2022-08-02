@@ -432,4 +432,47 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     return $file_contents;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  public function searchAssets(array $params): array {
+    $parameters = '';
+
+    foreach ($params as $key => $param) {
+      if (empty($param)) {
+        continue;
+      }
+      $parameters .= '&' . $key . '=' . $param;
+    }
+
+    try {
+      $customerId = $this->grediDamAuthService->getCustomerId();
+    }
+    catch (\Exception $e) {
+      throw $e;
+    }
+    $url = sprintf("%s/customers/%d/contents?include=object%s", $this->baseUrl, $customerId, $parameters);
+    $response = $this->guzzleClient->request('GET', $url, [
+      'headers' => [
+        'Content-Type' => 'application/json',
+      ],
+      'cookies' => $this->grediDamAuthService->getCookieJar(),
+    ]);
+
+    $posts = Json::decode($response->getBody()->getContents());
+    $content = [
+      'assets' => [],
+    ];
+
+    foreach ($posts as $post) {
+      if (!$post['folder']) {
+        $content['assets'][] = Asset::fromJson($post);
+      }
+    }
+    return [
+      'content' => $content,
+      'total' => count($content['assets']),
+    ];
+  }
+
 }

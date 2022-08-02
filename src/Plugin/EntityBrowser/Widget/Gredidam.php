@@ -288,6 +288,7 @@ class Gredidam extends WidgetBase {
     $this->currentCategory->name = NULL;
     $this->currentCategory->parts = [];
 
+    $page_type = 'listing';
     // Initialize pagination variables.
     $page = 0;
     $offset = 0;
@@ -334,6 +335,12 @@ class Gredidam extends WidgetBase {
         $page = intval($trigger_elem['#gredidam_page']);
         $offset = $limit * $page;
       }
+
+      if ($trigger_elem['#name'] === 'filter_sort_submit') {
+        $page_type = "search";
+        // Reset page to zero.
+        $page = 0;
+      }
     }
 
     // Get breadcrumb.
@@ -374,6 +381,20 @@ class Gredidam extends WidgetBase {
         ]);
         return ['#markup' => $markup];
       }
+    }
+
+    if ($page_type == "search") {
+      $sort_by = ($form_state->getValue('sortdir') == 'desc') ? '-sortBy' .
+        $form_state->getValue('sortby') : '+sortBy' . $form_state->getValue('sortby');
+      $keyword = trim($form_state->getValue('query'));
+      $params = [
+        'search' => $keyword,
+        'sort' => $sort_by,
+      ];
+      $search_results = $this->damClient->searchAssets($params);
+
+      $content = $search_results['content'];
+      $totalAssets = $search_results['total'] ?? 0;
     }
 
     $form['asset-container'] = [
@@ -422,7 +443,7 @@ class Gredidam extends WidgetBase {
     if ($totalAssets > $limit) {
       // Add the pager to the form.
       $form['actions'] += $this
-        ->getPager($totalAssets, $page, $limit, 'listing', $this->currentCategory);
+        ->getPager($totalAssets, $page, $limit, $page_type, $this->currentCategory);
     }
 
     return $form;
@@ -705,12 +726,12 @@ class Gredidam extends WidgetBase {
       '#type' => 'select',
       '#title' => 'Sort by',
       '#options' => [
-        'filename' => $this->t('File name'),
-        'size' => $this->t('File size'),
-        'created_date' => $this->t('Date created'),
-        'last_update_date' => $this->t('Date modified'),
+        'Name' => $this->t('File name'),
+        'Size' => $this->t('File size'),
+        'Created' => $this->t('Date created'),
+        'Updated' => $this->t('Date modified'),
       ],
-      '#default_value' => 'created_date',
+      '#default_value' => 'Name',
     ];
     // Add dropdown for sort direction.
     $form['filter-sort-container']['sortdir'] = [
