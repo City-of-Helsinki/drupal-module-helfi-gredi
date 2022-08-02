@@ -19,7 +19,9 @@ use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\Form\GrediDamConfigForm;
 use Drupal\helfi_gredi_image\Service\AssetFileEntityHelper;
+use Drupal\helfi_gredi_image\Service\GrediDamAuthService;
 use Drupal\media\Entity\Media;
+use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -106,6 +108,13 @@ class Gredidam extends WidgetBase {
   protected $fileHelper;
 
   /**
+   * Gredi DAM Auth Service.
+   *
+   * @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService
+   */
+  protected $authService;
+
+  /**
    * Gredidam constructor.
    *
    * {@inheritdoc}
@@ -124,17 +133,19 @@ class Gredidam extends WidgetBase {
     ModuleHandlerInterface $moduleHandler,
     ConfigFactoryInterface $config,
     PagerManagerInterface $pagerManager,
-    AssetFileEntityHelper $assetFileEntityHelper
+    AssetFileEntityHelper $assetFileEntityHelper,
+    GrediDamAuthService $grediDamAuthService
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $event_dispatcher, $entity_type_manager, $validation_manager);
     $this->damClient = $damClient;
-    $this->user = $account;
+    $this->user = User::load($account->id());
     $this->languageManager = $languageManager;
     $this->moduleHandler = $moduleHandler;
     $this->entityFieldManager = $entity_field_manager;
     $this->config = $config;
     $this->pagerManager = $pagerManager;
     $this->fileHelper = $assetFileEntityHelper;
+    $this->authService = $grediDamAuthService;
   }
 
   /**
@@ -155,7 +166,8 @@ class Gredidam extends WidgetBase {
       $container->get('module_handler'),
       $container->get('config.factory'),
       $container->get('pager.manager'),
-      $container->get('helfi_gredi_image.asset_file.helper')
+      $container->get('helfi_gredi_image.asset_file.helper'),
+      $container->get('helfi_gredi_image.auth_service')
     );
   }
 
@@ -223,6 +235,45 @@ class Gredidam extends WidgetBase {
     }
 
     $form = parent::getForm($original_form, $form_state, $additional_widget_parameters);
+
+    if ($this->authService->checkLogin()) {
+      $form['dam_auth'] = [
+        '#type' => 'fieldset',
+        '#title' => $this->t('Dam Authentication'),
+      ];
+
+      $form['dam_auth']['dam_username'] = [
+        '#type' => 'textfield',
+        '#title' => $this->t('Dam Username'),
+        '#description' => $this->t('User Dam Credentials: Username'),
+      ];
+
+      $form['dam_auth']['dam_password'] = [
+        '#type' => 'password',
+        '#title' => $this->t('Dam Password'),
+        '#description' => $this->t('User Dam Credentials: Password'),
+      ];
+
+      $form['dam_auth']['actions']['submit'] = [
+        '#type' => 'submit',
+        '#value' => 'Update credentials',
+        '#attributes' => [
+          'class' => ['button button--primary is-entity-browser-submit'],
+        ],
+      ];
+
+      $form['dam_auth']['actions']['submit']['#submit'][] = [
+        $this, 'updateUserDamCredentials',
+      ];
+
+      $form['dam_auth']['actions']['submit']['#validate'][] = [
+        $this, 'validateUserDamCredentials',
+      ];
+
+      unset($form['actions']);
+      return $form;
+    }
+
     // Attach the modal library.
     $form['#attached']['library'][] = 'core/drupal.dialog.ajax';
 
@@ -375,6 +426,33 @@ class Gredidam extends WidgetBase {
     }
 
     return $form;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function validateUserDamCredentials(&$form, FormStateInterface $form_state) {
+
+    if (empty($form_state->getValue('dam_username'))) {
+      return $form_state->setErrorByName('dam_username', $this->t('Dam Username field cannot be null!'));
+    }
+
+    if (empty($form_state->getValue('dam_password'))) {
+      return $form_state->setErrorByName('dam_password', $this->t('Dam Password field cannot be null!'));
+    }
+}
+
+  /**
+   * {@inheritDoc}
+   */
+  public function updateUserDamCredentials(&$form, FormStateInterface $form_state) {
+    $username = $form_state->getValue('dam_username');
+    $password = $form_state->getValue('dam_password');
+
+    $this->user->set('field_gredi_dam_username', $username);
+    $this->user->set('field_gredi_dam_password', $password);
+    $this->user->save();
+    $form_state->setRebuild();
   }
 
   /**
