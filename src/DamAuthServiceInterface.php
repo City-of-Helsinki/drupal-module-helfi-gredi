@@ -21,10 +21,10 @@ interface DamAuthServiceInterface {
   /**
    * Get cookie jar variable.
    *
-   * @return \GuzzleHttp\Cookie\CookieJar|null
+   * @return \GuzzleHttp\Cookie\CookieJar|bool
    *   Authentication cookie.
    */
-  public function getCookieJar(): ?CookieJar;
+  public function getCookieJar();
 
   /**
    * Get customer ID.

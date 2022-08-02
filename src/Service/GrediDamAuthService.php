@@ -76,7 +76,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
   /**
    * {@inheritDoc}
    */
-  public function getCookieJar(): ?CookieJar {
+  public function getCookieJar() {
     if ($this->cookieJar) {
       return $this->cookieJar;
     }
@@ -166,10 +166,14 @@ class GrediDamAuthService implements DamAuthServiceInterface {
     }
   }
 
+  /**
+   * Check if the user auth are correct.
+   *
+   * @return bool
+   */
   public function checkLogin() {
-    return is_int($this->loginWithCredentials()) && $this->loginWithCredentials() == 401);
 
-
+    return is_int($this->loginWithCredentials()) && $this->loginWithCredentials() == 401;
   }
 
   /**

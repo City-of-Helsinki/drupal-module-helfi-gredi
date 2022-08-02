@@ -235,7 +235,8 @@ class Gredidam extends WidgetBase {
     }
 
     $form = parent::getForm($original_form, $form_state, $additional_widget_parameters);
-    if (!$this->authService->checkLogin()) {
+
+    if ($this->authService->checkLogin()) {
       $form['dam_auth'] = [
         '#type' => 'fieldset',
         '#title' => $this->t('Dam Authentication'),
