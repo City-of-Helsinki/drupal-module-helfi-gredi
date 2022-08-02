@@ -728,9 +728,9 @@ class Gredidam extends WidgetBase {
       '#title' => 'Sort by',
       '#options' => [
         'Name' => $this->t('File name'),
-        'Size' => $this->t('File size'),
+//        'Size' => $this->t('File size'),
         'Created' => $this->t('Date created'),
-        'Updated' => $this->t('Date modified'),
+//        'Updated' => $this->t('Date modified'),
       ],
       '#default_value' => 'Name',
     ];
