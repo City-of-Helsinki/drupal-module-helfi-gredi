@@ -384,8 +384,9 @@ class Gredidam extends WidgetBase {
     }
 
     if ($page_type == "search") {
-      $sort_by = ($form_state->getValue('sortdir') == 'desc') ? '-sortBy' .
-        $form_state->getValue('sortby') : '+sortBy' . $form_state->getValue('sortby');
+      $sort_by = ($form_state->getValue('sortdir') == 'desc') ? '-orderBy' .
+        $form_state->getValue('sortby') : '+orderBy' . $form_state->getValue('sortby');
+
       $keyword = trim($form_state->getValue('query'));
       $params = [
         'search' => $keyword,
