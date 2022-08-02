@@ -167,12 +167,8 @@ class GrediDamAuthService implements DamAuthServiceInterface {
   }
 
   public function checkLogin() {
-    if (is_int($this->loginWithCredentials()) && $this->loginWithCredentials() == 401) {
-      return FALSE;
-    }
-    else {
-      return TRUE;
-    }
+    return is_int($this->loginWithCredentials()) && $this->loginWithCredentials() == 401);
+
 
   }
 
