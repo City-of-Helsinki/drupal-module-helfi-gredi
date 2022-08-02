@@ -135,7 +135,6 @@ class GrediDamAuthService implements DamAuthServiceInterface {
       try {
         $url = sprintf("%s/sessions", $this->baseUrl);
         $response = $this->guzzleClient->request("POST", $url, $data);
-
         if ($response->getStatusCode() == 200 && $response->getReasonPhrase() == 'OK') {
           $getCookie = $response->getHeader('Set-Cookie')[0];
           $subtring_start = strpos($getCookie, '=');
@@ -151,6 +150,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
       }
       catch (ClientException $e) {
         $status_code = $e->getResponse()->getStatusCode();
+
         \Drupal::logger('helfi_gredi_image')->error(
           'Unable to authenticate. DAM API client returned a @code exception code with the following message: %message',
           [
@@ -158,12 +158,22 @@ class GrediDamAuthService implements DamAuthServiceInterface {
             '%message' => $e->getMessage(),
           ]
         );
-
+        return $status_code;
       }
     }
     else {
       return NULL;
     }
+  }
+
+  public function checkLogin() {
+    if (is_int($this->loginWithCredentials()) && $this->loginWithCredentials() == 401) {
+      return FALSE;
+    }
+    else {
+      return TRUE;
+    }
+
   }
 
   /**
