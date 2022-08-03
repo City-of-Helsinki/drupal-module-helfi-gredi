@@ -3,7 +3,6 @@
 namespace Drupal\helfi_gredi_image;
 
 use Drupal\Core\Config\ImmutableConfig;
-use GuzzleHttp\Cookie\CookieJar;
 
 /**
  * Gredi DAM authentication service interface.

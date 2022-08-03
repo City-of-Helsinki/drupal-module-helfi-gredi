@@ -467,7 +467,6 @@ class Gredidam extends WidgetBase {
    * {@inheritDoc}
    */
   public function validateUserDamCredentials(&$form, FormStateInterface $form_state) {
-
     if (empty($form_state->getValue('dam_username'))) {
       return $form_state->setErrorByName('dam_username', $this->t('Dam Username field cannot be null!'));
     }
@@ -475,7 +474,7 @@ class Gredidam extends WidgetBase {
     if (empty($form_state->getValue('dam_password'))) {
       return $form_state->setErrorByName('dam_password', $this->t('Dam Password field cannot be null!'));
     }
-}
+  }
 
   /**
    * {@inheritDoc}
@@ -742,9 +741,9 @@ class Gredidam extends WidgetBase {
       '#title' => 'Sort by',
       '#options' => [
         'Name' => $this->t('File name'),
-//        'Size' => $this->t('File size'),
+        // 'Size' => $this->t('File size'),
         'Created' => $this->t('Date created'),
-//        'Updated' => $this->t('Date modified'),
+        // 'Updated' => $this->t('Date modified'),
       ],
       '#default_value' => 'Name',
     ];
