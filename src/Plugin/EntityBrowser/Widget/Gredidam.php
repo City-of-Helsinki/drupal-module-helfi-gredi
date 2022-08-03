@@ -235,26 +235,35 @@ class Gredidam extends WidgetBase {
     }
 
     $form = parent::getForm($original_form, $form_state, $additional_widget_parameters);
-
+    $form['modal-content'] = [
+      '#type' => 'container',
+      // Store the current category id in the form so it can be retrieved
+      // from the form state.
+      '#attributes' => [
+        'class' => ['gredidam-asset-browser row'],
+      ],
+      '#prefix' => '<div id="asset-container">',
+      '#suffix' => '</div>',
+    ];
     if ($this->authService->checkLogin()) {
-      $form['dam_auth'] = [
+      $form['modal-content']['dam_auth'] = [
         '#type' => 'fieldset',
         '#title' => $this->t('Dam Authentication'),
       ];
 
-      $form['dam_auth']['dam_username'] = [
+      $form['modal-content']['dam_auth']['dam_username'] = [
         '#type' => 'textfield',
         '#title' => $this->t('Dam Username'),
         '#description' => $this->t('User Dam Credentials: Username'),
       ];
 
-      $form['dam_auth']['dam_password'] = [
+      $form['modal-content']['dam_auth']['dam_password'] = [
         '#type' => 'password',
         '#title' => $this->t('Dam Password'),
         '#description' => $this->t('User Dam Credentials: Password'),
       ];
 
-      $form['dam_auth']['actions']['submit'] = [
+      $form['modal-content']['dam_auth']['actions']['submit'] = [
         '#type' => 'submit',
         '#value' => 'Update credentials',
         '#attributes' => [
@@ -262,11 +271,11 @@ class Gredidam extends WidgetBase {
         ],
       ];
 
-      $form['dam_auth']['actions']['submit']['#submit'][] = [
+      $form['modal-content']['dam_auth']['actions']['submit']['#submit'][] = [
         $this, 'updateUserDamCredentials',
       ];
 
-      $form['dam_auth']['actions']['submit']['#validate'][] = [
+      $form['modal-content']['dam_auth']['actions']['submit']['#validate'][] = [
         $this, 'validateUserDamCredentials',
       ];
 
@@ -275,7 +284,7 @@ class Gredidam extends WidgetBase {
     }
 
     // Attach the modal library.
-    $form['#attached']['library'][] = 'core/drupal.dialog.ajax';
+    $form['modal-content']['#attached']['library'][] = 'core/drupal.dialog.ajax';
 
     $config = $this->config->get('helfi_gredi_image.settings');
     $modulePath = $this->moduleHandler->getModule('helfi_gredi_image')->getPath();
@@ -293,6 +302,7 @@ class Gredidam extends WidgetBase {
     $page = 0;
     $offset = 0;
     $limit = $config->get('num_assets_per_page') ?? GrediDamConfigForm::NUM_ASSETS_PER_PAGE;
+
 
     if (isset($form_state->getCompleteForm()['widget'])
       && isset($trigger_elem) && $trigger_elem['#name'] != 'filter_sort_reset') {
@@ -314,7 +324,7 @@ class Gredidam extends WidgetBase {
         $current_selections = $form_state
           ->getValue('current_selections', []) + array_filter($form_state->getValue('assets', []));
 
-        $form['current_selections'] = [
+        $form['modal-content']['current_selections'] = [
           '#type' => 'value',
           '#value' => $current_selections,
         ];
@@ -327,6 +337,7 @@ class Gredidam extends WidgetBase {
         $this->currentCategory->id = $trigger_elem['#gredidam_category']['id'];
         $this->currentCategory->name = $trigger_elem['#gredidam_category']['name'];
         $this->currentCategory->parts[] = $trigger_elem['#gredidam_category']['name'];
+
       }
 
       if ($trigger_elem['#name'] === 'gredidam_pager') {
@@ -344,10 +355,10 @@ class Gredidam extends WidgetBase {
     }
 
     // Get breadcrumb.
-    $form += $this->getBreadcrumb($this->currentCategory);
+    $form['modal-content'] += $this->getBreadcrumb($this->currentCategory);
 
     // Add the filter and sort options to the form.
-    $form += $this->getFilterSort();
+    $form['modal-content'] += $this->getFilterSort();
 
     $content = [
       "folders" => [],
@@ -398,7 +409,9 @@ class Gredidam extends WidgetBase {
       $totalAssets = $search_results['total'] ?? 0;
     }
 
-    $form['asset-container'] = [
+
+
+    $form['modal-content']['asset-container'] = [
       '#type' => 'container',
       // Store the current category id in the form so it can be retrieved
       // from the form state.
@@ -408,7 +421,7 @@ class Gredidam extends WidgetBase {
       ],
     ];
     if (!empty($content['folders'])) {
-      $form['asset-container']['alert'] = [];
+      $form['modal-content']['asset-container']['alert'] = [];
       $this->getCategoryFormElements($content['folders'], $modulePath, $form);
     }
     $this->assets = [];
@@ -420,7 +433,7 @@ class Gredidam extends WidgetBase {
       }
     }
 
-    $form['asset-container']['assets'] = [
+    $form['modal-content']['asset-container']['assets'] = [
       '#type' => 'checkboxes',
       '#theme_wrappers' => ['checkboxes__gredidam_assets'],
       '#title_display' => 'invisible',
@@ -432,7 +445,7 @@ class Gredidam extends WidgetBase {
       ],
     ];
     if ($totalAssets === 0) {
-      $form['asset-container']['alert'] = [
+      $form['modal-content']['asset-container']['alert'] = [
         '#markup' => '<div class="alert alert-warning" role="alert">No data found!</div>',
         '#attached' => [
           'library' => [
@@ -705,6 +718,7 @@ class Gredidam extends WidgetBase {
         '#attributes' => [
           'class' => ['gredidam-browser-breadcrumb'],
         ],
+
       ];
     }
 
@@ -792,7 +806,7 @@ class Gredidam extends WidgetBase {
    */
   private function getPager(int $total_count, int $page, int $limit, string $page_type = "listing", Category $category = NULL) {
     // Add container for pager.
-    $form['pager-container'] = [
+    $form['modal-content']['pager-container'] = [
       '#type' => 'container',
       // Store page number in container so it can be retrieved from form state.
       '#page' => $page,
@@ -803,7 +817,7 @@ class Gredidam extends WidgetBase {
     // If not on the first page.
     if ($page > 0) {
       // Add a button to go to the first page.
-      $form['pager-container']['first'] = [
+      $form['modal-content']['pager-container']['first'] = [
         '#type' => 'button',
         '#value' => '<<',
         '#name' => 'gredidam_pager',
@@ -815,7 +829,7 @@ class Gredidam extends WidgetBase {
         ],
       ];
       // Add a button to go to the previous page.
-      $form['pager-container']['previous'] = [
+      $form['modal-content']['pager-container']['previous'] = [
         '#type' => 'button',
         '#value' => '<',
         '#name' => 'gredidam_pager',
@@ -838,7 +852,7 @@ class Gredidam extends WidgetBase {
     $endPage = min($startPage + 9, $lastPage);
     // Create buttons for pages from start to end.
     for ($i = $startPage; $i <= $endPage; $i++) {
-      $form['pager-container']['page_' . $i] = [
+      $form['modal-content']['pager-container']['page_' . $i] = [
         '#type' => 'button',
         '#value' => $i + 1,
         '#name' => 'gredidam_pager',
@@ -853,7 +867,7 @@ class Gredidam extends WidgetBase {
     // If not on the last page.
     if ($endPage > $page) {
       // Add a button to go to the next page.
-      $form['pager-container']['next'] = [
+      $form['modal-content']['pager-container']['next'] = [
         '#type' => 'button',
         '#value' => '>',
         '#name' => 'gredidam_pager',
@@ -865,7 +879,7 @@ class Gredidam extends WidgetBase {
         ],
       ];
       // Add a button to go to the last page.
-      $form['pager-container']['last'] = [
+      $form['modal-content']['pager-container']['last'] = [
         '#type' => 'button',
         '#value' => '>>',
         '#name' => 'gredidam_pager',
@@ -885,7 +899,7 @@ class Gredidam extends WidgetBase {
    */
   private function getCategoryFormElements($categories, $modulePath, &$form) {
     foreach ($categories as $category) {
-      $form['asset-container']['categories'][$category->name] = [
+      $form['modal-content']['asset-container']['categories'][$category->name] = [
         '#type' => 'container',
         '#attributes' => [
           'class' => ['gredidam-browser-category-link'],
@@ -899,17 +913,34 @@ class Gredidam extends WidgetBase {
           '#attributes' => [
             'class' => ['gredidam-category-link-button'],
           ],
+//          '#ajax' => [
+//            'callback' => [$this, 'getFolderContent'],
+//            'wrapper' => 'asset-container',
+//            'event' => 'click',
+//            'progress' => [
+//              'type' => 'throbber',
+//              'message' => $this->t('Loading data'),
+//            ],
+//          ],
         ],
         'title' => [
           '#type' => 'html_tag',
           '#tag' => 'p',
           '#value' => $category->name,
         ],
+
       ];
     }
 
     return $form;
   }
+
+//  public function getFolderContent($form, FormStateInterface $form_state) {
+//    dump($form_state->getValues());
+//    $form_state->set('breadcrumb', '');
+//    $form_state->setRebuild();
+//    return $form['widget']['modal-content'];
+//  }
 
   /**
    * Format display of one asset in media browser.
