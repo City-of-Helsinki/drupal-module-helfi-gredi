@@ -195,6 +195,7 @@ class Asset implements EntityInterface, \JsonSerializable {
       'created',
       'modified',
       'attachments',
+      'object',
       'apiContentLink',
     ];
     $remote_asset_url = self::getAssetRemoteBaseUrl();
@@ -202,12 +203,26 @@ class Asset implements EntityInterface, \JsonSerializable {
     $asset = new self();
     foreach ($properties as $property) {
       if (isset($json[$property])) {
-        if ($property === 'attachments') {
+        if (isset($json['attachments']) && $property === 'attachments') {
           foreach ($json['attachments'] as $attachment) {
             if ($attachment['type'] === self::ATTACHMENT_TYPE_ORIGINAL) {
               $asset->width = $attachment['propertiesById']['nibo:image-width'];
               $asset->height = $attachment['propertiesById']['nibo:image-height'];
               $asset->resolution = $attachment['propertiesById']['nibo:image-resolution'];
+              $asset->keywords = NULL;
+              $asset->alt_text = NULL;
+              $asset->size = $attachment['propertiesById']['nibo:file-size'];
+              $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
+            }
+            $asset->attachments[$attachment['type']] = $remote_asset_url . $attachment['publicLink'];
+          }
+        }
+        elseif ($property == 'object') {
+          foreach ($json['object'] as $attachment) {
+            if ($attachment['type'] === self::ATTACHMENT_TYPE_ORIGINAL) {
+//              $asset->width = $attachment['propertiesById']['nibo:image-width'];
+//              $asset->height = $attachment['propertiesById']['nibo:image-height'];
+//              $asset->resolution = $attachment['propertiesById']['nibo:image-resolution'];
               $asset->keywords = NULL;
               $asset->alt_text = NULL;
               $asset->size = $attachment['propertiesById']['nibo:file-size'];

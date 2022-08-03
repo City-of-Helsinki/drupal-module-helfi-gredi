@@ -95,4 +95,15 @@ interface DamClientInterface {
    */
   public function getSpecificMetadataFields(): array;
 
+  /**
+   * Search for assets by params.
+   *
+   * @param array $params
+   *   Params var.
+   *
+   * @return array
+   *   A list of assets.
+   */
+  public function searchAssets(array $params): array;
+
 }
