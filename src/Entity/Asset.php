@@ -220,9 +220,9 @@ class Asset implements EntityInterface, \JsonSerializable {
         elseif ($property == 'object') {
           foreach ($json['object'] as $attachment) {
             if ($attachment['type'] === self::ATTACHMENT_TYPE_ORIGINAL) {
-//              $asset->width = $attachment['propertiesById']['nibo:image-width'];
-//              $asset->height = $attachment['propertiesById']['nibo:image-height'];
-//              $asset->resolution = $attachment['propertiesById']['nibo:image-resolution'];
+              // $asset->width = $attachment['propertiesById']['nibo:image-width'];
+              // $asset->height = $attachment['propertiesById']['nibo:image-height'];
+              // $asset->resolution = $attachment['propertiesById']['nibo:image-resolution'];
               $asset->keywords = NULL;
               $asset->alt_text = NULL;
               $asset->size = $attachment['propertiesById']['nibo:file-size'];
