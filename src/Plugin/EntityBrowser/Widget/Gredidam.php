@@ -114,6 +114,8 @@ class Gredidam extends WidgetBase {
    */
   protected $authService;
 
+  protected $breadcrumb;
+
   /**
    * Gredidam constructor.
    *
@@ -296,6 +298,8 @@ class Gredidam extends WidgetBase {
     $this->currentCategory->id = NULL;
     $this->currentCategory->name = NULL;
     $this->currentCategory->parts = [];
+    $this->breadcrumb = [];
+
 
     $page_type = 'listing';
     // Initialize pagination variables.
@@ -333,10 +337,27 @@ class Gredidam extends WidgetBase {
 
     if (isset($trigger_elem)) {
       if ($trigger_elem['#name'] === 'gredidam_category') {
+
         // Update the required information of selected category.
         $this->currentCategory->id = $trigger_elem['#gredidam_category']['id'];
+        if ($this->currentCategory->id == NULL) {
+          $form_state->set('breadcrumb', NULL);
+          $this->breadcrumb = NULL;
+          $this->currentCategory->parts = [];
+        }
         $this->currentCategory->name = $trigger_elem['#gredidam_category']['name'];
-        $this->currentCategory->parts[] = $trigger_elem['#gredidam_category']['name'];
+
+        $this->breadcrumb = $form_state->get('breadcrumb');
+        $this->breadcrumb[] = [$trigger_elem['#gredidam_category_id'] => $form_state->getValue('gredidam_category')];
+
+        $form_state->set('breadcrumb', $this->breadcrumb);
+        $this->currentCategory->parts = $this->breadcrumb;
+        $form_state->setRebuild();
+
+      }
+      if ($trigger_elem['#name'] === 'breadcrumb') {
+        $this->currentCategory->id = array_keys($form_state->get('breadcrumb')[0])[0];
+        $this->currentCategory->parts = $trigger_elem["#parts"];
 
       }
 
@@ -525,12 +546,12 @@ class Gredidam extends WidgetBase {
       ]);
 
       if (!count($content)) {
-        $form_state->setError($form['widget']['asset-container'], $this->t('Please select an asset.'));
+        $form_state->setError($form['widget']['modal-content']['asset-container'], $this->t('Please select an asset.'));
         return;
       }
 
       if (count($content) != 1) {
-        $form_state->setError($form['widget']['asset-container'], $this->t('You can select maximum 1 asset.'));
+        $form_state->setError($form['widget']['modal-content']['asset-container'], $this->t('You can select maximum 1 asset.'));
         return;
       }
 
@@ -692,7 +713,7 @@ class Gredidam extends WidgetBase {
       '#type' => 'button',
       '#value' => "Home",
       '#name' => 'breadcrumb',
-      '#category_name' => NULL,
+      '#category_id' => NULL,
       '#parts' => $level,
       '#prefix' => '<li>',
       '#suffix' => '</li>',
@@ -700,16 +721,17 @@ class Gredidam extends WidgetBase {
         'class' => ['gredidam-browser-breadcrumb'],
       ],
     ];
-
+    $index = 0;
     // Add the breadcrumb buttons to the form.
     foreach ($category->parts as $key => $category_name) {
+
       $level[] = $category_name;
       // Increment it so doesn't overwrite the home.
-      $key++;
-      $form['breadcrumb-container'][$key] = [
+      $index++;
+      $form['breadcrumb-container'][$index] = [
         '#type' => 'button',
-        '#value' => $category_name,
-        '#category_name' => $category_name,
+        '#value' => array_values($category_name)[0],
+        '#category_id' => array_values($category_name)[0],
         '#name' => 'breadcrumb',
         '#parts' => $level,
         '#prefix' => '<li>',
@@ -908,6 +930,7 @@ class Gredidam extends WidgetBase {
           '#type' => 'button',
           '#value' => $category->name,
           '#name' => 'gredidam_category',
+          '#gredidam_category_id' => $category->id,
           '#gredidam_category' => $category->jsonSerialize(),
           '#attributes' => [
             'class' => ['gredidam-category-link-button'],
@@ -935,8 +958,6 @@ class Gredidam extends WidgetBase {
   }
 
 //  public function getFolderContent($form, FormStateInterface $form_state) {
-//    dump($form_state->getValues());
-//    $form_state->set('breadcrumb', '');
 //    $form_state->setRebuild();
 //    return $form['widget']['modal-content'];
 //  }
