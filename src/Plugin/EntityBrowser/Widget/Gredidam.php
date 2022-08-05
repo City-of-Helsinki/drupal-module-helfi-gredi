@@ -114,6 +114,11 @@ class Gredidam extends WidgetBase {
    */
   protected $authService;
 
+  /**
+   * Breadcrum array.
+   *
+   * @var array
+   */
   protected $breadcrumb;
 
   /**
@@ -300,13 +305,11 @@ class Gredidam extends WidgetBase {
     $this->currentCategory->parts = [];
     $this->breadcrumb = [];
 
-
     $page_type = 'listing';
     // Initialize pagination variables.
     $page = 0;
     $offset = 0;
     $limit = $config->get('num_assets_per_page') ?? GrediDamConfigForm::NUM_ASSETS_PER_PAGE;
-
 
     if (isset($form_state->getCompleteForm()['widget'])
       && isset($trigger_elem) && $trigger_elem['#name'] != 'filter_sort_reset') {
@@ -353,12 +356,10 @@ class Gredidam extends WidgetBase {
         $form_state->set('breadcrumb', $this->breadcrumb);
         $this->currentCategory->parts = $this->breadcrumb;
         $form_state->setRebuild();
-
       }
       if ($trigger_elem['#name'] === 'breadcrumb') {
         $this->currentCategory->id = array_keys($form_state->get('breadcrumb')[0])[0];
         $this->currentCategory->parts = $trigger_elem["#parts"];
-
       }
 
       if ($trigger_elem['#name'] === 'gredidam_pager') {
@@ -429,8 +430,6 @@ class Gredidam extends WidgetBase {
       $content = $search_results['content'];
       $totalAssets = $search_results['total'] ?? 0;
     }
-
-
 
     $form['modal-content']['asset-container'] = [
       '#type' => 'container',
