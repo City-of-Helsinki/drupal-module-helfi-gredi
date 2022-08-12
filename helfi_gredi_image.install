@@ -1,0 +1,84 @@
+<?php
+
+/**
+ * @file
+ * Installation related hooks and functions.
+ */
+
+
+function helfi_gredi_image_install() {
+  /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $form_display */
+  $form_display = \Drupal::entityTypeManager()
+    ->getStorage('entity_form_display')
+    ->load('user.user.default');
+  $form_display->setComponent('field_gredi_dam_username', [
+    'region' => 'content',
+    'weight' => -20,
+  ]);
+  $form_display->setComponent('field_gredi_dam_password', [
+    'region' => 'content',
+    'weight' => -19,
+    ]);
+  $form_display->save();
+}
+/**
+ * Implements hook_schema().
+ */
+function helfi_gredi_image_schema() {
+  $schema = [];
+  $schema['gredidam_assets_data'] = [
+    'description' => 'Gredi DAM asset information.',
+    'fields' => [
+      'asset_id' => [
+        'description' => 'The asset ID.',
+        'default' => '',
+        'type' => 'varchar_ascii',
+        'not null' => TRUE,
+        'length' => 128,
+      ],
+      'name' => [
+        'description' => 'The identifier of the data.',
+        'type' => 'varchar_ascii',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+      ],
+      'value' => [
+        'description' => 'The value.',
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+      ],
+      'serialized' => [
+        'description' => 'Whether value is serialized.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'default' => 0,
+      ],
+    ],
+    'primary key' => ['asset_id', 'name'],
+    'indexes' => [
+      'asset_id' => ['asset_id'],
+      'name' => ['name'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Installs the new asset data schema if necessary.
+ */
+function helfi_gredi_image_update_8101(&$sandbox) {
+
+  $table_name = 'gredidam_assets_data';
+
+  $db_schema = Drupal::database()->schema();
+  if ($db_schema->tableExists($table_name)) {
+    return;
+  }
+
+  $new_schema = helfi_gredi_image_schema();
+  $db_schema->createTable($table_name, $new_schema[$table_name]);
+}

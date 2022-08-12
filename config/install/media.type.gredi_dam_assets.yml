@@ -1,0 +1,23 @@
+uuid: a4956838-45ee-4537-8b84-3e7cbabb99d9
+langcode: en
+status: true
+dependencies:
+  module:
+    - helfi_gredi_image
+id: gredi_dam_assets
+label: 'Gredi DAM Assets'
+description: ''
+source: gredidam_asset
+queue_thumbnail_downloads: false
+new_revision: false
+source_configuration:
+  source_field: field_external_id
+field_map:
+  external_id: field_external_id
+  width: field_width
+  height: field_height
+  resolution: field_resolution
+  keywords: field_keywords
+  alt_text: field_alt_text
+  media_image: field_media_image
+  size: field_size

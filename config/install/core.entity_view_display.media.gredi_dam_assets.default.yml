@@ -1,0 +1,92 @@
+uuid: b3c90090-3309-4f84-9d34-83f221e6d4e6
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.media.gredi_dam_assets.field_alt_text
+    - field.field.media.gredi_dam_assets.field_external_id
+    - field.field.media.gredi_dam_assets.field_height
+    - field.field.media.gredi_dam_assets.field_keywords
+    - field.field.media.gredi_dam_assets.field_media_image
+    - field.field.media.gredi_dam_assets.field_resolution
+    - field.field.media.gredi_dam_assets.field_size
+    - field.field.media.gredi_dam_assets.field_width
+    - media.type.gredi_dam_assets
+  module:
+    - image
+id: media.gredi_dam_assets.default
+targetEntityType: media
+bundle: gredi_dam_assets
+mode: default
+content:
+  field_alt_text:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 1
+    region: content
+  field_external_id:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 2
+    region: content
+  field_height:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 3
+    region: content
+  field_keywords:
+    type: basic_string
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 5
+    region: content
+  field_media_image:
+    type: image
+    label: above
+    settings:
+      image_link: ''
+      image_style: ''
+      image_loading:
+        attribute: lazy
+    third_party_settings: {  }
+    weight: 4
+    region: content
+  field_resolution:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 7
+    region: content
+  field_size:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 8
+    region: content
+  field_width:
+    type: string
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    weight: 9
+    region: content
+hidden:
+  created: true
+  name: true
+  thumbnail: true
+  uid: true

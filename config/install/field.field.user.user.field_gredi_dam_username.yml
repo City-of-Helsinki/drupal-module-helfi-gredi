@@ -1,0 +1,20 @@
+uuid: f5fb22e0-fffe-463d-9b66-f182f0be6f06
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_gredi_dam_username
+  module:
+    - user
+id: user.user.field_gredi_dam_username
+field_name: field_gredi_dam_username
+entity_type: user
+bundle: user
+label: 'Gredi DAM Username'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string
