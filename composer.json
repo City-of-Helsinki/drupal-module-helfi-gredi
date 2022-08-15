@@ -6,10 +6,8 @@
     "minimum-stability": "dev",
     "require": {
         "drupal/helfi_api_base": "^2.2.0",
-        "twistor/stream-util": "dev-master",
-        "drupal/media_entity_browser": "^2.0"
-    },
-    "require-dev": {
+        "drupal/media_entity_browser": "^2.0",
+        "drupal/coder": "dev-8.x-3.x"
     },
     "extra": {
         "drupal-scaffold": {
