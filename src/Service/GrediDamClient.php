@@ -443,4 +443,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     ];
   }
 
+  public function uploadImage() {
+    // TODO post request
+  }
+
 }
