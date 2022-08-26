@@ -162,6 +162,33 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * {@inheritDoc}
    */
+  public function getCategoryTree(): array {
+    try {
+      $customerId = $this->grediDamAuthService->getCustomerId();
+    }
+    catch (\Exception $e) {
+      throw $e;
+    }
+    $url = sprintf("%s/customers/%d/contents?materialType=folder", $this->baseUrl, $customerId);
+    $userContent = $this->guzzleClient->request('GET', $url, [
+      'headers' => [
+        'Content-Type' => 'application/json',
+      ],
+      'cookies' => $this->grediDamAuthService->getCookieJar(),
+    ]);
+    $posts = $userContent->getBody()->getContents();
+    $categories = [];
+    foreach (Json::decode($posts) as $post) {
+      $category = Category::fromJson($post);
+      $categories[$category->id] = $category;
+    }
+
+    return $categories;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
   public function getRootContent(int $limit, int $offset): array {
     $url = sprintf("%s/settings", $this->baseUrl);
     $apiSettings = $this->guzzleClient->request('GET', $url, [
