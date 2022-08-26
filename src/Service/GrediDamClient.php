@@ -163,48 +163,16 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * {@inheritDoc}
    */
   public function getRootContent(int $limit, int $offset): array {
-    try {
-      $customerId = $this->grediDamAuthService->getCustomerId();
-    }
-    catch (\Exception $e) {
-      throw $e;
-    }
-    $url = sprintf("%s/customers/%d/contents?include=attachments", $this->baseUrl, $customerId);
-    $userContent = $this->guzzleClient->request('GET', $url, [
+    $url = sprintf("%s/settings", $this->baseUrl);
+    $apiSettings = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
       'cookies' => $this->grediDamAuthService->getCookieJar(),
-    ]);
-    $posts = Json::decode($userContent->getBody()->getContents());
-    $parentCandidates = array_filter(array_map(function ($p) {
-      if ($p["fileType"] === "folder") {
-        return $p["id"];
-      }
-    }, $posts));
-    $allContent = array_filter(array_map(function ($p) use ($parentCandidates) {
-      if (!in_array($p["parentId"], $parentCandidates)) {
-        return $p;
-      }
-    }, $posts));
-    $pageContent = array_slice($allContent, $offset, $limit);
-    $content = [
-      'folders' => [],
-      'assets' => [],
-    ];
-    foreach ($pageContent as $post) {
-      if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
-        $expands = ['meta', 'attachments'];
-        $content['assets'][] = $this->getAsset($post['id'], $expands, $post['parentId']);
-      }
-      elseif ($post['fileType'] == 'folder') {
-        $content['folders'][] = Category::fromJson($post);
-      }
-    }
-    return [
-      'content' => $content,
-      'total' => count($allContent),
-    ];
+    ])->getBody()->getContents();
+    $rootId = Json::decode($apiSettings)['contentFolderId'];
+
+    return $this->getFolderContent($rootId, $limit, $offset);
   }
 
   /**
