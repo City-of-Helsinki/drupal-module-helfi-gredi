@@ -444,7 +444,19 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   }
 
   public function uploadImage() {
-    // TODO post request
+    // Upload folder url.
+    $url = sprintf("%s/folders/16209558/files/", $this->baseUrl);
+    $apiResponse = $this->guzzleClient->request('GET', $url, [
+      'headers' => [
+        'Content-Type' => 'application/json',
+      ],
+      'cookies' => $this->grediDamAuthService->getCookieJar(),
+    ])->getStatusCode();
+    dump($apiResponse);
+
+//    $rootId = Json::decode($apiSettings)['contentFolderId'];
+
+//    return $this->getFolderContent($rootId, $limit, $offset);
   }
 
 }

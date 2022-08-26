@@ -66,14 +66,13 @@ function helfi_gredi_image_form_user_form_alter(&$form, FormStateInterface $form
 function helfi_gredi_image_form_entity_browser_gredi_dam_form_alter(&$form, FormStateInterface $form_state, $form_id) {
   if (isset($form['widget']['upload'])) {
     $form['#submit'][] = 'gredi_image_upload_submit';
-    //dump($form);
   }
 }
 
 function gredi_image_upload_submit(&$form, FormStateInterface $form_state) {
   $files = $form_state->getValue('upload');
   $fid = [];
-  foreach($files as $file) {
+  foreach ($files as $file) {
     if (empty($file)) {
       continue;
     }
