@@ -340,7 +340,6 @@ class Gredidam extends WidgetBase {
 
     if (isset($trigger_elem)) {
       if ($trigger_elem['#name'] === 'gredidam_category') {
-
         // Update the required information of selected category.
         $this->currentCategory->id = $trigger_elem['#gredidam_category']['id'];
         if ($this->currentCategory->id == NULL) {
@@ -698,6 +697,7 @@ class Gredidam extends WidgetBase {
    * Get Breadcrumb.
    */
   public function getBreadcrumb(Category $category) {
+    $categories = $this->damClient->getCategoryTree();
     // Create a container for the breadcrumb.
     $form['breadcrumb-container'] = [
       '#type' => 'container',
@@ -720,17 +720,28 @@ class Gredidam extends WidgetBase {
         'class' => ['gredidam-browser-breadcrumb'],
       ],
     ];
-    $index = 0;
     // Add the breadcrumb buttons to the form.
-    foreach ($category->parts as $key => $category_name) {
-
-      $level[] = $category_name;
+    $breadcrumbCategories = [];
+    if ($category->id) {
+      $currentCategory = $categories[$category->id];
+      for ($i = 0; $i <= 2; $i++) {
+        $breadcrumbCategories[] = $currentCategory;
+        if ($currentCategory->parentId == $currentCategory->rootFolder) {
+          break;
+        }
+        $currentCategory = $categories[$currentCategory->parentId];
+      }
+    }
+    $breadcrumbParts = array_reverse($breadcrumbCategories);
+    $index = 0;
+    foreach ($breadcrumbParts as $breadcrumbPart) {
+      $level[] = $breadcrumbPart;
       // Increment it so doesn't overwrite the home.
       $index++;
       $form['breadcrumb-container'][$index] = [
         '#type' => 'button',
-        '#value' => array_values($category_name)[0],
-        '#category_id' => array_values($category_name)[0],
+        '#value' => ((count($breadcrumbParts) === 3) && ($index === 1)) ? '..' : $breadcrumbPart->name,
+        '#category_id' => $breadcrumbPart->id,
         '#name' => 'breadcrumb',
         '#parts' => $level,
         '#prefix' => '<li>',
@@ -738,7 +749,6 @@ class Gredidam extends WidgetBase {
         '#attributes' => [
           'class' => ['gredidam-browser-breadcrumb'],
         ],
-
       ];
     }
 

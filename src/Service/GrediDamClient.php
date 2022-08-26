@@ -162,7 +162,36 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * {@inheritDoc}
    */
-  public function getRootContent(int $limit, int $offset): array {
+  public function getCategoryTree(): array {
+    try {
+      $customerId = $this->grediDamAuthService->getCustomerId();
+    }
+    catch (\Exception $e) {
+      throw $e;
+    }
+    $url = sprintf("%s/customers/%d/contents?materialType=folder", $this->baseUrl, $customerId);
+    $userContent = $this->guzzleClient->request('GET', $url, [
+      'headers' => [
+        'Content-Type' => 'application/json',
+      ],
+      'cookies' => $this->grediDamAuthService->getCookieJar(),
+    ]);
+    $posts = $userContent->getBody()->getContents();
+    $categories = [];
+    foreach (Json::decode($posts) as $post) {
+      $category = Category::fromJson($post);
+      $categories[$category->id] = $category;
+    }
+
+    return $categories;
+  }
+
+  /**
+   * Get folder id.
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
+  public function getFolderRootId() {
     $url = sprintf("%s/settings", $this->baseUrl);
     $apiSettings = $this->guzzleClient->request('GET', $url, [
       'headers' => [
@@ -170,9 +199,14 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       ],
       'cookies' => $this->grediDamAuthService->getCookieJar(),
     ])->getBody()->getContents();
-    $rootId = Json::decode($apiSettings)['contentFolderId'];
+    return Json::decode($apiSettings)['contentFolderId'];
+  }
 
-    return $this->getFolderContent($rootId, $limit, $offset);
+  /**
+   * {@inheritDoc}
+   */
+  public function getRootContent(int $limit, int $offset): array {
+    return $this->getFolderContent($this->getFolderRootId(), $limit, $offset);
   }
 
   /**
