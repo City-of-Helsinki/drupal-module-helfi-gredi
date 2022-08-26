@@ -187,9 +187,11 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   }
 
   /**
-   * {@inheritDoc}
+   * Get folder id.
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function getRootContent(int $limit, int $offset): array {
+  public function getFolderRootId() {
     $url = sprintf("%s/settings", $this->baseUrl);
     $apiSettings = $this->guzzleClient->request('GET', $url, [
       'headers' => [
@@ -197,9 +199,14 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       ],
       'cookies' => $this->grediDamAuthService->getCookieJar(),
     ])->getBody()->getContents();
-    $rootId = Json::decode($apiSettings)['contentFolderId'];
+    return Json::decode($apiSettings)['contentFolderId'];
+  }
 
-    return $this->getFolderContent($rootId, $limit, $offset);
+  /**
+   * {@inheritDoc}
+   */
+  public function getRootContent(int $limit, int $offset): array {
+    return $this->getFolderContent($this->getFolderRootId(), $limit, $offset);
   }
 
   /**

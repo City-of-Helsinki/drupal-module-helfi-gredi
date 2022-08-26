@@ -726,7 +726,7 @@ class Gredidam extends WidgetBase {
       $currentCategory = $categories[$category->id];
       for ($i = 0; $i <= 2; $i++) {
         $breadcrumbCategories[] = $currentCategory;
-        if ($currentCategory->parentId == '5170629') {
+        if ($currentCategory->parentId == $currentCategory->rootFolder) {
           break;
         }
         $currentCategory = $categories[$currentCategory->parentId];
