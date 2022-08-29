@@ -769,7 +769,7 @@ class Gredidam extends WidgetBase {
       ],
     ];
     // Add dropdown for sort by.
-    $form['filter-sort-container']['soxrtby'] = [
+    $form['filter-sort-container']['sortby'] = [
       '#type' => 'select',
       '#title' => 'Sort by',
       '#options' => [
