@@ -55,7 +55,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    *
    * @var mixed
    */
-  protected $customerId;
+  protected $rootId;
 
   /**
    * Gredi dam auth service.
@@ -192,6 +192,11 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getFolderRootId() {
+
+    if ($this->rootId) {
+      return $this->rootId;
+    }
+
     $url = sprintf("%s/settings", $this->baseUrl);
     $apiSettings = $this->guzzleClient->request('GET', $url, [
       'headers' => [
@@ -199,6 +204,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       ],
       'cookies' => $this->grediDamAuthService->getCookieJar(),
     ])->getBody()->getContents();
+
+    $this->rootId = Json::decode($apiSettings)['contentFolderId'];
     return Json::decode($apiSettings)['contentFolderId'];
   }
 
