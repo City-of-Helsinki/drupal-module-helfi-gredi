@@ -357,7 +357,7 @@ class Gredidam extends WidgetBase {
         $form_state->setRebuild();
       }
       if ($trigger_elem['#name'] === 'breadcrumb') {
-        $this->currentCategory->id = array_keys($form_state->get('breadcrumb')[0])[0];
+        $this->currentCategory->id = $trigger_elem['#attributes']['gredi_folder_id'];
         $this->currentCategory->parts = $trigger_elem["#parts"];
       }
 
@@ -718,6 +718,7 @@ class Gredidam extends WidgetBase {
       '#suffix' => '</li>',
       '#attributes' => [
         'class' => ['gredidam-browser-breadcrumb'],
+        'gredi_folder_id' => \Drupal::service('helfi_gredi_image.dam_client')->getFolderRootId(),
       ],
     ];
     // Add the breadcrumb buttons to the form.
@@ -748,6 +749,7 @@ class Gredidam extends WidgetBase {
         '#suffix' => '</li>',
         '#attributes' => [
           'class' => ['gredidam-browser-breadcrumb'],
+          'gredi_folder_id' => $breadcrumbPart->id,
         ],
       ];
     }
@@ -767,7 +769,7 @@ class Gredidam extends WidgetBase {
       ],
     ];
     // Add dropdown for sort by.
-    $form['filter-sort-container']['sortby'] = [
+    $form['filter-sort-container']['soxrtby'] = [
       '#type' => 'select',
       '#title' => 'Sort by',
       '#options' => [
