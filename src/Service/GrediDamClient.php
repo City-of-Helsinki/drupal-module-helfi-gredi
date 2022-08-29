@@ -7,6 +7,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
+use Drupal\file\Entity\File;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\DamClientInterface;
@@ -14,6 +15,7 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use GuzzleHttp\Psr7\Utils;
 
 /**
  * Class ClientFactory.
@@ -477,16 +479,42 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     ];
   }
 
-  public function uploadImage() {
+  public function uploadImage(File $jsonImage) {
     // Upload folder url.
     $url = sprintf("%s/folders/16209558/files/", $this->baseUrl);
+
     $apiResponse = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
       'cookies' => $this->grediDamAuthService->getCookieJar(),
     ])->getStatusCode();
-    dump($apiResponse);
+
+    if ($apiResponse == '200') {
+      // Resource to be sent.
+      $resource = Utils::tryFopen($jsonImage->getFileUri(), 'r');
+
+     // dump($resource);
+     // die();
+
+      $apiResponse = $this->guzzleClient->request('POST', $url, [
+        'headers' => [
+          'Content-Type' => 'application/json',
+          'Content-Disposition' => 'form-data;name="file"',
+        ],
+        'cookies' => $this->grediDamAuthService->getCookieJar(),
+
+        'body' => [
+          'file' => json_encode($resource),
+          'fileType' => 'nt:file',
+          'name' => $jsonImage->getFileName(),
+          'propertiesById' => [
+            'nibo:description_fi' => 'test',
+            'nibo:description_en' => 'test',
+          ],
+        ],
+      ]);
+    }
 
 //    $rootId = Json::decode($apiSettings)['contentFolderId'];
 

@@ -9,6 +9,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use Drupal\file\Entity\File;
+use Drupal\Component\Serialization\Json;
 
 /**
  * Implements hook_theme().
@@ -77,8 +78,9 @@ function gredi_image_upload_submit(&$form, FormStateInterface $form_state) {
       continue;
     }
     $file_entity = File::load($file);
-    dump($file_entity);
+    //dump($file_entity);
   }
+  //$jsonImage = Json::encode($file_entity);
+  \Drupal::service('helfi_gredi_image.dam_client')->uploadImage($file_entity);
 
-  die();
 }
