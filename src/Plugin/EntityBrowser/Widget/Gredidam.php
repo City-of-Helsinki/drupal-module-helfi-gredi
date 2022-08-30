@@ -698,6 +698,7 @@ class Gredidam extends WidgetBase {
    */
   public function getBreadcrumb(Category $category) {
     $categories = $this->damClient->getCategoryTree();
+    $rootFolderId = \Drupal::service('helfi_gredi_image.dam_client')->getFolderRootId();
     // Create a container for the breadcrumb.
     $form['breadcrumb-container'] = [
       '#type' => 'container',
@@ -718,12 +719,12 @@ class Gredidam extends WidgetBase {
       '#suffix' => '</li>',
       '#attributes' => [
         'class' => ['gredidam-browser-breadcrumb'],
-        'gredi_folder_id' => \Drupal::service('helfi_gredi_image.dam_client')->getFolderRootId(),
+        'gredi_folder_id' => $rootFolderId,
       ],
     ];
     // Add the breadcrumb buttons to the form.
     $breadcrumbCategories = [];
-    if ($category->id) {
+    if ($category->id && ($category->id != $rootFolderId)) {
       $currentCategory = $categories[$category->id];
       for ($i = 0; $i <= 2; $i++) {
         $breadcrumbCategories[] = $currentCategory;
