@@ -300,9 +300,8 @@ class Gredidam extends WidgetBase {
     $this->currentCategory = new Category();
     // Default current category id and name to NULL
     // which will act as root category.
-    $this->currentCategory->id = NULL;
+    $this->currentCategory->id = \Drupal::service('helfi_gredi_image.dam_client')->getFolderRootId();
     $this->currentCategory->name = NULL;
-    $this->currentCategory->parts = [];
     $this->breadcrumb = [];
 
     $page_type = 'listing';
@@ -325,7 +324,6 @@ class Gredidam extends WidgetBase {
       if (isset($widget['asset-container']) && isset($widget['asset-container']['#gredidam_category'])) {
         // Set current category to the value stored in the form state.
         $this->currentCategory->id = $widget['asset-container']['#gredidam_category']['id'];
-        $this->currentCategory->parts[] = $trigger_elem['#gredidam_category']['name'];
       }
       if ($form_state->getValue('assets')) {
         $current_selections = $form_state
@@ -345,7 +343,6 @@ class Gredidam extends WidgetBase {
         if ($this->currentCategory->id == NULL) {
           $form_state->set('breadcrumb', NULL);
           $this->breadcrumb = NULL;
-          $this->currentCategory->parts = [];
         }
         $this->currentCategory->name = $trigger_elem['#gredidam_category']['name'];
 
@@ -353,15 +350,14 @@ class Gredidam extends WidgetBase {
         $this->breadcrumb[] = [$trigger_elem['#gredidam_category_id'] => $form_state->getValue('gredidam_category')];
 
         $form_state->set('breadcrumb', $this->breadcrumb);
-        $this->currentCategory->parts = $this->breadcrumb;
         $form_state->setRebuild();
       }
       if ($trigger_elem['#name'] === 'breadcrumb') {
         $this->currentCategory->id = $trigger_elem['#attributes']['gredi_folder_id'];
-        $this->currentCategory->parts = $trigger_elem["#parts"];
       }
 
       if ($trigger_elem['#name'] === 'gredidam_pager') {
+        $this->currentCategory->id = $trigger_elem['#attributes']['gredi_folder_id'];
         $this->currentCategory->name = $trigger_elem['#current_category']->name ?? NULL;
         // Set the current category id to the id of the category, was clicked.
         $page = intval($trigger_elem['#gredidam_page']);
@@ -706,15 +702,12 @@ class Gredidam extends WidgetBase {
         'class' => ['breadcrumb gredidam-browser-breadcrumb-container'],
       ],
     ];
-    // Placeholder to keep parts information for breadcrumbs.
-    $level = [];
     // Add the home breadcrumb buttons to the form.
     $form['breadcrumb-container'][0] = [
       '#type' => 'button',
       '#value' => "Home",
       '#name' => 'breadcrumb',
       '#category_id' => NULL,
-      '#parts' => $level,
       '#prefix' => '<li>',
       '#suffix' => '</li>',
       '#attributes' => [
@@ -737,7 +730,6 @@ class Gredidam extends WidgetBase {
     $breadcrumbParts = array_reverse($breadcrumbCategories);
     $index = 0;
     foreach ($breadcrumbParts as $breadcrumbPart) {
-      $level[] = $breadcrumbPart;
       // Increment it so doesn't overwrite the home.
       $index++;
       $form['breadcrumb-container'][$index] = [
@@ -745,7 +737,6 @@ class Gredidam extends WidgetBase {
         '#value' => ((count($breadcrumbParts) === 3) && ($index === 1)) ? '..' : $breadcrumbPart->name,
         '#category_id' => $breadcrumbPart->id,
         '#name' => 'breadcrumb',
-        '#parts' => $level,
         '#prefix' => '<li>',
         '#suffix' => '</li>',
         '#attributes' => [
@@ -859,6 +850,7 @@ class Gredidam extends WidgetBase {
         '#gredidam_page' => 0,
         '#attributes' => [
           'class' => ['page-button', 'page-first'],
+          'gredi_folder_id' => $category->id,
         ],
       ];
       // Add a button to go to the previous page.
@@ -871,6 +863,7 @@ class Gredidam extends WidgetBase {
         '#current_category' => $category,
         '#attributes' => [
           'class' => ['page-button', 'page-previous'],
+          'gredi_folder_id' => $category->id,
         ],
       ];
     }
@@ -894,6 +887,7 @@ class Gredidam extends WidgetBase {
         '#current_category' => $category,
         '#attributes' => [
           'class' => [($i == $page ? 'page-current' : ''), 'page-button'],
+          'gredi_folder_id' => $category->id,
         ],
       ];
     }
@@ -909,6 +903,7 @@ class Gredidam extends WidgetBase {
         '#gredidam_page' => $page + 1,
         '#attributes' => [
           'class' => ['page-button', 'page-next'],
+          'gredi_folder_id' => $category->id,
         ],
       ];
       // Add a button to go to the last page.
@@ -921,6 +916,7 @@ class Gredidam extends WidgetBase {
         '#page_type' => $page_type,
         '#attributes' => [
           'class' => ['page-button', 'page-last'],
+          'gredi_folder_id' => $category->id,
         ],
       ];
     }
