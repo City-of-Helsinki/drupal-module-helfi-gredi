@@ -507,22 +507,22 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $fieldString = json_encode($fieldData);
       $base64EncodedFile = base64_encode(file_get_contents($jsonImage->getFileUri()));
 
-      $requestBody =
-        "\r\n"
-        . "\r\n"
-        . "--customboundary\r\n"
-        . "Content-Type: application/json\r\n"
-        . "Content-Disposition: form-data\r\n"
-        . "\r\n"
-        . $fieldString . "\r\n"
-        . "--customboundary\r\n"
-        . "Content-Type: image/jpeg\r\n"
-        . "Content-Transfer-Encoding: base64\r\n"
-        . "Content-Disposition: form-data; name='file'\r\n"
-        . "\r\n"
-        . $base64EncodedFile . "\r\n"
-        . "--customboundary--\r\n"
-        . "\r\n";
+      $requestBody = "";
+      $requestBody .= "\r\n";
+      $requestBody .= "\r\n";
+      $requestBody .= "--customboundary\r\n";
+      $requestBody .= "Content-Type: application/json\r\n";
+      $requestBody .= "Content-Disposition: form-data\r\n";
+      $requestBody .= "\r\n";
+      $requestBody .= $fieldString . "\r\n";
+      $requestBody .= "--customboundary\r\n";
+      $requestBody .= "Content-Type: image/jpeg\r\n";
+      $requestBody .= "Content-Transfer-Encoding: base64\r\n";
+      $requestBody .= "Content-Disposition: form-data; name=\"file\"\r\n";
+      $requestBody .= "\r\n";
+      $requestBody .= $base64EncodedFile . "\r\n";
+      $requestBody .= "--customboundary--\r\n";
+      $requestBody .= "\r\n";
 
       try {
         $response = $this->guzzleClient->request('POST', $url, [
