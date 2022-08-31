@@ -496,51 +496,51 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       ],
       'cookies' => $this->grediDamAuthService->getCookieJar(),
     ])->getStatusCode();
-
+    dump($url);
     if ($apiResponse == '200') {
-      // Resource to be sent.
-      //$resource = Utils::tryFopen($jsonImage->getFileUri(), 'r');
-      $resource = base64_encode(file_get_contents($jsonImage->getFileUri()));
-      //dump();
-     //die();
+      $fieldData = [
+        "name" => "joku_nimi.jpg",
+        "fileType" => "nt:file",
+        "propertiesById" => [],
+        "metaById" => [],
+      ];
+      $fieldString = json_encode($fieldData);
+      $base64EncodedFile = base64_encode(file_get_contents($jsonImage->getFileUri()));
 
+      $requestBody =
+        "\r\n"
+        . "\r\n"
+        . "--customboundary\r\n"
+        . "Content-Type: application/json\r\n"
+        . "Content-Disposition: form-data\r\n"
+        . "\r\n"
+        . $fieldString . "\r\n"
+        . "--customboundary\r\n"
+        . "Content-Type:image/jpeg\r\n"
+        . "Content-Transfer-Encoding: base64\r\n"
+        . "Content-Disposition: form-data; name='name'\r\n"
+        . "\r\n"
+        . $base64EncodedFile . "\r\n"
+        . "--customboundary--\r\n"
+        . "\r\n";
 
-      $response = $this->guzzleClient->request('POST', $url, [
-        'cookies' => $this->grediDamAuthService->getCookieJar(),
-//        'headers' => [
-//          'Content-Type' => 'multipart/form-data; boundary=boundary',
-//        ],
-        'multipart' => [
-          [
-            'name' => 'name',
-            'contents' => 'test9',
+      try {
+        $response = $this->guzzleClient->request('POST', $url, [
+          'cookies' => $this->grediDamAuthService->getCookieJar(),
+          'headers' => [
+            'Content-Type' => 'multipart/form-data;boundary=customboundary',
+            'Content-Length' => strlen($requestBody),
           ],
-          [
-            'name' => 'fileType',
-            'contents' => 'nt:file',
-          ],
-          [
-            'name' => 'propertiesById',
-            'contents' => '',
-          ],
-          [
-            'name' => 'metaById',
-            'contents' => '',
-          ],
-          [
-//            'Content-Disposition' => 'form-data; name="file"',
-//            'Content-Type' => 'image/jpeg',
-//            'Content-Transfer-Encoding' => 'base64',
-           // 'Content-type' => 'multipart/form-data',
-            'name' => 'file',
-            'contents' => $resource,
-           // 'filename' => basename($jsonImage->getFileUri()),
-          ],
-        ],
-       // 'allow_redirects' => FALSE,
-      ]);
-      dump($response->getStatusCode());
-      die();
+          'body' => $requestBody
+        ]);
+      }
+      catch (\Exception $e) {
+        dd($e->getMessage());
+      }
+      dd($response);
+    }
+    else {
+      dd($apiResponse);
     }
   }
 
