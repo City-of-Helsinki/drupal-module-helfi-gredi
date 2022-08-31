@@ -301,7 +301,6 @@ class Gredidam extends WidgetBase {
     // Default current category id and name to NULL
     // which will act as root category.
     $this->currentCategory->id = \Drupal::service('helfi_gredi_image.dam_client')->getFolderRootId();
-    $this->currentCategory->name = NULL;
     $this->breadcrumb = [];
 
     $page_type = 'listing';
@@ -344,7 +343,6 @@ class Gredidam extends WidgetBase {
           $form_state->set('breadcrumb', NULL);
           $this->breadcrumb = NULL;
         }
-        $this->currentCategory->name = $trigger_elem['#gredidam_category']['name'];
 
         $this->breadcrumb = $form_state->get('breadcrumb');
         $this->breadcrumb[] = [$trigger_elem['#gredidam_category_id'] => $form_state->getValue('gredidam_category')];
@@ -358,7 +356,6 @@ class Gredidam extends WidgetBase {
 
       if ($trigger_elem['#name'] === 'gredidam_pager') {
         $this->currentCategory->id = $trigger_elem['#attributes']['gredi_folder_id'];
-        $this->currentCategory->name = $trigger_elem['#current_category']->name ?? NULL;
         // Set the current category id to the id of the category, was clicked.
         $page = intval($trigger_elem['#gredidam_page']);
         $offset = $limit * $page;
@@ -707,7 +704,6 @@ class Gredidam extends WidgetBase {
       '#type' => 'button',
       '#value' => "Home",
       '#name' => 'breadcrumb',
-      '#category_id' => NULL,
       '#prefix' => '<li>',
       '#suffix' => '</li>',
       '#attributes' => [
@@ -735,7 +731,6 @@ class Gredidam extends WidgetBase {
       $form['breadcrumb-container'][$index] = [
         '#type' => 'button',
         '#value' => ((count($breadcrumbParts) === 3) && ($index === 1)) ? '..' : $breadcrumbPart->name,
-        '#category_id' => $breadcrumbPart->id,
         '#name' => 'breadcrumb',
         '#prefix' => '<li>',
         '#suffix' => '</li>',
