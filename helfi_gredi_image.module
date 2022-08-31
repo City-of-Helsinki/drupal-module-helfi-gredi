@@ -65,12 +65,19 @@ function helfi_gredi_image_form_user_form_alter(&$form, FormStateInterface $form
  * Implements hook_form_FORM_ID_alter().
  */
 function helfi_gredi_image_form_entity_browser_gredi_dam_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  //dump($form);
   if (isset($form['widget']['upload'])) {
-    $form['#submit'][] = 'gredi_image_upload_submit';
+    //dump($form);
+    if ($form_state->hasFileElement()) {
+      $form['#submit'][] = 'gredi_image_upload_submit';
+      //dump($form);
+     // dump($form_state);
+    }
   }
 }
 
 function gredi_image_upload_submit(&$form, FormStateInterface $form_state) {
+  //dump($form_state);
   $files = $form_state->getValue('upload');
   $fid = [];
   foreach ($files as $file) {
@@ -82,5 +89,5 @@ function gredi_image_upload_submit(&$form, FormStateInterface $form_state) {
   }
 
   \Drupal::service('helfi_gredi_image.dam_client')->uploadImage($file_entity);
-  die();
+  //die();
 }

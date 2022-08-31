@@ -17,6 +17,7 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\MultipartStream;
+use Laminas\Diactoros\RequestFactory;
 use Laminas\Diactoros\StreamFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use GuzzleHttp\Psr7\Utils;
@@ -502,6 +503,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $resource = base64_encode(file_get_contents($jsonImage->getFileUri()));
       //dump();
      //die();
+
+
       $response = $this->guzzleClient->request('POST', $url, [
         'cookies' => $this->grediDamAuthService->getCookieJar(),
 //        'headers' => [
