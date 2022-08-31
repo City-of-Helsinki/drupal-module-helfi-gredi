@@ -2,6 +2,7 @@
 
 namespace Drupal\helfi_gredi_image\Service;
 
+use Composer\Util\StreamContextFactory;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
@@ -11,9 +12,12 @@ use Drupal\file\Entity\File;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\DamClientInterface;
+use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\MultipartStream;
+use Laminas\Diactoros\StreamFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use GuzzleHttp\Psr7\Utils;
 
@@ -93,9 +97,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    *   The Drupal LoggerChannelFactory service.
    */
   public function __construct(
-    ClientInterface $guzzleClient,
-    ConfigFactoryInterface $config,
-    GrediDamAuthService $grediDamAuthService,
+    ClientInterface               $guzzleClient,
+    ConfigFactoryInterface        $config,
+    GrediDamAuthService           $grediDamAuthService,
     LoggerChannelFactoryInterface $loggerChannelFactory
   ) {
     $this->guzzleClient = $guzzleClient;
@@ -129,8 +133,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     }
     try {
       $customerId = $this->grediDamAuthService->getCustomerId();
-    }
-    catch (\Exception $e) {
+    } catch (\Exception $e) {
       throw $e;
     }
     $url = sprintf("%s/customers/%d/contents?include=attachments%s", $this->baseUrl, $customerId, $parameters);
@@ -167,8 +170,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   public function getCategoryTree(): array {
     try {
       $customerId = $this->grediDamAuthService->getCustomerId();
-    }
-    catch (\Exception $e) {
+    } catch (\Exception $e) {
       throw $e;
     }
     $url = sprintf("%s/customers/%d/contents?materialType=folder", $this->baseUrl, $customerId);
@@ -231,8 +233,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         'cookies' => $this->grediDamAuthService->getCookieJar(),
       ]);
       return Json::decode($apiCall->getBody()->getContents())['id'];
-    }
-    catch (ClientException $e) {
+    } catch (ClientException $e) {
       return NULL;
     }
   }
@@ -383,8 +384,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         $this->loggerChannel->warning(
           'Unable to save file for asset ID @asset_id.
           Thumbnail has not been found.', [
-            '@asset_id' => $asset->external_id,
-          ],
+          '@asset_id' => $asset->external_id,
+        ],
         );
         return FALSE;
       }
@@ -422,8 +423,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
           $filename = $matches[1];
         }
       }
-    }
-    catch (RequestException $exception) {
+    } catch (RequestException $exception) {
       $message = 'Unable to download contents for asset ID @asset_id: %message.
       Attempted download URL @url with redirects to @history';
       $context = [
@@ -458,8 +458,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
 
     try {
       $customerId = $this->grediDamAuthService->getCustomerId();
-    }
-    catch (\Exception $e) {
+    } catch (\Exception $e) {
       throw $e;
     }
     $url = sprintf("%s/customers/%d/contents?include=object%s", $this->baseUrl, $customerId, $parameters);
@@ -499,33 +498,87 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
 
     if ($apiResponse == '200') {
       // Resource to be sent.
-      $resource = Utils::tryFopen($jsonImage->getFileUri(), 'r');
-
-     // dump($resource);
-     // die();
-
-      $apiResponse = $this->guzzleClient->request('POST', $url, [
-        'headers' => [
-          'Content-Type' => 'application/json',
-          'Content-Disposition' => 'form-data;name="file"',
-        ],
+      //$resource = Utils::tryFopen($jsonImage->getFileUri(), 'r');
+      $resource = base64_encode(file_get_contents($jsonImage->getFileUri()));
+      //dump();
+     //die();
+      $response = $this->guzzleClient->request('POST', $url, [
         'cookies' => $this->grediDamAuthService->getCookieJar(),
-
-        'body' => [
-          'file' => json_encode($resource),
-          'fileType' => 'nt:file',
-          'name' => $jsonImage->getFileName(),
-          'propertiesById' => [
-            'nibo:description_fi' => 'test',
-            'nibo:description_en' => 'test',
+//        'headers' => [
+//          'Content-Type' => 'multipart/form-data; boundary=boundary',
+//        ],
+        'multipart' => [
+          [
+            'name' => 'name',
+            'contents' => 'test9',
+          ],
+          [
+            'name' => 'fileType',
+            'contents' => 'nt:file',
+          ],
+          [
+            'name' => 'propertiesById',
+            'contents' => '',
+          ],
+          [
+            'name' => 'metaById',
+            'contents' => '',
+          ],
+          [
+//            'Content-Disposition' => 'form-data; name="file"',
+//            'Content-Type' => 'image/jpeg',
+//            'Content-Transfer-Encoding' => 'base64',
+           // 'Content-type' => 'multipart/form-data',
+            'name' => 'file',
+            'contents' => $resource,
+           // 'filename' => basename($jsonImage->getFileUri()),
           ],
         ],
+       // 'allow_redirects' => FALSE,
       ]);
+      dump($response->getStatusCode());
+      die();
     }
+  }
+
+}
+//      try {
+//        $client = new Client(['headers' => ['X-Auth-Secret-Token' => 'my-secret-token']]);
+//        $options = [
+//          'multipart' => [
+//            [
+//              'Content-type' => 'multipart/form-data',
+//              'name' => 'image',
+//              'contents' => $resource,
+//              'filename' => basename($jsonImage->getFileUri()),
+//            ],
+//          ],
+//        ];
+//        $response = $client->post($url, $options);
+//      }
+//      catch (\Exception $e) {
+//        // log exception
+//      }
+//      $apiResponse = $this->guzzleClient->request('POST', $url, [
+//        'headers' => [
+//          'Content-Type' => 'multipart/form-data; boundary=boundary',
+//          'Content-Disposition' => 'form-data; name="json"',
+//        ],
+//        'cookies' => $this->grediDamAuthService->getCookieJar(),
+//
+//        'body' => [
+//          'file' => json_encode($resource),
+//          'fileType' => 'nt:file',
+//          'name' => $jsonImage->getFileName(),
+//          'propertiesById' => [
+//            'nibo:description_fi' => 'test',
+//            'nibo:description_en' => 'test',
+//          ],
+//        ],
+//      ]);
+//    }
 
 //    $rootId = Json::decode($apiSettings)['contentFolderId'];
 
 //    return $this->getFolderContent($rootId, $limit, $offset);
-  }
 
-}
