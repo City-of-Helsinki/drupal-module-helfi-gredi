@@ -490,13 +490,13 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     // Upload folder url.
     $url = sprintf("%s/folders/16209558/files/", $this->baseUrl);
 
+    \Drupal::logger('helfi_gredi_image')->error($url);
     $apiResponse = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
       'cookies' => $this->grediDamAuthService->getCookieJar(),
     ])->getStatusCode();
-    dump($url);
     if ($apiResponse == '200') {
       $fieldData = [
         "name" => "joku_nimi.jpg",
@@ -504,38 +504,38 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         "propertiesById" => [],
         "metaById" => [],
       ];
-      $fieldString = json_encode($fieldData);
+      $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
       $base64EncodedFile = base64_encode(file_get_contents($jsonImage->getFileUri()));
 
+      $boundary = "helfiboundary";
       $requestBody = "";
       $requestBody .= "\r\n";
       $requestBody .= "\r\n";
-      $requestBody .= "--customboundary\r\n";
-      $requestBody .= "Content-Type: application/json\r\n";
+      $requestBody .= "--" . $boundary . "\r\n";
       $requestBody .= "Content-Disposition: form-data\r\n";
+      $requestBody .= "Content-Type: application/json\r\n";
       $requestBody .= "\r\n";
       $requestBody .= $fieldString . "\r\n";
-      $requestBody .= "--customboundary\r\n";
+      $requestBody .= "--" . $boundary . "\r\n";
+      $requestBody .= "Content-Disposition: form-data; name=\"file\"\r\n";
       $requestBody .= "Content-Type: image/jpeg\r\n";
       $requestBody .= "Content-Transfer-Encoding: base64\r\n";
-      $requestBody .= "Content-Disposition: form-data; name=\"file\"\r\n";
       $requestBody .= "\r\n";
       $requestBody .= $base64EncodedFile . "\r\n";
-      $requestBody .= "--customboundary--\r\n";
+      $requestBody .= "--" . $boundary . "--\r\n";
       $requestBody .= "\r\n";
-
       try {
         $response = $this->guzzleClient->request('POST', $url, [
           'cookies' => $this->grediDamAuthService->getCookieJar(),
           'headers' => [
-            'Content-Type' => 'multipart/form-data;boundary=customboundary',
+            'Content-Type' => 'multipart/form-data;boundary=' . $boundary,
             'Content-Length' => strlen($requestBody),
           ],
-          'body' => $requestBody
+          'body' => $requestBody,
         ]);
       }
       catch (\Exception $e) {
-        dd($e->getMessage());
+        \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
       }
       dd($response);
     }
