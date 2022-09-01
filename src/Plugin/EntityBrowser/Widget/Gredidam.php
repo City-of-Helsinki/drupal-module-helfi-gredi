@@ -728,14 +728,21 @@ class Gredidam extends WidgetBase {
     foreach ($breadcrumbParts as $breadcrumbPart) {
       // Increment it so doesn't overwrite the home.
       $index++;
+
+      $disabled = FALSE;
+
+      if ($index == count($breadcrumbParts)) {
+        $disabled = TRUE;
+      }
       $form['breadcrumb-container'][$index] = [
         '#type' => 'button',
         '#value' => ((count($breadcrumbParts) === 3) && ($index === 1)) ? '..' : $breadcrumbPart->name,
         '#name' => 'breadcrumb',
         '#prefix' => '<li>',
         '#suffix' => '</li>',
+        '#disabled' => $disabled,
         '#attributes' => [
-          'class' => ['gredidam-browser-breadcrumb'],
+          'class' => ['gredidam-browser-breadcrumb disabled'],
           'gredi_folder_id' => $breadcrumbPart->id,
         ],
       ];
