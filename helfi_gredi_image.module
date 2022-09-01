@@ -77,17 +77,16 @@ function helfi_gredi_image_form_entity_browser_gredi_dam_form_alter(&$form, Form
 }
 
 function gredi_image_upload_submit(&$form, FormStateInterface $form_state) {
-  //dump($form_state);
+
   $files = $form_state->getValue('upload');
   $fid = [];
-  foreach ($files as $file) {
-    if (empty($file)) {
-      continue;
+  if (!empty($files)) {
+    foreach ($files as $file) {
+      if (empty($file)) {
+        continue;
+      }
+      $file_entity = File::load($file);
     }
-    $file_entity = File::load($file);
-   // dump($file_entity);
+    \Drupal::service('helfi_gredi_image.dam_client')->uploadImage($file_entity);
   }
-
-  \Drupal::service('helfi_gredi_image.dam_client')->uploadImage($file_entity);
-  //die();
 }
