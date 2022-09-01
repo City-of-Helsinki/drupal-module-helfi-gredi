@@ -486,11 +486,18 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     ];
   }
 
+  /**
+   * Create POST request to upload file.
+   *
+   * @param \Drupal\file\Entity\File $jsonImage
+   *
+   * @return void
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
   public function uploadImage(File $jsonImage) {
     // Upload folder url.
-    $url = sprintf("%s/folders/16209558/files/", $this->baseUrl);
-
-    \Drupal::logger('helfi_gredi_image')->error($url);
+    $url = sprintf("%sfolders/16209558/files/", $this->baseUrl);
+    
     $apiResponse = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
@@ -499,7 +506,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     ])->getStatusCode();
     if ($apiResponse == '200') {
       $fieldData = [
-        "name" => "joku_nimi.jpg",
+        "name" => basename($jsonImage->getFileUri()),
         "fileType" => "nt:file",
         "propertiesById" => [],
         "metaById" => [],
@@ -512,7 +519,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $requestBody .= "\r\n";
       $requestBody .= "\r\n";
       $requestBody .= "--" . $boundary . "\r\n";
-      $requestBody .= "Content-Disposition: form-data\r\n";
+      $requestBody .= "Content-Disposition: form-data; name=\"json\"\r\n";
       $requestBody .= "Content-Type: application/json\r\n";
       $requestBody .= "\r\n";
       $requestBody .= $fieldString . "\r\n";
@@ -537,51 +544,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       catch (\Exception $e) {
         \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
       }
-      dd($response);
-    }
-    else {
-      dd($apiResponse);
     }
   }
 
 }
-//      try {
-//        $client = new Client(['headers' => ['X-Auth-Secret-Token' => 'my-secret-token']]);
-//        $options = [
-//          'multipart' => [
-//            [
-//              'Content-type' => 'multipart/form-data',
-//              'name' => 'image',
-//              'contents' => $resource,
-//              'filename' => basename($jsonImage->getFileUri()),
-//            ],
-//          ],
-//        ];
-//        $response = $client->post($url, $options);
-//      }
-//      catch (\Exception $e) {
-//        // log exception
-//      }
-//      $apiResponse = $this->guzzleClient->request('POST', $url, [
-//        'headers' => [
-//          'Content-Type' => 'multipart/form-data; boundary=boundary',
-//          'Content-Disposition' => 'form-data; name="json"',
-//        ],
-//        'cookies' => $this->grediDamAuthService->getCookieJar(),
-//
-//        'body' => [
-//          'file' => json_encode($resource),
-//          'fileType' => 'nt:file',
-//          'name' => $jsonImage->getFileName(),
-//          'propertiesById' => [
-//            'nibo:description_fi' => 'test',
-//            'nibo:description_en' => 'test',
-//          ],
-//        ],
-//      ]);
-//    }
 
-//    $rootId = Json::decode($apiSettings)['contentFolderId'];
-
-//    return $this->getFolderContent($rootId, $limit, $offset);
 
