@@ -497,7 +497,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   public function uploadImage(File $jsonImage) {
     // Upload folder url.
     $url = sprintf("%sfolders/16209558/files/", $this->baseUrl);
-    
+
     $apiResponse = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
