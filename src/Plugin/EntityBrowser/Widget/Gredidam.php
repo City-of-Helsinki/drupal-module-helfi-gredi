@@ -927,15 +927,6 @@ class Gredidam extends WidgetBase {
           '#attributes' => [
             'class' => ['gredidam-category-link-button'],
           ],
-//          '#ajax' => [
-//            'callback' => [$this, 'getFolderContent'],
-//            'wrapper' => 'asset-container',
-//            'event' => 'click',
-//            'progress' => [
-//              'type' => 'throbber',
-//              'message' => $this->t('Loading data'),
-//            ],
-//          ],
         ],
         'title' => [
           '#type' => 'html_tag',
@@ -949,11 +940,6 @@ class Gredidam extends WidgetBase {
     return $form;
   }
 
-//  public function getFolderContent($form, FormStateInterface $form_state) {
-//    $form_state->setRebuild();
-//    return $form['widget']['modal-content'];
-//  }
-
   /**
    * Format display of one asset in media browser.
    *
@@ -965,7 +951,7 @@ class Gredidam extends WidgetBase {
   private function layoutMediaEntity(Asset $gredidamAsset, $key) {
     $assetName = $gredidamAsset->name;
     $thumbnail = ($thumbUrl = $gredidamAsset->getThumbnail()) ?
-      '<div class="gredidam-asset-thumb"><img src="' . $thumbUrl . '" width="150px" height="150px" /></div>' :
+      '<div class="gredidam-asset-thumb"><img src="' . $thumbUrl . '" width="100px" height="100px" /></div>' :
       '<span class="gredidam-browser-empty">No preview available.</span>';
     $element = '<div class="js-form-item form-item
      form-type--boolean js-form-item-assets-' .

@@ -31,41 +31,6 @@ class Category implements EntityInterface, \JsonSerializable {
   public $name;
 
   /**
-   * Description of the category.
-   *
-   * @var string
-   */
-  public $description;
-
-  /**
-   * Created time.
-   *
-   * @var string
-   */
-  public $created;
-
-  /**
-   * Updated time.
-   *
-   * @var string
-   */
-  public $modified;
-
-  /**
-   * An array of sub categories.
-   *
-   * @var Category[]
-   */
-  public $categories;
-
-  /**
-   * Parts information, useful in rendering breadcrumbs.
-   *
-   * @var array
-   */
-  public $parts = [];
-
-  /**
    * {@inheritdoc}
    */
   public static function fromJson($json) {
@@ -73,26 +38,10 @@ class Category implements EntityInterface, \JsonSerializable {
       $json = json_decode($json);
     }
 
-    $subCategories = [];
-    if (isset($json->total_count) && $json->total_count > 0) {
-      foreach ($json as $subcategory_data) {
-        if ($subcategory_data['folder']) {
-          $subCategories[] = Category::fromJson($subcategory_data);
-        }
-      }
-
-      return $subCategories;
-    }
-    elseif (isset($json->total_count) && $json->total_count === 0) {
-      return $subCategories;
-    }
     $properties = [
       'id',
       'parentId',
       'name',
-      'description',
-      'created',
-      'modified',
     ];
 
     $category = new static();
@@ -113,15 +62,7 @@ class Category implements EntityInterface, \JsonSerializable {
       'id' => $this->id,
       'parentId' => $this->parentId,
       'name' => $this->name,
-      'description' => 'category',
-      'parts' => $this->parts,
-      'created' => $this->created,
-      'modified' => $this->modified,
     ];
-
-    if (!empty($this->categories)) {
-      $properties['categories'] = $this->categories;
-    }
 
     return $properties;
   }
