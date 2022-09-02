@@ -145,6 +145,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
           $this->cookieJar = CookieJar::fromArray([
             'JSESSIONID' => $result,
           ], $cookieDomain['host']);
+          setcookie('JSESSIONID', $result);
           return $this->cookieJar;
         }
       }
