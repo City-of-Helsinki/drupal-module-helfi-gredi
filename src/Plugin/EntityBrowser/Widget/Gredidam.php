@@ -300,7 +300,7 @@ class Gredidam extends WidgetBase {
     $this->currentCategory = new Category();
     // Default current category id and name to NULL
     // which will act as root category.
-    $this->currentCategory->id = \Drupal::service('helfi_gredi_image.dam_client')->getFolderRootId();
+    $this->currentCategory->id = $this->damClient->getRootFolderId();
     $this->breadcrumb = [];
 
     $page_type = 'listing';
@@ -691,7 +691,7 @@ class Gredidam extends WidgetBase {
    */
   public function getBreadcrumb(Category $category) {
     $categories = $this->damClient->getCategoryTree();
-    $rootFolderId = \Drupal::service('helfi_gredi_image.dam_client')->getFolderRootId();
+    $rootFolderId = $this->damClient->getRootFolderId();
     // Create a container for the breadcrumb.
     $form['breadcrumb-container'] = [
       '#type' => 'container',

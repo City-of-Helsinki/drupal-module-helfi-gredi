@@ -108,7 +108,7 @@ class Category implements EntityInterface, \JsonSerializable {
         $category->{$property} = $json[$property];
       }
     }
-    $category->rootFolder = \Drupal::service('helfi_gredi_image.dam_client')->getFolderRootId();
+    $category->rootFolder = \Drupal::service('helfi_gredi_image.dam_client')->getRootFolderId();
 
     return $category;
   }
