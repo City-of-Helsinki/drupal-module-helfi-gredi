@@ -2,7 +2,6 @@
 
 namespace Drupal\helfi_gredi_image\Service;
 
-use Composer\Util\StreamContextFactory;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
@@ -12,15 +11,10 @@ use Drupal\file\Entity\File;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\DamClientInterface;
-use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Psr7\MultipartStream;
-use Laminas\Diactoros\RequestFactory;
-use Laminas\Diactoros\StreamFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use GuzzleHttp\Psr7\Utils;
 
 /**
  * Class ClientFactory.
@@ -58,11 +52,11 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   protected ConfigFactoryInterface $config;
 
   /**
-   * Customer ID.
+   * Root folder ID.
    *
    * @var mixed
    */
-  protected $rootId;
+  protected $rootFolderId;
 
   /**
    * Gredi dam auth service.
@@ -192,14 +186,13 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   }
 
   /**
-   * Get folder id.
+   * Get root folder id.
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function getFolderRootId() {
-
-    if ($this->rootId) {
-      return $this->rootId;
+  public function getRootFolderId() {
+    if ($this->rootFolderId) {
+      return $this->rootFolderId;
     }
 
     $url = sprintf("%s/settings", $this->baseUrl);
@@ -210,7 +203,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       'cookies' => $this->grediDamAuthService->getCookieJar(),
     ])->getBody()->getContents();
 
-    $this->rootId = Json::decode($apiSettings)['contentFolderId'];
+    $this->rootFolderId = Json::decode($apiSettings)['contentFolderId'];
     return Json::decode($apiSettings)['contentFolderId'];
   }
 
@@ -218,7 +211,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * {@inheritDoc}
    */
   public function getRootContent(int $limit, int $offset): array {
-    return $this->getFolderContent($this->getFolderRootId(), $limit, $offset);
+    return $this->getFolderContent($this->getRootFolderId(), $limit, $offset);
   }
 
   /**
