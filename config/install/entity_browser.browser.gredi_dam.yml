@@ -10,8 +10,8 @@ name: gredi_dam
 label: 'Gredi DAM Entity Browser'
 display: modal
 display_configuration:
-  width: '950'
-  height: '800'
+  width: '900'
+  height: '600'
   link_text: 'Select entities'
   auto_open: false
 selection_display: no_display
@@ -22,7 +22,7 @@ widgets:
   dfa4d36f-818c-4b89-8320-c86ea912a2f8:
     id: gredidam
     uuid: dfa4d36f-818c-4b89-8320-c86ea912a2f8
-    label: gredidam
+    label: 'Gredi Browser'
     weight: 1
     settings:
       media_type: gredi_dam_assets
@@ -30,7 +30,7 @@ widgets:
   ef44a1c1-d65c-4315-9582-8bf14f3ca9b9:
     id: media_image_upload
     uuid: ef44a1c1-d65c-4315-9582-8bf14f3ca9b9
-    label: media_image_upload
+    label: ' Gredi Image Upload'
     weight: 2
     settings:
       submit_text: 'Select files'
