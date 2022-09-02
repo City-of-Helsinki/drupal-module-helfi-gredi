@@ -1,0 +1,19 @@
+uuid: fb9a8167-28ff-4810-ad5d-927de2c8a3e7
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_external_id
+    - media.type.image
+id: media.image.field_external_id
+field_name: field_external_id
+entity_type: media
+bundle: image
+label: 'External Id'
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string
