@@ -10,6 +10,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use Drupal\file\Entity\File;
 use Drupal\Component\Serialization\Json;
+use \Drupal\media\Entity\Media;
 
 /**
  * Implements hook_theme().
@@ -65,13 +66,11 @@ function helfi_gredi_image_form_user_form_alter(&$form, FormStateInterface $form
  * Implements hook_form_FORM_ID_alter().
  */
 function helfi_gredi_image_form_entity_browser_gredi_dam_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-  //dump($form);
+
   if (isset($form['widget']['upload'])) {
-    //dump($form);
+
     if ($form_state->hasFileElement()) {
       $form['#submit'][] = 'gredi_image_upload_submit';
-      //dump($form);
-     // dump($form_state);
     }
   }
 }
@@ -86,7 +85,6 @@ function helfi_gredi_image_form_entity_browser_gredi_dam_form_alter(&$form, Form
  */
 function gredi_image_upload_submit(&$form, FormStateInterface $form_state) {
   $files = $form_state->getValue('upload');
-  $fid = [];
   if (!empty($files)) {
     foreach ($files as $file) {
       if (empty($file)) {
@@ -94,7 +92,20 @@ function gredi_image_upload_submit(&$form, FormStateInterface $form_state) {
       }
       $file_entity = File::load($file);
     }
-    \Drupal::service('helfi_gredi_image.dam_client')->uploadImage($file_entity);
+    $external_id = \Drupal::service('helfi_gredi_image.dam_client')->uploadImage($file_entity);
+
+    $media = $form_state->getStorage()['entity_browser']['selected_entities'][0];
+    // If request response is OK then update external_field_id.
+    if ($external_id != NULL) {
+      $media_var = Media::load($media->id());
+      $media_var->field_external_id = $external_id;
+      $media_var->save();
+    }
+    // Else delete created media file.
+    else {
+      $media_var = Media::load($media->id())->delete();
+    }
+
   }
 }
 

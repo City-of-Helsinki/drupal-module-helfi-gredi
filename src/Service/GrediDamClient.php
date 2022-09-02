@@ -532,10 +532,13 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
             'Content-Length' => strlen($requestBody),
           ],
           'body' => $requestBody,
-        ]);
+        ])->getBody()->getContents();
+
+        return json_decode($response, TRUE)['id'];
       }
       catch (\Exception $e) {
         \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
+        return NULL;
       }
     }
   }
