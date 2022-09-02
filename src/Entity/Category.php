@@ -66,13 +66,6 @@ class Category implements EntityInterface, \JsonSerializable {
   public $parts = [];
 
   /**
-   * Root folder id.
-   *
-   * @var string
-   */
-  public $rootFolder;
-
-  /**
    * {@inheritdoc}
    */
   public static function fromJson($json) {
@@ -108,7 +101,6 @@ class Category implements EntityInterface, \JsonSerializable {
         $category->{$property} = $json[$property];
       }
     }
-    $category->rootFolder = \Drupal::service('helfi_gredi_image.dam_client')->getRootFolderId();
 
     return $category;
   }
