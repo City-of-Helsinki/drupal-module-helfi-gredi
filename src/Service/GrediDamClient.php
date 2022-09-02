@@ -80,6 +80,13 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   private $baseUrl;
 
   /**
+   * The tree of Gredi DAM categories.
+   *
+   * @var array
+   */
+  private $categoryTree;
+
+  /**
    * ClientFactory constructor.
    *
    * @param \GuzzleHttp\ClientInterface $guzzleClient
@@ -92,9 +99,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    *   The Drupal LoggerChannelFactory service.
    */
   public function __construct(
-    ClientInterface               $guzzleClient,
-    ConfigFactoryInterface        $config,
-    GrediDamAuthService           $grediDamAuthService,
+    ClientInterface $guzzleClient,
+    ConfigFactoryInterface $config,
+    GrediDamAuthService $grediDamAuthService,
     LoggerChannelFactoryInterface $loggerChannelFactory
   ) {
     $this->guzzleClient = $guzzleClient;
@@ -128,7 +135,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     }
     try {
       $customerId = $this->grediDamAuthService->getCustomerId();
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       throw $e;
     }
     $url = sprintf("%s/customers/%d/contents?include=attachments%s", $this->baseUrl, $customerId, $parameters);
@@ -163,9 +171,14 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * {@inheritDoc}
    */
   public function getCategoryTree(): array {
+    if ($this->categoryTree) {
+      return $this->categoryTree;
+    }
+
     try {
       $customerId = $this->grediDamAuthService->getCustomerId();
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       throw $e;
     }
     $url = sprintf("%s/customers/%d/contents?materialType=folder", $this->baseUrl, $customerId);
@@ -176,13 +189,13 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       'cookies' => $this->grediDamAuthService->getCookieJar(),
     ]);
     $posts = $userContent->getBody()->getContents();
-    $categories = [];
+    $this->categoryTree = [];
     foreach (Json::decode($posts) as $post) {
       $category = Category::fromJson($post);
-      $categories[$category->id] = $category;
+      $this->categoryTree[$category->id] = $category;
     }
 
-    return $categories;
+    return $this->categoryTree;
   }
 
   /**
@@ -227,7 +240,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         'cookies' => $this->grediDamAuthService->getCookieJar(),
       ]);
       return Json::decode($apiCall->getBody()->getContents())['id'];
-    } catch (ClientException $e) {
+    }
+    catch (ClientException $e) {
       return NULL;
     }
   }
@@ -378,8 +392,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         $this->loggerChannel->warning(
           'Unable to save file for asset ID @asset_id.
           Thumbnail has not been found.', [
-          '@asset_id' => $asset->external_id,
-        ],
+            '@asset_id' => $asset->external_id,
+          ],
         );
         return FALSE;
       }
@@ -417,7 +431,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
           $filename = $matches[1];
         }
       }
-    } catch (RequestException $exception) {
+    }
+    catch (RequestException $exception) {
       $message = 'Unable to download contents for asset ID @asset_id: %message.
       Attempted download URL @url with redirects to @history';
       $context = [
@@ -452,7 +467,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
 
     try {
       $customerId = $this->grediDamAuthService->getCustomerId();
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       throw $e;
     }
     $url = sprintf("%s/customers/%d/contents?include=object%s", $this->baseUrl, $customerId, $parameters);
@@ -482,12 +498,14 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * Create POST request to upload file.
    *
-   * @param \Drupal\file\Entity\File $jsonImage
+   * @param \Drupal\file\Entity\File $image
+   *   Image file entity.
    *
    * @return void
+   *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function uploadImage(File $jsonImage) {
+  public function uploadImage(File $image) {
     // Upload folder url.
     $url = sprintf("%sfolders/16209558/files/", $this->baseUrl);
 
@@ -499,13 +517,13 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     ])->getStatusCode();
     if ($apiResponse == '200') {
       $fieldData = [
-        "name" => basename($jsonImage->getFileUri()),
+        "name" => basename($image->getFileUri()),
         "fileType" => "nt:file",
         "propertiesById" => [],
         "metaById" => [],
       ];
       $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
-      $base64EncodedFile = base64_encode(file_get_contents($jsonImage->getFileUri()));
+      $base64EncodedFile = base64_encode(file_get_contents($image->getFileUri()));
 
       $boundary = "helfiboundary";
       $requestBody = "";
@@ -541,5 +559,3 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   }
 
 }
-
-

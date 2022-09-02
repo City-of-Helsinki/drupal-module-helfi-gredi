@@ -298,10 +298,8 @@ class Gredidam extends WidgetBase {
     $trigger_elem = $form_state->getTriggeringElement();
 
     $this->currentCategory = new Category();
-    // Default current category id and name to NULL
-    // which will act as root category.
+    // Default current category to root category.
     $this->currentCategory->id = $this->damClient->getRootFolderId();
-    $this->breadcrumb = [];
 
     $page_type = 'listing';
     // Initialize pagination variables.
@@ -339,15 +337,6 @@ class Gredidam extends WidgetBase {
       if ($trigger_elem['#name'] === 'gredidam_category') {
         // Update the required information of selected category.
         $this->currentCategory->id = $trigger_elem['#gredidam_category']['id'];
-        if ($this->currentCategory->id == NULL) {
-          $form_state->set('breadcrumb', NULL);
-          $this->breadcrumb = NULL;
-        }
-
-        $this->breadcrumb = $form_state->get('breadcrumb');
-        $this->breadcrumb[] = [$trigger_elem['#gredidam_category_id'] => $form_state->getValue('gredidam_category')];
-
-        $form_state->set('breadcrumb', $this->breadcrumb);
         $form_state->setRebuild();
       }
       if ($trigger_elem['#name'] === 'breadcrumb') {
@@ -382,9 +371,7 @@ class Gredidam extends WidgetBase {
 
     // Get folders content from customer id.
     try {
-      $response = $this->currentCategory->id ?
-        $this->damClient->getFolderContent($this->currentCategory->id, $limit, $offset) :
-        $this->damClient->getRootContent($limit, $offset);
+      $response = $this->damClient->getFolderContent($this->currentCategory->id, $limit, $offset);
       $content = $response['content'];
       $totalAssets = $response['total'];
     }
@@ -717,7 +704,7 @@ class Gredidam extends WidgetBase {
       $currentCategory = $categories[$category->id];
       for ($i = 0; $i <= 2; $i++) {
         $breadcrumbCategories[] = $currentCategory;
-        if ($currentCategory->parentId == $currentCategory->rootFolder) {
+        if ($currentCategory->parentId == $rootFolderId) {
           break;
         }
         $currentCategory = $categories[$currentCategory->parentId];
