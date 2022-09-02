@@ -69,7 +69,7 @@ function helfi_gredi_image_form_entity_browser_gredi_dam_form_alter(&$form, Form
 
   if (isset($form['widget']['upload'])) {
 
-    if ($form_state->hasFileElement()) {
+    if ($form_state->hasFileElement() && $form_state->getTriggeringElement()['#value'] = 'Select files') {
       $form['#submit'][] = 'gredi_image_upload_submit';
     }
   }
@@ -95,6 +95,7 @@ function gredi_image_upload_submit(&$form, FormStateInterface $form_state) {
     $external_id = \Drupal::service('helfi_gredi_image.dam_client')->uploadImage($file_entity);
 
     $media = $form_state->getStorage()['entity_browser']['selected_entities'][0];
+
     // If request response is OK then update external_field_id.
     if ($external_id != NULL) {
       $media_var = Media::load($media->id());
