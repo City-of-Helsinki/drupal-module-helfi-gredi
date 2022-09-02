@@ -1,0 +1,19 @@
+uuid: 5e5c2d7b-a4a2-4148-91bc-a5795be7617f
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_resolution
+    - media.type.image
+id: media.image.field_resolution
+field_name: field_resolution
+entity_type: media
+bundle: image
+label: Resolution
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

@@ -36,5 +36,5 @@ widgets:
       submit_text: 'Select files'
       upload_location: 'public://gredidam'
       multiple: '1'
-      extensions: 'jpg jpeg png gif'
+      extensions: 'jpg jpeg png gif pdf'
       media_type: image
