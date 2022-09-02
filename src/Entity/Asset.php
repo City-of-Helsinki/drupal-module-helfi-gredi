@@ -135,6 +135,13 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $apiContentLink;
 
   /**
+   * Preview link.
+   *
+   * @var string
+   */
+  public $previewLink;
+
+  /**
    * A list of allowed values for the "expand" query attribute.
    *
    * @return string[]
@@ -213,8 +220,8 @@ class Asset implements EntityInterface, \JsonSerializable {
               $asset->alt_text = NULL;
               $asset->size = $attachment['propertiesById']['nibo:file-size'];
               $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
+              $asset->previewLink = $remote_asset_url . $json['apiPreviewLink'];
             }
-            $asset->attachments[$attachment['type']] = $remote_asset_url . $attachment['publicLink'];
           }
         }
         elseif (isset($json['object']) && $property === 'object') {
@@ -223,7 +230,7 @@ class Asset implements EntityInterface, \JsonSerializable {
           $asset->alt_text = NULL;
           $asset->size = $attachment['propertiesById']['nibo:file-size'];
           $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
-          $asset->attachments[self::ATTACHMENT_TYPE_PREVIEW] = $remote_asset_url . $attachment['apiPreviewLink'];
+          $asset->previewLink = $remote_asset_url . $attachment['apiPreviewLink'];
         }
         elseif ($property == 'id') {
           $asset->id = $json['id'];
@@ -265,27 +272,6 @@ class Asset implements EntityInterface, \JsonSerializable {
       'modified' => $this->modified,
       'attachments' => $this->attachments,
     ];
-  }
-
-  /**
-   * Function to retreve thumbnail URL.
-   *
-   * @return string|null
-   *   Thumbnail URL.
-   */
-  public function getThumbnail(): ?string {
-    if (!empty($this->attachments)) {
-      if (array_key_exists(self::ATTACHMENT_TYPE_THUMBNAIL, $this->attachments)) {
-        return $this->attachments[self::ATTACHMENT_TYPE_THUMBNAIL];
-      }
-      if (array_key_exists(self::ATTACHMENT_TYPE_PREVIEW, $this->attachments)) {
-        return $this->attachments[self::ATTACHMENT_TYPE_PREVIEW];
-      }
-      if (array_key_exists(self::ATTACHMENT_TYPE_ORIGINAL, $this->attachments)) {
-        return $this->attachments[self::ATTACHMENT_TYPE_ORIGINAL];
-      }
-    }
-    return NULL;
   }
 
 }
