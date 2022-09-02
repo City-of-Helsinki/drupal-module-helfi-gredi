@@ -8,6 +8,8 @@
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
+use Drupal\file\Entity\File;
+use Drupal\Component\Serialization\Json;
 
 /**
  * Implements hook_theme().
@@ -56,3 +58,56 @@ function helfi_gredi_image_form_media_gredi_dam_assets_edit_form_alter(&$form, F
 function helfi_gredi_image_form_user_form_alter(&$form, FormStateInterface $form_state) {
   $form['field_gredi_dam_password']['widget'][0]['value']['#type'] = 'password';
 }
+
+/**
+ * Edit specific entity browser form. Edit upload image form.
+ *
+ * Implements hook_form_FORM_ID_alter().
+ */
+function helfi_gredi_image_form_entity_browser_gredi_dam_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  //dump($form);
+  if (isset($form['widget']['upload'])) {
+    //dump($form);
+    if ($form_state->hasFileElement()) {
+      $form['#submit'][] = 'gredi_image_upload_submit';
+      //dump($form);
+     // dump($form_state);
+    }
+  }
+}
+
+/**
+ * Upload file function.
+ *
+ * @param $form
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *
+ * @return void
+ */
+function gredi_image_upload_submit(&$form, FormStateInterface $form_state) {
+
+  $files = $form_state->getValue('upload');
+  $fid = [];
+  if (!empty($files)) {
+    foreach ($files as $file) {
+      if (empty($file)) {
+        continue;
+      }
+      $file_entity = File::load($file);
+    }
+    \Drupal::service('helfi_gredi_image.dam_client')->uploadImage($file_entity);
+  }
+}
+
+///**
+// * Implements hook_theme_suggestions_alter().
+// */
+//function helfi_gredi_image_theme_suggestions_alter(array &$suggestions, array $variables, $hook) {
+//  $suggestions = [];
+//  if ($hook == 'input'
+//    && isset($variables['element']['#attributes']['gredi_folder_id'])
+//    && $variables['element']['#attributes']['gredi_folder_id'] == \Drupal::service('helfi_gredi_image.dam_client')->getFolderRootId()) {
+//    $suggestions[] = 'input_breadcrumb_home_icon';
+//  }
+//  return $suggestions;
+//}

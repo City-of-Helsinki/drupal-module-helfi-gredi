@@ -2,18 +2,25 @@
 
 namespace Drupal\helfi_gredi_image\Service;
 
+use Composer\Util\StreamContextFactory;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
+use Drupal\file\Entity\File;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\DamClientInterface;
+use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Psr7\MultipartStream;
+use Laminas\Diactoros\RequestFactory;
+use Laminas\Diactoros\StreamFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use GuzzleHttp\Psr7\Utils;
 
 /**
  * Class ClientFactory.
@@ -91,9 +98,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    *   The Drupal LoggerChannelFactory service.
    */
   public function __construct(
-    ClientInterface $guzzleClient,
-    ConfigFactoryInterface $config,
-    GrediDamAuthService $grediDamAuthService,
+    ClientInterface               $guzzleClient,
+    ConfigFactoryInterface        $config,
+    GrediDamAuthService           $grediDamAuthService,
     LoggerChannelFactoryInterface $loggerChannelFactory
   ) {
     $this->guzzleClient = $guzzleClient;
@@ -127,8 +134,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     }
     try {
       $customerId = $this->grediDamAuthService->getCustomerId();
-    }
-    catch (\Exception $e) {
+    } catch (\Exception $e) {
       throw $e;
     }
     $url = sprintf("%s/customers/%d/contents?include=attachments%s", $this->baseUrl, $customerId, $parameters);
@@ -165,8 +171,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   public function getCategoryTree(): array {
     try {
       $customerId = $this->grediDamAuthService->getCustomerId();
-    }
-    catch (\Exception $e) {
+    } catch (\Exception $e) {
       throw $e;
     }
     $url = sprintf("%s/customers/%d/contents?materialType=folder", $this->baseUrl, $customerId);
@@ -229,8 +234,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         'cookies' => $this->grediDamAuthService->getCookieJar(),
       ]);
       return Json::decode($apiCall->getBody()->getContents())['id'];
-    }
-    catch (ClientException $e) {
+    } catch (ClientException $e) {
       return NULL;
     }
   }
@@ -381,8 +385,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         $this->loggerChannel->warning(
           'Unable to save file for asset ID @asset_id.
           Thumbnail has not been found.', [
-            '@asset_id' => $asset->external_id,
-          ],
+          '@asset_id' => $asset->external_id,
+        ],
         );
         return FALSE;
       }
@@ -420,8 +424,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
           $filename = $matches[1];
         }
       }
-    }
-    catch (RequestException $exception) {
+    } catch (RequestException $exception) {
       $message = 'Unable to download contents for asset ID @asset_id: %message.
       Attempted download URL @url with redirects to @history';
       $context = [
@@ -456,8 +459,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
 
     try {
       $customerId = $this->grediDamAuthService->getCustomerId();
-    }
-    catch (\Exception $e) {
+    } catch (\Exception $e) {
       throw $e;
     }
     $url = sprintf("%s/customers/%d/contents?include=object%s", $this->baseUrl, $customerId, $parameters);
@@ -484,4 +486,67 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     ];
   }
 
+  /**
+   * Create POST request to upload file.
+   *
+   * @param \Drupal\file\Entity\File $jsonImage
+   *
+   * @return void
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
+  public function uploadImage(File $jsonImage) {
+    // Upload folder url.
+    $url = sprintf("%sfolders/16209558/files/", $this->baseUrl);
+
+    $apiResponse = $this->guzzleClient->request('GET', $url, [
+      'headers' => [
+        'Content-Type' => 'application/json',
+      ],
+      'cookies' => $this->grediDamAuthService->getCookieJar(),
+    ])->getStatusCode();
+    if ($apiResponse == '200') {
+      $fieldData = [
+        "name" => basename($jsonImage->getFileUri()),
+        "fileType" => "nt:file",
+        "propertiesById" => [],
+        "metaById" => [],
+      ];
+      $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
+      $base64EncodedFile = base64_encode(file_get_contents($jsonImage->getFileUri()));
+
+      $boundary = "helfiboundary";
+      $requestBody = "";
+      $requestBody .= "\r\n";
+      $requestBody .= "\r\n";
+      $requestBody .= "--" . $boundary . "\r\n";
+      $requestBody .= "Content-Disposition: form-data; name=\"json\"\r\n";
+      $requestBody .= "Content-Type: application/json\r\n";
+      $requestBody .= "\r\n";
+      $requestBody .= $fieldString . "\r\n";
+      $requestBody .= "--" . $boundary . "\r\n";
+      $requestBody .= "Content-Disposition: form-data; name=\"file\"\r\n";
+      $requestBody .= "Content-Type: image/jpeg\r\n";
+      $requestBody .= "Content-Transfer-Encoding: base64\r\n";
+      $requestBody .= "\r\n";
+      $requestBody .= $base64EncodedFile . "\r\n";
+      $requestBody .= "--" . $boundary . "--\r\n";
+      $requestBody .= "\r\n";
+      try {
+        $response = $this->guzzleClient->request('POST', $url, [
+          'cookies' => $this->grediDamAuthService->getCookieJar(),
+          'headers' => [
+            'Content-Type' => 'multipart/form-data;boundary=' . $boundary,
+            'Content-Length' => strlen($requestBody),
+          ],
+          'body' => $requestBody,
+        ]);
+      }
+      catch (\Exception $e) {
+        \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
+      }
+    }
+  }
+
 }
+
+
