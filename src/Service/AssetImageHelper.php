@@ -8,9 +8,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\Image\ImageFactory;
-use Drupal\Core\Url;
 use Drupal\file\FileInterface;
-use Drupal\helfi_gredi_image\Entity\Asset;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**

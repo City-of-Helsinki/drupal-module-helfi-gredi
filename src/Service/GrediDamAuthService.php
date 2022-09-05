@@ -67,15 +67,15 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    *   HTTP client.
    * @param \Drupal\Core\Session\AccountInterface $account
    *   User account.
-   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   * @param \Symfony\Component\HttpFoundation\RequestStack $requestStack
    *   Request stack service.
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function __construct(ClientInterface $guzzleClient, AccountInterface $account, RequestStack $request_stack) {
+  public function __construct(ClientInterface $guzzleClient, AccountInterface $account, RequestStack $requestStack) {
     $this->guzzleClient = $guzzleClient;
     $this->user = User::load($account->id());
-    $this->request = $request_stack->getCurrentRequest();
+    $this->request = $requestStack->getCurrentRequest();
   }
 
   /**

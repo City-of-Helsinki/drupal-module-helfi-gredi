@@ -389,7 +389,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         'Unable to save file for asset ID @asset_id.
          Thumbnail has not been found.', [
            '@asset_id' => $asset->external_id,
-        ],
+         ],
       );
       return FALSE;
     }
