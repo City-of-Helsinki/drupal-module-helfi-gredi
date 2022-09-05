@@ -97,62 +97,6 @@ class AssetImageHelper implements ContainerInjectionInterface {
   }
 
   /**
-   * Get the URL to the DAM-provided thumbnail if possible.
-   *
-   * @param \Drupal\helfi_gredi_image\Entity\Asset $asset
-   *   The asset to get the thumbnail size from.
-   * @param int $thumbnailSize
-   *   Find the closest thumbnail size without going over when multiple
-   *   thumbnails are available.
-   *
-   * @return string|false
-   *   The preview URL or FALSE if none available.
-   */
-  public function getThumbnailUrlBySize(Asset $asset, $thumbnailSize = 2048) {
-    $config = $this->configFactory->get('media_gredidam.settings');
-
-    // Do not change if the format SVG or configured to get the original.
-    $format = $asset->file_properties->format ?? '';
-    if ($config->get('transcode') === 'original' || $format === 'SVG') {
-      return $asset->links->download;
-    }
-
-    if (empty($asset->embeds)) {
-      return FALSE;
-    }
-
-    $image_properties = $asset->file_properties->image_properties ?? NULL;
-
-    if (!$image_properties) {
-      $query = [];
-    }
-    else {
-      if ($image_properties->aspect_ratio > 1) {
-        $dimension = 'w';
-        $size = $image_properties->width;
-      }
-      else {
-        $dimension = 'h';
-        $size = $image_properties->height;
-      }
-      $scaled_size = min($thumbnailSize, $size);
-      $query = [
-        $dimension => $scaled_size,
-        "q" => $config->get('image_quality') ?? 80,
-      ];
-    }
-
-    $url = Url::fromUri($asset->embeds->original->url, [
-      'query' => $query,
-    ]);
-
-    // Use png format if we somehow end up with an empty value.
-    $image_format = $config->get('image_format') ?? 'png';
-
-    return str_replace("/original/", "/$image_format/", $url->toString());
-  }
-
-  /**
    * Get the thumbnail for the given asset.
    *
    * @param \Drupal\file\FileInterface|false $file

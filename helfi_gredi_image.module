@@ -66,10 +66,9 @@ function helfi_gredi_image_form_user_form_alter(&$form, FormStateInterface $form
  * Implements hook_form_FORM_ID_alter().
  */
 function helfi_gredi_image_form_entity_browser_gredi_dam_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-
   if (isset($form['widget']['upload'])) {
 
-    if ($form_state->hasFileElement() && $form_state->getTriggeringElement()['#value'] = 'Select files') {
+    if ($form_state->hasFileElement()) {
       $form['#submit'][] = 'gredi_image_upload_submit';
     }
   }

@@ -135,6 +135,13 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $apiContentLink;
 
   /**
+   * Preview link.
+   *
+   * @var string
+   */
+  public $previewLink;
+
+  /**
    * A list of allowed values for the "expand" query attribute.
    *
    * @return string[]
@@ -213,24 +220,18 @@ class Asset implements EntityInterface, \JsonSerializable {
               $asset->alt_text = NULL;
               $asset->size = $attachment['propertiesById']['nibo:file-size'];
               $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
+              $asset->previewLink = $remote_asset_url . $json['apiPreviewLink'];
             }
-            $asset->attachments[$attachment['type']] = $remote_asset_url . $attachment['publicLink'];
           }
         }
-//        elseif ($property == 'object') {
-//          foreach ($json['object'] as $attachment) {
-//            if ($attachment['type'] === self::ATTACHMENT_TYPE_ORIGINAL) {
-//              $asset->width = $attachment['propertiesById']['nibo:image-width'];
-//              $asset->height = $attachment['propertiesById']['nibo:image-height'];
-//              $asset->resolution = $attachment['propertiesById']['nibo:image-resolution'];
-//              $asset->keywords = NULL;
-//              $asset->alt_text = NULL;
-//              $asset->size = $attachment['propertiesById']['nibo:file-size'];
-//              $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
-//            }
-//            $asset->attachments[$attachment['type']] = $remote_asset_url . $attachment['publicLink'];
-//          }
-//        }
+        elseif (isset($json['object']) && $property === 'object') {
+          $attachment = $json['object'];
+          $asset->keywords = NULL;
+          $asset->alt_text = NULL;
+          $asset->size = $attachment['propertiesById']['nibo:file-size'];
+          $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
+          $asset->previewLink = $remote_asset_url . $attachment['apiPreviewLink'];
+        }
         elseif ($property == 'id') {
           $asset->id = $json['id'];
           $asset->external_id = $json['id'];
@@ -271,27 +272,6 @@ class Asset implements EntityInterface, \JsonSerializable {
       'modified' => $this->modified,
       'attachments' => $this->attachments,
     ];
-  }
-
-  /**
-   * Function to retreve thumbnail URL.
-   *
-   * @return string|null
-   *   Thumbnail URL.
-   */
-  public function getThumbnail(): ?string {
-    if (!empty($this->attachments)) {
-      if (array_key_exists(self::ATTACHMENT_TYPE_THUMBNAIL, $this->attachments)) {
-        return $this->attachments[self::ATTACHMENT_TYPE_THUMBNAIL];
-      }
-      if (array_key_exists(self::ATTACHMENT_TYPE_PREVIEW, $this->attachments)) {
-        return $this->attachments[self::ATTACHMENT_TYPE_PREVIEW];
-      }
-      if (array_key_exists(self::ATTACHMENT_TYPE_ORIGINAL, $this->attachments)) {
-        return $this->attachments[self::ATTACHMENT_TYPE_ORIGINAL];
-      }
-    }
-    return NULL;
   }
 
 }

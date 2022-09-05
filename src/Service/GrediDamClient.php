@@ -379,24 +379,19 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    *   The remote asset contents or FALSE on failure.
    */
   public function fetchRemoteAssetData(Asset $asset, &$filename) {
-    if ($this->config->get('transcode') === 'original') {
-      $download_url = $asset->attachments[Asset::ATTACHMENT_TYPE_ORIGINAL];
-    }
-    else {
-      // If the module was configured to enforce an image size limit then we
-      // need to grab the nearest matching pre-created size.
-      $remote_base_url = Asset::getAssetRemoteBaseUrl();
-      $download_url = $remote_base_url . $asset->apiContentLink;
+    // If the module was configured to enforce an image size limit then we
+    // need to grab the nearest matching pre-created size.
+    $remote_base_url = Asset::getAssetRemoteBaseUrl();
+    $download_url = $remote_base_url . $asset->apiContentLink;
 
-      if (empty($download_url)) {
-        $this->loggerChannel->warning(
-          'Unable to save file for asset ID @asset_id.
-          Thumbnail has not been found.', [
-            '@asset_id' => $asset->external_id,
-          ],
-        );
-        return FALSE;
-      }
+    if (empty($download_url)) {
+      $this->loggerChannel->warning(
+        'Unable to save file for asset ID @asset_id.
+         Thumbnail has not been found.', [
+           '@asset_id' => $asset->external_id,
+        ],
+      );
+      return FALSE;
     }
 
     try {
