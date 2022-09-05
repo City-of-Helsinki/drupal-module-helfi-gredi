@@ -96,7 +96,7 @@ function gredi_image_upload_submit(&$form, FormStateInterface $form_state) {
     $media = $form_state->getStorage()['entity_browser']['selected_entities'][0];
 
     // If request response is OK then update external_field_id.
-    if ($external_id != NULL) {
+    if ($external_id) {
       $media_var = Media::load($media->id());
       $media_var->field_external_id = $external_id;
       $media_var->save();

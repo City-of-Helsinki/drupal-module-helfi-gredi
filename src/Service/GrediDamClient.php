@@ -15,6 +15,7 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use function PHPUnit\Framework\isEmpty;
 
 /**
  * Class ClientFactory.
@@ -85,6 +86,13 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * @var array
    */
   private $categoryTree;
+
+  /**
+   * Upload folder id.
+   *
+   * @var string
+   */
+  private $uploadFolderId;
 
   /**
    * ClientFactory constructor.
@@ -217,6 +225,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     ])->getBody()->getContents();
 
     $this->rootFolderId = Json::decode($apiSettings)['contentFolderId'];
+
     return Json::decode($apiSettings)['contentFolderId'];
   }
 
@@ -496,11 +505,12 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * @param \Drupal\file\Entity\File $image
    *   Image file entity.
    *
-   * @return void
+   * @return string
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function uploadImage(File $image) {
+  public function uploadImage(File $image) : string {
+
     // Upload folder url.
     $url = sprintf("%sfolders/16209558/files/", $this->baseUrl);
 
@@ -547,12 +557,50 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
           'body' => $requestBody,
         ])->getBody()->getContents();
 
+        // Return file ID from API as string.
         return json_decode($response, TRUE)['id'];
       }
       catch (\Exception $e) {
         \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
-        return NULL;
       }
+    }
+
+  }
+
+  public function createFolder() {
+
+    if ($this->uploadFolderId) {
+      return $this->uploadFolderId;
+    }
+//    $pageContent = $this->getRootContent(0,0);
+   // $url = sprintf("%sfolders/%d/files", $this->baseUrl, $this->getRootFolderId());
+    $url = sprintf("%sfolders/12666699/files", $this->baseUrl);
+
+    $fieldData = [
+      "name" => 'upload',
+      "fileType" => "nt:folder",
+      "propertiesById" => [
+        'nibo:description_fi' => 'upload folder',
+        'nibo:description_en' => 'upload folder',
+      ],
+    ];
+    $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
+
+    try {
+      $response = $this->guzzleClient->request('POST', $url, [
+        'cookies' => $this->grediDamAuthService->getCookieJar(),
+        'headers' => [
+          'Content-Type' => 'application/json',
+        ],
+        'body' => $fieldString,
+      ])->getBody()->getContents();
+
+      $this->uploadFolderId = $response;
+    }
+    catch (\Exception $e) {
+      \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
+
+      return NULL;
     }
   }
 
