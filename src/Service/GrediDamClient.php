@@ -438,7 +438,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * {@inheritDoc}
    */
-  public function searchAssets(array $params): array {
+  public function searchAssets(array $params, $limit, $offset): array {
     $parameters = '';
 
     foreach ($params as $key => $param) {
@@ -472,9 +472,11 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         $content['assets'][] = Asset::fromJson($post);
       }
     }
+    $totalAssets = count($content['assets']);
+    $content['assets'] = array_slice($content['assets'], $offset, $limit);
     return [
       'content' => $content,
-      'total' => count($content['assets']),
+      'total' => $totalAssets,
     ];
   }
 
