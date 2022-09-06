@@ -360,10 +360,8 @@ class Gredidam extends WidgetBase {
       }
     }
 
-    if (!(isset($trigger_elem) || (isset($trigger_elem) && $trigger_elem['#name'] != 'filter_sort_submit'))) {
-      // Get breadcrumb.
-      $form['modal-content'] += $this->getBreadcrumb($this->currentCategory);
-    }
+    // Get breadcrumb.
+    $form['modal-content'] += $this->getBreadcrumb($this->currentCategory);
 
     // Add the filter and sort options to the form.
     $form['modal-content'] += $this->getFilterSort();
