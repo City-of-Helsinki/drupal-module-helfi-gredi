@@ -3,6 +3,7 @@
 namespace Drupal\helfi_gredi_image\Entity;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\File\FileSystemInterface;
 
 /**
  * The asset entity describing the asset object shared by Gredi DAM.
@@ -173,6 +174,8 @@ class Asset implements EntityInterface, \JsonSerializable {
       $json = Json::decode($json);
     }
 
+    \Drupal::service('file_system')->prepareDirectory('public://gredidam/thumbs', FileSystemInterface::CREATE_DIRECTORY)
+
     $properties = [
       'id',
       'parentId',
@@ -215,6 +218,8 @@ class Asset implements EntityInterface, \JsonSerializable {
         else {
           $asset->{$property} = $json[$property];
         }
+        $location = 'public://gredidam/thumbs/' . $asset->name;
+        $asset->previewLink = \Drupal::service('helfi_gredi_image.asset_file.helper')->drupalFileSaveData(\Drupal::service('helfi_gredi_image.dam_client')->fetchRemoteAssetData($asset, $asset->name), $location)->createFileUrl();
       }
     }
     return $asset;

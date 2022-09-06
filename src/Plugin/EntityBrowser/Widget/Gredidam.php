@@ -950,11 +950,11 @@ class Gredidam extends WidgetBase {
    */
   private function layoutMediaEntity(Asset $gredidamAsset, $key) {
     $assetName = $gredidamAsset->name;
-    $location = 'public://gredidam/thumbs';
-    $img = $this->fileHelper->drupalFileSaveData($this->damClient->fetchRemoteAssetData($gredidamAsset, $assetName), $location);
+    dump($gredidamAsset);
 
-    $thumbnail = ($gredidamAsset->previewLink) ?
-      '<div class="gredidam-asset-thumb"><img src="' . $img->createFileUrl() . '" width="100px" height="100px" /></div>' :
+
+    $thumbnail = ($thumbUrl = $gredidamAsset->previewLink) ?
+      '<div class="gredidam-asset-thumb"><img src="' . $thumbUrl . '" width="100px" height="100px" /></div>' :
       '<span class="gredidam-browser-empty">No preview available.</span>';
     $element = '<div class="js-form-item form-item
      form-type--boolean js-form-item-assets-' .
