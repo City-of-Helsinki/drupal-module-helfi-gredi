@@ -334,18 +334,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         'label' => 'Filename',
         'type' => 'string',
       ],
-      'width' => [
-        'label' => 'Width',
-        'type' => 'string',
-      ],
-      'height' => [
-        'label' => 'Height',
-        'type' => 'string',
-      ],
-      'resolution' => [
-        'label' => 'Resolution',
-        'type' => 'string',
-      ],
       'keywords' => [
         'label' => 'Keywords',
         'type' => 'text_long',
