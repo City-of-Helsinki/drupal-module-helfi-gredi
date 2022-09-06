@@ -173,8 +173,8 @@ class Asset implements EntityInterface, \JsonSerializable {
     if (is_string($json)) {
       $json = Json::decode($json);
     }
-
-    \Drupal::service('file_system')->prepareDirectory('public://gredidam/thumbs', FileSystemInterface::CREATE_DIRECTORY);
+    $locationToCheck = 'public://gredidam/thumbs';
+    \Drupal::service('file_system')->prepareDirectory($locationToCheck, FileSystemInterface::CREATE_DIRECTORY);
 
     $properties = [
       'id',
