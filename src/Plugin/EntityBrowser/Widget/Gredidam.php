@@ -357,8 +357,10 @@ class Gredidam extends WidgetBase {
       }
     }
 
-    // Get breadcrumb.
-    $form['modal-content'] += $this->getBreadcrumb($this->currentCategory);
+    if (!(isset($trigger_elem) || (isset($trigger_elem) && $trigger_elem['#name'] != 'filter_sort_submit'))) {
+      // Get breadcrumb.
+      $form['modal-content'] += $this->getBreadcrumb($this->currentCategory);
+    }
 
     // Add the filter and sort options to the form.
     $form['modal-content'] += $this->getFilterSort();
@@ -813,6 +815,9 @@ class Gredidam extends WidgetBase {
    *   Form.
    */
   private function getPager(int $total_count, int $page, int $limit, string $page_type = "listing", Category $category = NULL) {
+    if ($page_type === "search") {
+      return [];
+    }
     // Add container for pager.
     $form['modal-content']['pager-container'] = [
       '#type' => 'container',
