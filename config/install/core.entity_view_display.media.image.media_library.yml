@@ -6,12 +6,9 @@ dependencies:
     - core.entity_view_mode.media.media_library
     - field.field.media.image.field_alt_text
     - field.field.media.image.field_external_id
-    - field.field.media.image.field_height
     - field.field.media.image.field_keywords
     - field.field.media.image.field_media_image
-    - field.field.media.image.field_resolution
     - field.field.media.image.field_size
-    - field.field.media.image.field_width
     - image.style.medium
     - media.type.image
   module:
@@ -39,28 +36,12 @@ content:
     third_party_settings: {  }
     weight: 1
     region: content
-  field_height:
-    type: string
-    label: above
-    settings:
-      link_to_entity: false
-    third_party_settings: {  }
-    weight: 2
-    region: content
   field_keywords:
     type: basic_string
     label: above
     settings: {  }
     third_party_settings: {  }
     weight: 7
-    region: content
-  field_resolution:
-    type: string
-    label: above
-    settings:
-      link_to_entity: false
-    third_party_settings: {  }
-    weight: 5
     region: content
   field_size:
     type: string
@@ -69,14 +50,6 @@ content:
       link_to_entity: false
     third_party_settings: {  }
     weight: 4
-    region: content
-  field_width:
-    type: string
-    label: above
-    settings:
-      link_to_entity: false
-    third_party_settings: {  }
-    weight: 3
     region: content
   thumbnail:
     type: image

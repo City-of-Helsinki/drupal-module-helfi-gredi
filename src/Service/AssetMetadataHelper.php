@@ -112,9 +112,6 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
     $fields = [
       'external_id' => $this->t('External ID'),
       'name' => $this->t('Filename'),
-      'width' => $this->t('Width'),
-      'height' => $this->t('Height'),
-      'resolution' => $this->t('Resolution'),
       'keywords' => $this->t('Keywords'),
       'alt_text' => $this->t('Alt text'),
       'media_image' => $this->t('Image'),
@@ -145,15 +142,6 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
    */
   public function getMetadataFromAsset(Asset $asset, $name) {
     switch ($name) {
-      case 'height':
-        return $asset->height;
-
-      case 'width':
-        return $asset->width;
-
-      case 'resolution':
-        return $asset->resolution;
-
       case 'keywords':
         return $asset->keywords;
 

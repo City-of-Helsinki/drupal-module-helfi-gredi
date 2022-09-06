@@ -125,9 +125,6 @@ class AssetUnitTest extends UnitTestCase {
     );
 
     // Assertions for all return cases from AssetMetadataHelper.
-    $this->assertEquals('6000', $metadataHelperService->getMetadataFromAsset($result, 'width'));
-    $this->assertEquals('4000', $metadataHelperService->getMetadataFromAsset($result, 'height'));
-    $this->assertEquals('100x100', $metadataHelperService->getMetadataFromAsset($result, 'resolution'));
     $this->assertEquals(NULL, $metadataHelperService->getMetadataFromAsset($result, 'keywords'));
     $this->assertEquals(NULL, $metadataHelperService->getMetadataFromAsset($result, 'alt_text'));
     $this->assertEquals('2982301', $metadataHelperService->getMetadataFromAsset($result, 'size'));
