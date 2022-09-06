@@ -344,7 +344,10 @@ class Gredidam extends WidgetBase {
       }
 
       if ($trigger_elem['#name'] === 'gredidam_pager') {
-        $this->currentCategory->id = $trigger_elem['#attributes']['gredi_folder_id'];
+        $page_type = $trigger_elem['#page_type'];
+        if ($page_type === 'listing') {
+          $this->currentCategory->id = $trigger_elem['#attributes']['gredi_folder_id'];
+        }
         // Set the current category id to the id of the category, was clicked.
         $page = intval($trigger_elem['#gredidam_page']);
         $offset = $limit * $page;
@@ -397,7 +400,7 @@ class Gredidam extends WidgetBase {
       }
     }
 
-    if ($page_type == "search") {
+    if ($page_type === "search") {
       $sort_by = ($form_state->getValue('sortdir') == 'desc') ? '-orderBy' .
         $form_state->getValue('sortby') : '+orderBy' . $form_state->getValue('sortby');
 
@@ -406,7 +409,7 @@ class Gredidam extends WidgetBase {
         'search' => $keyword,
         'sort' => $sort_by,
       ];
-      $search_results = $this->damClient->searchAssets($params);
+      $search_results = $this->damClient->searchAssets($params, $limit, $offset);
 
       $content = $search_results['content'];
       $totalAssets = $search_results['total'] ?? 0;
@@ -815,9 +818,6 @@ class Gredidam extends WidgetBase {
    *   Form.
    */
   private function getPager(int $total_count, int $page, int $limit, string $page_type = "listing", Category $category = NULL) {
-    if ($page_type === "search") {
-      return [];
-    }
     // Add container for pager.
     $form['modal-content']['pager-container'] = [
       '#type' => 'container',
@@ -835,7 +835,6 @@ class Gredidam extends WidgetBase {
         '#value' => '<<',
         '#name' => 'gredidam_pager',
         '#page_type' => $page_type,
-        '#current_category' => $category,
         '#gredidam_page' => 0,
         '#attributes' => [
           'class' => ['page-button', 'page-first'],
@@ -849,7 +848,6 @@ class Gredidam extends WidgetBase {
         '#name' => 'gredidam_pager',
         '#page_type' => $page_type,
         '#gredidam_page' => $page - 1,
-        '#current_category' => $category,
         '#attributes' => [
           'class' => ['page-button', 'page-previous'],
           'gredi_folder_id' => $category->id,
@@ -873,7 +871,6 @@ class Gredidam extends WidgetBase {
         '#name' => 'gredidam_pager',
         '#page_type' => $page_type,
         '#gredidam_page' => $i,
-        '#current_category' => $category,
         '#attributes' => [
           'class' => [($i == $page ? 'page-current' : ''), 'page-button'],
           'gredi_folder_id' => $category->id,
@@ -887,7 +884,6 @@ class Gredidam extends WidgetBase {
         '#type' => 'button',
         '#value' => '>',
         '#name' => 'gredidam_pager',
-        '#current_category' => $category,
         '#page_type' => $page_type,
         '#gredidam_page' => $page + 1,
         '#attributes' => [
@@ -900,7 +896,6 @@ class Gredidam extends WidgetBase {
         '#type' => 'button',
         '#value' => '>>',
         '#name' => 'gredidam_pager',
-        '#current_category' => $category,
         '#gredidam_page' => $lastPage,
         '#page_type' => $page_type,
         '#attributes' => [

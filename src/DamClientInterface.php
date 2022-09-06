@@ -100,10 +100,14 @@ interface DamClientInterface {
    *
    * @param array $params
    *   Params var.
-   *
+   * @param int $limit
+   *   Limit.
+   * @param int $offset
+   *   Offset.
+
    * @return array
    *   A list of assets.
    */
-  public function searchAssets(array $params): array;
+  public function searchAssets(array $params, $limit, $offset): array;
 
 }
