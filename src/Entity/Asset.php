@@ -38,13 +38,6 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $parentId;
 
   /**
-   * The external ID of the asset.
-   *
-   * @var string
-   */
-  public $linkFileId;
-
-  /**
    * The filename of the asset.
    *
    * @var string
@@ -119,7 +112,7 @@ class Asset implements EntityInterface, \JsonSerializable {
    *
    * @var string
    */
-  public $previewLink;
+  public $apiPreviewLink;
 
   /**
    * A list of allowed values for the "expand" query attribute.
@@ -179,13 +172,13 @@ class Asset implements EntityInterface, \JsonSerializable {
     $properties = [
       'id',
       'parentId',
-      'linkFileId',
       'name',
       'created',
       'modified',
       'attachments',
       'object',
       'apiContentLink',
+      'apiPreviewLink',
     ];
     $remote_asset_url = self::getAssetRemoteBaseUrl();
     // Copy all the simple properties.
@@ -199,7 +192,6 @@ class Asset implements EntityInterface, \JsonSerializable {
               $asset->alt_text = NULL;
               $asset->size = $attachment['propertiesById']['nibo:file-size'];
               $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
-              $asset->previewLink = $remote_asset_url . $json['apiPreviewLink'];
             }
           }
         }
@@ -209,7 +201,8 @@ class Asset implements EntityInterface, \JsonSerializable {
           $asset->alt_text = NULL;
           $asset->size = $attachment['propertiesById']['nibo:file-size'];
           $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
-          $asset->previewLink = $remote_asset_url . $attachment['apiPreviewLink'];
+          $asset->apiContentLink = $attachment['apiContentLink'];
+          $asset->apiPreviewLink = $attachment['apiPreviewLink'];
         }
         elseif ($property == 'id') {
           $asset->id = $json['id'];
@@ -218,10 +211,12 @@ class Asset implements EntityInterface, \JsonSerializable {
         else {
           $asset->{$property} = $json[$property];
         }
-        $location = 'public://gredidam/thumbs/' . $asset->name;
-        $asset->previewLink = \Drupal::service('helfi_gredi_image.asset_file.helper')->drupalFileSaveData(\Drupal::service('helfi_gredi_image.dam_client')->fetchRemoteAssetData($asset, $asset->name), $location)->createFileUrl();
       }
     }
+    $location = 'public://gredidam/thumbs/' . $asset->name;
+    $fileContent = \Drupal::service('helfi_gredi_image.dam_client')->fetchRemoteAssetData($asset, $asset->name, FALSE);
+    $asset->apiPreviewLink = \Drupal::service('helfi_gredi_image.asset_file.helper')->drupalFileSaveData($fileContent, $location)->createFileUrl();
+
     return $asset;
   }
 
@@ -247,11 +242,12 @@ class Asset implements EntityInterface, \JsonSerializable {
     return [
       'id' => $this->id,
       'parentId' => $this->parentId,
-      'linkFileId' => $this->linkFileId,
       'name' => $this->name,
       'created' => $this->created,
       'modified' => $this->modified,
       'attachments' => $this->attachments,
+      'apiContentLink' => $this->apiContentLink,
+      'apiPreviewLink' => $this->apiPreviewLink,
     ];
   }
 

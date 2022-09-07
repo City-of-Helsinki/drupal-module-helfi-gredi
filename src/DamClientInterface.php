@@ -104,7 +104,7 @@ interface DamClientInterface {
    *   Limit.
    * @param int $offset
    *   Offset.
-
+   *
    * @return array
    *   A list of assets.
    */
