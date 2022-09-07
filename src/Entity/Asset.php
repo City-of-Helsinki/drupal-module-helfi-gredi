@@ -180,7 +180,6 @@ class Asset implements EntityInterface, \JsonSerializable {
       'apiContentLink',
       'apiPreviewLink',
     ];
-    $remote_asset_url = self::getAssetRemoteBaseUrl();
     // Copy all the simple properties.
     $asset = new self();
     foreach ($properties as $property) {
@@ -188,8 +187,6 @@ class Asset implements EntityInterface, \JsonSerializable {
         if (isset($json['attachments']) && $property === 'attachments') {
           foreach ($json['attachments'] as $attachment) {
             if ($attachment['type'] === self::ATTACHMENT_TYPE_ORIGINAL) {
-              $asset->keywords = NULL;
-              $asset->alt_text = NULL;
               $asset->size = $attachment['propertiesById']['nibo:file-size'];
               $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
             }
@@ -197,8 +194,6 @@ class Asset implements EntityInterface, \JsonSerializable {
         }
         elseif (isset($json['object']) && $property === 'object') {
           $attachment = $json['object'];
-          $asset->keywords = NULL;
-          $asset->alt_text = NULL;
           $asset->size = $attachment['propertiesById']['nibo:file-size'];
           $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
           $asset->apiContentLink = $attachment['apiContentLink'];
