@@ -361,18 +361,20 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * @param \Drupal\helfi_gredi_image\Entity\Asset $asset
    *   The asset to fetch data for.
    * @param string $filename
-   *   The filename as a reference so it can be overridden.
+   *   The filename as a reference, so it can be overridden.
+   * @param bool $original
+   *   If true download the original data else the preview.
    *
    * @return false|string[]
    *   The remote asset contents or FALSE on failure.
    */
-  public function fetchRemoteAssetData(Asset $asset, &$filename) {
+  public function fetchRemoteAssetData(Asset $asset, &$filename, $original = TRUE) {
     // If the module was configured to enforce an image size limit then we
     // need to grab the nearest matching pre-created size.
-    $remote_base_url = Asset::getAssetRemoteBaseUrl();
-    $download_url = $remote_base_url . $asset->apiContentLink;
+    $remoteBaseUrl = Asset::getAssetRemoteBaseUrl();
+    $downloadUrl = $remoteBaseUrl . ($original ? $asset->apiContentLink : $asset->apiPreviewLink);
 
-    if (empty($download_url)) {
+    if (empty($downloadUrl)) {
       $this->loggerChannel->warning(
         'Unable to save file for asset ID @asset_id.
          Thumbnail has not been found.', [
@@ -385,7 +387,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     try {
       $response = $this->guzzleClient->request(
         "GET",
-        $download_url,
+        $downloadUrl,
         [
           'allow_redirects' => [
             'track_redirects' => TRUE,
@@ -401,7 +403,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         Received zero-byte response for download URL @url',
           [
             '@asset_id' => $asset->external_id,
-            '@url' => $download_url,
+            '@url' => $downloadUrl,
           ]);
         return FALSE;
       }
@@ -421,7 +423,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $context = [
         '@asset_id' => $asset->external_id,
         '%message' => $exception->getMessage(),
-        '@url' => $download_url,
+        '@url' => $downloadUrl,
         '@history' => '[empty request, cannot determine redirects]',
       ];
       $response = $exception->getResponse();
@@ -486,11 +488,12 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * @param \Drupal\file\Entity\File $image
    *   Image file entity.
    *
-   * @return void
+   * @return string|NULL
+   *   Gredi DAM asset ID.
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function uploadImage(File $image) {
+  public function uploadImage(File $image): ?string {
     // Upload folder url.
     $url = sprintf("%sfolders/16209558/files/", $this->baseUrl);
 
@@ -541,9 +544,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       }
       catch (\Exception $e) {
         \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
-        return NULL;
       }
     }
+    return NULL;
   }
 
 }
