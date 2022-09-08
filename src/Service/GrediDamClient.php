@@ -131,26 +131,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   }
 
   /**
-   * Setter method for upload folder id.
-   *
-   * @param string $uploadFolderId
-   *   Upload folder id.
-   */
-  public function setUploadFolderId($uploadFolderId) {
-    $this->uploadFolderId = $uploadFolderId;
-  }
-
-  /**
-   * Getter method for upload folder id.
-   *
-   * @return string
-   *   Return $uploadFolderId
-   */
-  public function getUploadFolderId() {
-    return $this->uploadFolderId;
-  }
-
-  /**
    * {@inheritDoc}
    */
   public function getCustomerContent(array $params = []): array {
@@ -220,7 +200,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     foreach (Json::decode($posts) as $post) {
       // Set upload folder id.
       if ($post['name'] == 'UPLOAD' && $post['parentId'] == $this->getRootFolderId()) {
-        $this->setUploadFolderId($post['id']);
+        $this->uploadFolderId = $post['id'];
       }
 
       $category = Category::fromJson($post);
@@ -522,15 +502,15 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   public function uploadImage(File $image): ?string {
     // If getCategoryTree found that UPLOAD folder exists,
     // it will assign the folder id to uploadFolderId.
-    if ($this->getUploadFolderId()) {
-      $urlUpload = sprintf("%s/folders/%d/files/", $this->baseUrl, $this->getUploadFolderId());
+    if ($this->uploadFolderId) {
+      $urlUpload = sprintf("%s/folders/%d/files/", $this->baseUrl, $this->uploadFolderId);
     }
     else {
       // If upload folder doesn't exist,
       // it will be created and the folder id
       // will be assigned to uploadFolderId.
       $this->createFolder('UPLOAD', 'Upload folder');
-      $urlUpload = sprintf("%s/folders/%d/files/", $this->baseUrl, $this->getUploadFolderId());
+      $urlUpload = sprintf("%s/folders/%d/files/", $this->baseUrl, $this->uploadFolderId);
     }
 
     $apiResponse = $this->guzzleClient->request('GET', $urlUpload, [
@@ -619,7 +599,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         'body' => $fieldString,
       ])->getBody()->getContents();
 
-      $this->setUploadFolderId(Json::decode($response)['id']);
+      $this->uploadFolderId = Json::decode($response)['id'];
     }
     catch (\Exception $e) {
       \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
