@@ -2,6 +2,7 @@
 
 namespace Drupal\helfi_gredi_image;
 
+use Drupal\file\Entity\File;
 use Drupal\helfi_gredi_image\Entity\Asset;
 
 /**
@@ -109,5 +110,29 @@ interface DamClientInterface {
    *   A list of assets.
    */
   public function searchAssets(array $params, $limit, $offset): array;
+
+  /**
+   * Upload image to DAM.
+   *
+   * @param \Drupal\file\Entity\File $image
+   *   Image to upload.
+   *
+   * @return string|null
+   *   ID of the newly created DAM asset.
+   */
+  public function uploadImage(File $image): ?string;
+
+  /**
+   * Create folder.
+   *
+   * @param string $folderName
+   *   Image to upload.
+   * @param string $folderDescription
+   *   Image to upload.
+   *
+   * @return string|null
+   *   ID of the newly created DAM asset.
+   */
+  public function createFolder($folderName, $folderDescription);
 
 }
