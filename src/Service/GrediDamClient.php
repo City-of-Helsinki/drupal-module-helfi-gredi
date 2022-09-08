@@ -15,7 +15,6 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use function PHPUnit\Framework\isEmpty;
 
 /**
  * Class ClientFactory.
@@ -134,7 +133,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * Setter method for upload folder id.
    *
-   * @param $uploadFolderId
+   * @param string $uploadFolderId
    *   Upload folder id.
    */
   public function setUploadFolderId($uploadFolderId) {
@@ -308,13 +307,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         $content['folders'][] = Category::fromJson($post);
       }
     }
-
-    // Assign upload folder id if exists.
-//    foreach ($content['folders'] as $folder) {
-//      if ($folder->name == 'UPLOAD') {
-//        $this->setUploadFolderId($folder->id);
-//      }
-//    }
 
     return [
       'content' => $content,
@@ -525,26 +517,21 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   }
 
   /**
-   * Create POST request to upload file.
-   *
-   * @param \Drupal\file\Entity\File $image
-   *   Image file entity.
-   *
-   * @return string|NULL
-   *   Return the ID of the newly created Gredi DAM asset.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
+   * {@inheritDoc}
    */
   public function uploadImage(File $image): ?string {
     // Call the list with all elements to find if upload folder exists.
     $this->getCategoryTree();
 
-    // If getCategoryTree found that UPLOAD folder exists it will assign the folder id to uploadFolderId.
+    // If getCategoryTree found that UPLOAD folder exists,
+    // it will assign the folder id to uploadFolderId.
     if ($this->getUploadFolderId()) {
       $urlUpload = sprintf("%sfolders/%d/files/", $this->baseUrl, $this->getUploadFolderId());
     }
     else {
-      // If upload folder doesn't exist, it will be created and the folder id will be assigned to uploadFolderId.
+      // If upload folder doesn't exist,
+      // it will be created and the folder id
+      // will be assigned to uploadFolderId.
       $this->createFolder('UPLOAD', 'Upload folder');
       $urlUpload = sprintf("%sfolders/%d/files/", $this->baseUrl, $this->getUploadFolderId());
     }
@@ -606,16 +593,14 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * Function that creates a folder in the API root.
    *
-   * @param $folderName
+   * @param string $folderName
    *   Folder name.
-   *
-   * @param $folderDescription
+   * @param string $folderDescription
    *   Folder description.
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function createFolder($folderName, $folderDescription) {
-
     $url = sprintf("%sfolders/%d/files", $this->baseUrl, $this->getRootFolderId());
 
     $fieldData = [
