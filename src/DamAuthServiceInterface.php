@@ -15,7 +15,7 @@ interface DamAuthServiceInterface {
    * @return \Drupal\Core\Config\ImmutableConfig
    *   An immutable configuration object.
    */
-  public static function getConfig(): ImmutableConfig;
+  public function getConfig(): ImmutableConfig;
 
   /**
    * Get cookie jar variable.

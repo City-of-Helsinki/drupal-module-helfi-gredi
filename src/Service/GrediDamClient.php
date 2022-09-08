@@ -115,7 +115,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     $this->config = $config;
     $this->grediDamAuthService = $grediDamAuthService;
     $this->loggerChannel = $loggerChannelFactory->get('media_gredidam');
-    $this->baseUrl = $this->grediDamAuthService->getConfig()->get('domain');
+    $this->baseUrl = trim($this->grediDamAuthService->getConfig()->get('domain'), '/');
   }
 
   /**
@@ -520,20 +520,17 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * {@inheritDoc}
    */
   public function uploadImage(File $image): ?string {
-    // Call the list with all elements to find if upload folder exists.
-    $this->getCategoryTree();
-
     // If getCategoryTree found that UPLOAD folder exists,
     // it will assign the folder id to uploadFolderId.
     if ($this->getUploadFolderId()) {
-      $urlUpload = sprintf("%sfolders/%d/files/", $this->baseUrl, $this->getUploadFolderId());
+      $urlUpload = sprintf("%s/folders/%d/files/", $this->baseUrl, $this->getUploadFolderId());
     }
     else {
       // If upload folder doesn't exist,
       // it will be created and the folder id
       // will be assigned to uploadFolderId.
       $this->createFolder('UPLOAD', 'Upload folder');
-      $urlUpload = sprintf("%sfolders/%d/files/", $this->baseUrl, $this->getUploadFolderId());
+      $urlUpload = sprintf("%s/folders/%d/files/", $this->baseUrl, $this->getUploadFolderId());
     }
 
     $apiResponse = $this->guzzleClient->request('GET', $urlUpload, [
@@ -601,7 +598,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function createFolder($folderName, $folderDescription) {
-    $url = sprintf("%sfolders/%d/files", $this->baseUrl, $this->getRootFolderId());
+    $url = sprintf("%s/folders/%d/files", $this->baseUrl, $this->getRootFolderId());
 
     $fieldData = [
       "name" => $folderName,

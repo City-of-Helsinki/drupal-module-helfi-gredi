@@ -64,12 +64,14 @@ class GrediDamAuthService implements DamAuthServiceInterface {
   public function __construct(ClientInterface $guzzleClient, AccountInterface $account) {
     $this->guzzleClient = $guzzleClient;
     $this->user = User::load($account->id());
+    $config = $this->getConfig();
+    $this->baseUrl = trim($config->get('domain'), "/");
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function getConfig(): ImmutableConfig {
+  public function getConfig(): ImmutableConfig {
     return \Drupal::config('helfi_gredi_image.settings');
   }
 
@@ -90,8 +92,6 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getCustomerId() {
-    $config = self::getConfig();
-    $this->baseUrl = $config->get('domain');
     try {
       $url = sprintf("%s/customerIds/%s", $this->baseUrl, self::CUSTOMER);
       $apiCall = $this->guzzleClient->request('GET', $url, [
@@ -114,8 +114,6 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    *   The Gredi DAM client.
    */
   public function loginWithCredentials() {
-    $config = self::getConfig();
-    $this->baseUrl = $config->get('domain');
     $cookieDomain = parse_url($this->baseUrl);
     $username = $this->getUsername();
     $password = $this->getPassword();
