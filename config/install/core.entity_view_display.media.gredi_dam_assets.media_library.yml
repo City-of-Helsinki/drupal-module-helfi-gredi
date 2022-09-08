@@ -6,12 +6,9 @@ dependencies:
     - core.entity_view_mode.media.media_library
     - field.field.media.gredi_dam_assets.field_alt_text
     - field.field.media.gredi_dam_assets.field_external_id
-    - field.field.media.gredi_dam_assets.field_height
     - field.field.media.gredi_dam_assets.field_keywords
     - field.field.media.gredi_dam_assets.field_media_image
-    - field.field.media.gredi_dam_assets.field_resolution
     - field.field.media.gredi_dam_assets.field_size
-    - field.field.media.gredi_dam_assets.field_width
     - image.style.medium
     - media.type.gredi_dam_assets
   module:
@@ -36,11 +33,8 @@ hidden:
   created: true
   field_alt_text: true
   field_external_id: true
-  field_height: true
   field_keywords: true
   field_media_image: true
-  field_resolution: true
   field_size: true
-  field_width: true
   name: true
   uid: true

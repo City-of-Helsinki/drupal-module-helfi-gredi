@@ -10,21 +10,21 @@ namespace Drupal\helfi_gredi_image\Entity;
 class Category implements EntityInterface, \JsonSerializable {
 
   /**
-   * ID of the Category.
+   * ID of the category.
    *
    * @var string
    */
   public $id;
 
   /**
-   * The Parent ID of the asset.
+   * The Parent ID of the category.
    *
    * @var string
    */
   public $parentId;
 
   /**
-   * Name of the Category.
+   * Name of the category.
    *
    * @var string
    */

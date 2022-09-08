@@ -5,12 +5,9 @@ dependencies:
   config:
     - field.field.media.gredi_dam_assets.field_alt_text
     - field.field.media.gredi_dam_assets.field_external_id
-    - field.field.media.gredi_dam_assets.field_height
     - field.field.media.gredi_dam_assets.field_keywords
     - field.field.media.gredi_dam_assets.field_media_image
-    - field.field.media.gredi_dam_assets.field_resolution
     - field.field.media.gredi_dam_assets.field_size
-    - field.field.media.gredi_dam_assets.field_width
     - image.style.thumbnail
     - media.type.gredi_dam_assets
   module:
@@ -43,14 +40,6 @@ content:
       size: 60
       placeholder: ''
     third_party_settings: {  }
-  field_height:
-    type: string_textfield
-    weight: 103
-    region: content
-    settings:
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
   field_keywords:
     type: string_textarea
     weight: 105
@@ -75,25 +64,9 @@ content:
       size: 60
       placeholder: ''
     third_party_settings: {  }
-  field_resolution:
-    type: string_textfield
-    weight: 107
-    region: content
-    settings:
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
   field_size:
     type: string_textfield
     weight: 108
-    region: content
-    settings:
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-  field_width:
-    type: string_textfield
-    weight: 109
     region: content
     settings:
       size: 60

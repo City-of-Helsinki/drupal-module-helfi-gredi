@@ -2,8 +2,6 @@
   Drupal.behaviors.pagerBegavior = {
     attach: function (context, settings) {
       once('pagerBegavior', 'html', context).forEach( function (element) {
-
-console.log(drupalSettings);
           var container = $('#pagination-demo2');
           container.pagination({
             dataSource: drupalSettings.helfi_gredi_image.dataAssets,
