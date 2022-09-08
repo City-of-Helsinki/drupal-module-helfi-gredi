@@ -11,17 +11,6 @@ use Drupal\helfi_gredi_image\Entity\Asset;
 interface DamClientInterface {
 
   /**
-   * Get folders and assets from Customer ID.
-   *
-   * @param array $params
-   *   Parameters.
-   *
-   * @return array
-   *   Customer content.
-   */
-  public function getCustomerContent(array $params = []): array;
-
-  /**
    * Get folders and assets from Customer's root.
    *
    * @param int $limit

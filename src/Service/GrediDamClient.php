@@ -133,61 +133,12 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * {@inheritDoc}
    */
-  public function getCustomerContent(array $params = []): array {
-    $parameters = '';
-    if (isset($params)) {
-      foreach ($params as $key => $param) {
-        $parameters .= '&' . $key . '=' . $param;
-      }
-    }
-    try {
-      $customerId = $this->grediDamAuthService->getCustomerId();
-    }
-    catch (\Exception $e) {
-      throw $e;
-    }
-    $url = sprintf("%s/customers/%d/contents?include=attachments%s", $this->baseUrl, $customerId, $parameters);
-    $userContent = $this->guzzleClient->request('GET', $url, [
-      'headers' => [
-        'Content-Type' => 'application/json',
-      ],
-      'cookies' => $this->grediDamAuthService->getCookieJar(),
-    ]);
-    $posts = $userContent->getBody()->getContents();
-    $content = [
-      'folders' => [],
-      'assets' => [],
-    ];
-    foreach (Json::decode($posts) as $post) {
-      if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
-        $expands = ['meta', 'attachments'];
-        $content['assets'][] = $this->getAsset($post['id'], $expands, $post['parentId']);
-      }
-      elseif ($post['fileType'] == 'folder') {
-        $content['folders'][] = Category::fromJson($post);
-      }
-    }
-
-    return [
-      'content' => $content,
-      'total' => count($content),
-    ];
-  }
-
-  /**
-   * {@inheritDoc}
-   */
   public function getCategoryTree(): array {
     if ($this->categoryTree) {
       return $this->categoryTree;
     }
 
-    try {
-      $customerId = $this->grediDamAuthService->getCustomerId();
-    }
-    catch (\Exception $e) {
-      throw $e;
-    }
+    $customerId = $this->grediDamAuthService->getCustomerId();
     $url = sprintf("%s/customers/%d/contents?materialType=folder", $this->baseUrl, $customerId);
     $userContent = $this->guzzleClient->request('GET', $url, [
       'headers' => [
@@ -464,12 +415,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $parameters .= '&' . $key . '=' . $param;
     }
 
-    try {
-      $customerId = $this->grediDamAuthService->getCustomerId();
-    }
-    catch (\Exception $e) {
-      throw $e;
-    }
+    $customerId = $this->grediDamAuthService->getCustomerId();
     $url = sprintf("%s/customers/%d/contents?include=object%s", $this->baseUrl, $customerId, $parameters);
     $response = $this->guzzleClient->request('GET', $url, [
       'headers' => [
@@ -500,18 +446,14 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * {@inheritDoc}
    */
   public function uploadImage(File $image): ?string {
-    // If getCategoryTree found that UPLOAD folder exists,
-    // it will assign the folder id to uploadFolderId.
-    if ($this->uploadFolderId) {
-      $urlUpload = sprintf("%s/folders/%d/files/", $this->baseUrl, $this->uploadFolderId);
-    }
-    else {
+    if (!$this->uploadFolderId) {
       // If upload folder doesn't exist,
       // it will be created and the folder id
       // will be assigned to uploadFolderId.
       $this->createFolder('UPLOAD', 'Upload folder');
-      $urlUpload = sprintf("%s/folders/%d/files/", $this->baseUrl, $this->uploadFolderId);
     }
+    // Assign the folder id to uploadFolderId.
+    $urlUpload = sprintf("%s/folders/%d/files/", $this->baseUrl, $this->uploadFolderId);
 
     $apiResponse = $this->guzzleClient->request('GET', $urlUpload, [
       'headers' => [
