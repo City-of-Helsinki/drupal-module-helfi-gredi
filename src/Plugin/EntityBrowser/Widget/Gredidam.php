@@ -244,7 +244,7 @@ class Gredidam extends WidgetBase {
     $form = parent::getForm($original_form, $form_state, $additional_widget_parameters);
     $form['modal-content'] = [
       '#type' => 'container',
-      // Store the current category id in the form so it can be retrieved
+      // Store the current category id in the form, so it can be retrieved
       // from the form state.
       '#attributes' => [
         'class' => ['gredidam-asset-browser row'],
@@ -470,11 +470,11 @@ class Gredidam extends WidgetBase {
    */
   public function validateUserDamCredentials(&$form, FormStateInterface $form_state) {
     if (empty($form_state->getValue('dam_username'))) {
-      return $form_state->setErrorByName('dam_username', $this->t('Dam Username field cannot be null!'));
+      $form_state->setErrorByName('dam_username', $this->t('Dam Username field cannot be null!'));
     }
 
     if (empty($form_state->getValue('dam_password'))) {
-      return $form_state->setErrorByName('dam_password', $this->t('Dam Password field cannot be null!'));
+      $form_state->setErrorByName('dam_password', $this->t('Dam Password field cannot be null!'));
     }
   }
 
@@ -931,11 +931,8 @@ class Gredidam extends WidgetBase {
           '#tag' => 'p',
           '#value' => $category->name,
         ],
-
       ];
     }
-
-    return $form;
   }
 
   /**
