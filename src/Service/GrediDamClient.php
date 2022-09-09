@@ -288,7 +288,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       return NULL;
     }
 
-    $url = sprintf("%s/folders/%d/files/?include=attachments", $this->baseUrl, $folder_id);
+    $url = sprintf("%s/folders/%d/files/?include=attachments,meta", $this->baseUrl, $folder_id);
     $userContent = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
@@ -373,22 +373,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         'label' => 'External ID',
         'type' => 'string',
       ],
-      'name' => [
-        'label' => 'Filename',
-        'type' => 'string',
-      ],
-      'width' => [
-        'label' => 'Width',
-        'type' => 'string',
-      ],
-      'height' => [
-        'label' => 'Height',
-        'type' => 'string',
-      ],
-      'resolution' => [
-        'label' => 'Resolution',
-        'type' => 'string',
-      ],
       'keywords' => [
         'label' => 'Keywords',
         'type' => 'text_long',
@@ -397,8 +381,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         'label' => 'Alt text',
         'type' => 'string',
       ],
-      'size' => [
-        'label' => 'Filesize (kb)',
+      'created' => [
+        'label' => 'Created',
         'type' => 'string',
       ],
     ];
@@ -602,14 +586,13 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
           ],
           'body' => $requestBody,
         ])->getBody()->getContents();
-
-        // Return file ID from API as string.
-        return json_decode($response, TRUE)['id'];
       }
       catch (\Exception $e) {
         \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
       }
     }
+    // Return file ID from API as string.
+    return json_decode($response, TRUE)['id'];
   }
 
   /**
@@ -651,6 +634,18 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     catch (\Exception $e) {
       \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
     }
+  }
+
+  public function getMetaFields() {
+    $customerId = $this->grediDamAuthService->getCustomerId();
+    $url = sprintf("%scustomers/%d/meta", $this->baseUrl, $customerId);
+    $response = $this->guzzleClient->request('GET', $url, [
+      'headers' => [
+        'Content-Type' => 'application/json',
+      ],
+      'cookies' => $this->grediDamAuthService->getCookieJar(),
+    ]);
+    dump(Json::decode($response));
   }
 
 }

@@ -111,14 +111,10 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
   public function getMetadataAttributeLabels() {
     $fields = [
       'external_id' => $this->t('External ID'),
-      'name' => $this->t('Filename'),
-      'width' => $this->t('Width'),
-      'height' => $this->t('Height'),
-      'resolution' => $this->t('Resolution'),
       'keywords' => $this->t('Keywords'),
       'alt_text' => $this->t('Alt text'),
+      'created' => $this->t('Created'),
       'media_image' => $this->t('Image'),
-      'size' => $this->t('Filesize (kb)'),
     ];
 
     // Add specific metadata fields to fields array.
@@ -144,24 +140,17 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
    *   Result will vary based on the metadata item.
    */
   public function getMetadataFromAsset(Asset $asset, $name) {
+
     switch ($name) {
-      case 'height':
-        return $asset->height;
-
-      case 'width':
-        return $asset->width;
-
-      case 'resolution':
-        return $asset->resolution;
 
       case 'keywords':
         return $asset->keywords;
 
-      case 'alt-text':
+      case 'alt_text':
         return $asset->alt_text;
 
-      case 'size':
-        return $asset->size;
+      case 'created':
+        return $asset->created;
 
       case 'external_id':
         return $asset->external_id;

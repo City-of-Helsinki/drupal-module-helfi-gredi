@@ -142,6 +142,13 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $previewLink;
 
   /**
+   * Upload date.
+   *
+   * @var string
+   */
+  public $file_upload_date;
+
+  /**
    * A list of allowed values for the "expand" query attribute.
    *
    * @return string[]
@@ -210,25 +217,41 @@ class Asset implements EntityInterface, \JsonSerializable {
     $asset = new self();
     foreach ($properties as $property) {
       if (isset($json[$property])) {
+
+        if (isset($json['metaById'])) {
+          // Keywords field with id = 257.
+          $asset->keywords['en'] = $json['metaById']['custom:meta-field-257_en'];
+          if (isset($json['metaById']['custom:meta-field-257_fi'])) {
+            $asset->keywords['fi'] = $json['metaById']['custom:meta-field-257_fi'];
+          }
+          if (isset($json['metaById']['custom:meta-field-257_se'])) {
+            $asset->keywords['se'] = $json['metaById']['custom:meta-field-257_se'];
+          }
+
+          // Alt_text field with id = 1410.
+          $asset->alt_text['en'] = $json['metaById']['custom:meta-field-1410_en'];
+          if (isset($json['metaById']['custom:meta-field-1410_fi'])) {
+            $asset->alt_text['fi'] = $json['metaById']['custom:meta-field-1410_fi'];
+          }
+          if (isset($json['metaById']['custom:meta-field-1410_se'])) {
+            $asset->alt_text['se'] = $json['metaById']['custom:meta-field-1410_se'];
+          }
+        }
         if (isset($json['attachments']) && $property === 'attachments') {
           foreach ($json['attachments'] as $attachment) {
             if ($attachment['type'] === self::ATTACHMENT_TYPE_ORIGINAL) {
-              $asset->width = $attachment['propertiesById']['nibo:image-width'];
-              $asset->height = $attachment['propertiesById']['nibo:image-height'];
-              $asset->resolution = $attachment['propertiesById']['nibo:image-resolution'];
-              $asset->keywords = NULL;
-              $asset->alt_text = NULL;
-              $asset->size = $attachment['propertiesById']['nibo:file-size'];
+              $asset->created = \DateTime::createFromFormat('Y-m-d\TH:i:s.u+', $json['created'])->format('Y-m-d H:i:s');
               $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
               $asset->previewLink = $remote_asset_url . $json['apiPreviewLink'];
             }
           }
         }
+
         elseif (isset($json['object']) && $property === 'object') {
           $attachment = $json['object'];
           $asset->keywords = NULL;
+          $asset->created = \DateTime::createFromFormat('Y-m-d\TH:i:s.u+', $json['created']);
           $asset->alt_text = NULL;
-          $asset->size = $attachment['propertiesById']['nibo:file-size'];
           $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
           $asset->previewLink = $remote_asset_url . $attachment['apiPreviewLink'];
         }
@@ -241,6 +264,7 @@ class Asset implements EntityInterface, \JsonSerializable {
         }
       }
     }
+
     return $asset;
   }
 

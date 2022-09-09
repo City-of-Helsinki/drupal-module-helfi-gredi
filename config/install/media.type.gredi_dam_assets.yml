@@ -4,6 +4,8 @@ status: true
 dependencies:
   module:
     - helfi_gredi_image
+_core:
+  default_config_hash: TjxgQbAO1LM_pdThkq8tI7SEqclzQzGg783ePS8xylI
 id: gredi_dam_assets
 label: 'Gredi DAM Assets'
 description: ''
@@ -13,11 +15,8 @@ new_revision: false
 source_configuration:
   source_field: field_external_id
 field_map:
-  external_id: field_external_id
-  width: field_width
-  height: field_height
-  resolution: field_resolution
+  external_id: external_id
   keywords: field_keywords
   alt_text: field_alt_text
+  created: field_created
   media_image: field_media_image
-  size: field_size

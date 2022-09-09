@@ -660,6 +660,21 @@ class Gredidam extends WidgetBase {
         'changed' => strtotime($asset->modified),
       ]);
 
+      // Check if asset has translation for fi.
+      if ($asset->keywords['fi'] && $asset->alt_text['fi']) {
+        $entity->addTranslation('fi', [
+          'field_keywords' => $asset->keywords['fi'],
+          'field_alt_text' => $asset->alt_text['fi'],
+        ]);
+      }
+      // Check if asset has translation for se.
+      if ($asset->keywords['se'] && $asset->alt_text['se']) {
+        $entity->addTranslation('sv', [
+          'field_keywords' => $asset->keywords['se'],
+          'field_alt_text' => $asset->alt_text['se'],
+        ]);
+      }
+
       $entity->save();
 
       // Reload the entity to make sure we have everything populated properly.
