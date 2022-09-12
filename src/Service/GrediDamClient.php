@@ -94,6 +94,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    */
   protected $uploadFolderId;
 
+  private $metafields;
+
   /**
    * ClientFactory constructor.
    *
@@ -637,6 +639,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   }
 
   public function getMetaFields() {
+    if ($this->metafields) {
+      return $this->metafields;
+    }
     $customerId = $this->grediDamAuthService->getCustomerId();
     $url = sprintf("%scustomers/%d/meta", $this->baseUrl, $customerId);
     $response = $this->guzzleClient->request('GET', $url, [
@@ -644,8 +649,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         'Content-Type' => 'application/json',
       ],
       'cookies' => $this->grediDamAuthService->getCookieJar(),
-    ]);
-    dump(Json::decode($response));
+    ])->getBody()->getContents();
+    $this->metafields = Json::decode($response);
+    return $this->metafields;
   }
 
 }

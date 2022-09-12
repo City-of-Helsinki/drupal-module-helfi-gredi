@@ -3,6 +3,7 @@
 namespace Drupal\helfi_gredi_image\Entity;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\new_dependency_test\Service;
 
 /**
  * The asset entity describing the asset object shared by Gredi DAM.
@@ -215,28 +216,38 @@ class Asset implements EntityInterface, \JsonSerializable {
     $remote_asset_url = self::getAssetRemoteBaseUrl();
     // Copy all the simple properties.
     $asset = new self();
+
+    // Get metafields.
+    $metaProperties = [];
+    $metafields = \Drupal::service('helfi_gredi_image.dam_client')->getMetaFields();
+    // Assign the id for each metafield.
+    foreach ($metafields as $fields) {
+      $metaProperties[$fields['namesByLang']['en']] = [
+        'id' => $fields['id'],
+        'lang' => array_keys($fields['namesByLang']),
+      ];
+    }
+
+    // Check all the translations from the API.
+    if (isset($json['metaById'])) {
+      // Keywords field.
+      foreach ($metaProperties['Keywords']['lang'] as $language) {
+        $buildMetaField = 'custom:meta-field-' . $metaProperties['Keywords']['id'] . '_' . $language;
+        if (isset($json['metaById'][$buildMetaField])) {
+          $asset->keywords[$language] = $json['metaById'][$buildMetaField];
+        }
+      }
+      // Alt text field.
+      foreach ($metaProperties['Alt text']['lang'] as $language) {
+        $buildMetaField = 'custom:meta-field-' . $metaProperties['Alt text']['id'] . '_' . $language;
+        if (isset($json['metaById'][$buildMetaField])) {
+          $asset->alt_text[$language] = $json['metaById'][$buildMetaField];
+        }
+      }
+    }
+
     foreach ($properties as $property) {
       if (isset($json[$property])) {
-
-        if (isset($json['metaById'])) {
-          // Keywords field with id = 257.
-          $asset->keywords['en'] = $json['metaById']['custom:meta-field-257_en'];
-          if (isset($json['metaById']['custom:meta-field-257_fi'])) {
-            $asset->keywords['fi'] = $json['metaById']['custom:meta-field-257_fi'];
-          }
-          if (isset($json['metaById']['custom:meta-field-257_se'])) {
-            $asset->keywords['se'] = $json['metaById']['custom:meta-field-257_se'];
-          }
-
-          // Alt_text field with id = 1410.
-          $asset->alt_text['en'] = $json['metaById']['custom:meta-field-1410_en'];
-          if (isset($json['metaById']['custom:meta-field-1410_fi'])) {
-            $asset->alt_text['fi'] = $json['metaById']['custom:meta-field-1410_fi'];
-          }
-          if (isset($json['metaById']['custom:meta-field-1410_se'])) {
-            $asset->alt_text['se'] = $json['metaById']['custom:meta-field-1410_se'];
-          }
-        }
         if (isset($json['attachments']) && $property === 'attachments') {
           foreach ($json['attachments'] as $attachment) {
             if ($attachment['type'] === self::ATTACHMENT_TYPE_ORIGINAL) {

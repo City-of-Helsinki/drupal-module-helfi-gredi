@@ -660,19 +660,30 @@ class Gredidam extends WidgetBase {
         'changed' => strtotime($asset->modified),
       ]);
 
-      // Check if asset has translation for fi.
-      if ($asset->keywords['fi'] && $asset->alt_text['fi']) {
-        $entity->addTranslation('fi', [
-          'field_keywords' => $asset->keywords['fi'],
-          'field_alt_text' => $asset->alt_text['fi'],
-        ]);
-      }
-      // Check if asset has translation for se.
-      if ($asset->keywords['se'] && $asset->alt_text['se']) {
-        $entity->addTranslation('sv', [
-          'field_keywords' => $asset->keywords['se'],
-          'field_alt_text' => $asset->alt_text['se'],
-        ]);
+      // Add language translations.
+      foreach ($asset->keywords as $key => $lang) {
+        if ($key) {
+          // For english case no translation will be added.
+          if ($key == 'en') {
+            $entity->field_keywords = $asset->keywords[$key];
+            $entity->field_alt_text = $asset->alt_text[$key];
+            continue;
+          }
+          if ($key == 'se') {
+            // Wrong mapping from API 'se' should be 'sv' (swedish lang code).
+            $key = 'se';
+            $entity->addTranslation($lang, [
+              'field_keywords' => $asset->keywords[$key],
+              'field_alt_text' => $asset->alt_text[$key],
+            ]);
+          }
+          else {
+            $entity->addTranslation($key, [
+              'field_keywords' => $asset->keywords[$key],
+              'field_alt_text' => $asset->alt_text[$key],
+            ]);
+          }
+        }
       }
 
       $entity->save();
