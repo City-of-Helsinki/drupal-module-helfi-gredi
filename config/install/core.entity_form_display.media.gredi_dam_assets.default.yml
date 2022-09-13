@@ -1,0 +1,106 @@
+uuid: 227c6a15-54f5-4054-9835-3c7f68f500c1
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.media.gredi_dam_assets.field_alt_text
+    - field.field.media.gredi_dam_assets.field_external_id
+    - field.field.media.gredi_dam_assets.field_keywords
+    - field.field.media.gredi_dam_assets.field_media_image
+    - field.field.media.gredi_dam_assets.field_size
+    - image.style.thumbnail
+    - media.type.gredi_dam_assets
+  module:
+    - image
+    - path
+id: media.gredi_dam_assets.default
+targetEntityType: media
+bundle: gredi_dam_assets
+mode: default
+content:
+  created:
+    type: datetime_timestamp
+    weight: 10
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_alt_text:
+    type: string_textfield
+    weight: 101
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_external_id:
+    type: string_textfield
+    weight: 102
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_keywords:
+    type: string_textarea
+    weight: 105
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+  field_media_image:
+    type: image_image
+    weight: 104
+    region: content
+    settings:
+      progress_indicator: throbber
+      preview_image_style: thumbnail
+    third_party_settings: {  }
+  field_name:
+    type: string_textfield
+    weight: 106
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  field_size:
+    type: string_textfield
+    weight: 108
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  name:
+    type: string_textfield
+    weight: -5
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  path:
+    type: path
+    weight: 30
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  status:
+    type: boolean_checkbox
+    weight: 100
+    region: content
+    settings:
+      display_label: true
+    third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 5
+    region: content
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden: {  }

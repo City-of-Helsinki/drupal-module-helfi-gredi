@@ -21,4 +21,4 @@ services:
       - { name: backend_overridable }
   helfi_gredi_image.auth_service:
     class: Drupal\helfi_gredi_image\Service\GrediDamAuthService
-    arguments: ['@http_client', '@current_user', '@request_stack']
+    arguments: ['@http_client', '@current_user']

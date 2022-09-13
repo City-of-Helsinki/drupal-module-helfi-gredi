@@ -3,7 +3,7 @@
 namespace Drupal\helfi_gredi_image\Entity;
 
 use Drupal\Component\Serialization\Json;
-use Drupal\new_dependency_test\Service;
+use Drupal\Core\File\FileSystemInterface;
 
 /**
  * The asset entity describing the asset object shared by Gredi DAM.
@@ -36,13 +36,6 @@ class Asset implements EntityInterface, \JsonSerializable {
    * @var string
    */
   public $parentId;
-
-  /**
-   * The external ID of the asset.
-   *
-   * @var string
-   */
-  public $linkFileId;
 
   /**
    * The filename of the asset.
@@ -78,27 +71,6 @@ class Asset implements EntityInterface, \JsonSerializable {
    * @var array
    */
   public $metadata;
-
-  /**
-   * The asset's width.
-   *
-   * @var string
-   */
-  public $width;
-
-  /**
-   * The asset's height.
-   *
-   * @var string
-   */
-  public $height;
-
-  /**
-   * The asset's resoluion.
-   *
-   * @var string
-   */
-  public $resolution;
 
   /**
    * The asset's keywords.
@@ -140,7 +112,7 @@ class Asset implements EntityInterface, \JsonSerializable {
    *
    * @var string
    */
-  public $previewLink;
+  public $apiPreviewLink;
 
   /**
    * Upload date.
@@ -201,19 +173,20 @@ class Asset implements EntityInterface, \JsonSerializable {
     if (is_string($json)) {
       $json = Json::decode($json);
     }
+    $locationToCheck = 'public://gredidam/thumbs';
+    \Drupal::service('file_system')->prepareDirectory($locationToCheck, FileSystemInterface::CREATE_DIRECTORY);
 
     $properties = [
       'id',
       'parentId',
-      'linkFileId',
       'name',
       'created',
       'modified',
       'attachments',
       'object',
       'apiContentLink',
+      'apiPreviewLink',
     ];
-    $remote_asset_url = self::getAssetRemoteBaseUrl();
     // Copy all the simple properties.
     $asset = new self();
 
@@ -253,7 +226,6 @@ class Asset implements EntityInterface, \JsonSerializable {
             if ($attachment['type'] === self::ATTACHMENT_TYPE_ORIGINAL) {
               $asset->created = \DateTime::createFromFormat('Y-m-d\TH:i:s.u+', $json['created'])->format('Y-m-d H:i:s');
               $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
-              $asset->previewLink = $remote_asset_url . $json['apiPreviewLink'];
             }
           }
         }
@@ -264,7 +236,8 @@ class Asset implements EntityInterface, \JsonSerializable {
           $asset->created = \DateTime::createFromFormat('Y-m-d\TH:i:s.u+', $json['created']);
           $asset->alt_text = NULL;
           $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
-          $asset->previewLink = $remote_asset_url . $attachment['apiPreviewLink'];
+          $asset->apiContentLink = $attachment['apiContentLink'];
+          $asset->apiPreviewLink = $attachment['apiPreviewLink'];
         }
         elseif ($property == 'id') {
           $asset->id = $json['id'];
@@ -275,6 +248,10 @@ class Asset implements EntityInterface, \JsonSerializable {
         }
       }
     }
+
+    $location = 'public://gredidam/thumbs/' . $asset->name;
+    $fileContent = \Drupal::service('helfi_gredi_image.dam_client')->fetchRemoteAssetData($asset, $asset->name, FALSE);
+    $asset->apiPreviewLink = \Drupal::service('helfi_gredi_image.asset_file.helper')->drupalFileSaveData($fileContent, $location)->createFileUrl();
 
     return $asset;
   }
@@ -301,11 +278,12 @@ class Asset implements EntityInterface, \JsonSerializable {
     return [
       'id' => $this->id,
       'parentId' => $this->parentId,
-      'linkFileId' => $this->linkFileId,
       'name' => $this->name,
       'created' => $this->created,
       'modified' => $this->modified,
       'attachments' => $this->attachments,
+      'apiContentLink' => $this->apiContentLink,
+      'apiPreviewLink' => $this->apiPreviewLink,
     ];
   }
 

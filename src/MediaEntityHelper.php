@@ -153,7 +153,6 @@ class MediaEntityHelper {
         ->load($this->mediaEntity->bundle());
 
       $field_map = !empty($bundle) ? $bundle->getFieldMap() : FALSE;
-
     }
     catch (\Exception $x) {
       return FALSE;

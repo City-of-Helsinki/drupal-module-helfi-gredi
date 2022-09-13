@@ -244,7 +244,7 @@ class Gredidam extends WidgetBase {
     $form = parent::getForm($original_form, $form_state, $additional_widget_parameters);
     $form['modal-content'] = [
       '#type' => 'container',
-      // Store the current category id in the form so it can be retrieved
+      // Store the current category id in the form, so it can be retrieved
       // from the form state.
       '#attributes' => [
         'class' => ['gredidam-asset-browser row'],
@@ -344,7 +344,10 @@ class Gredidam extends WidgetBase {
       }
 
       if ($trigger_elem['#name'] === 'gredidam_pager') {
-        $this->currentCategory->id = $trigger_elem['#attributes']['gredi_folder_id'];
+        $page_type = $trigger_elem['#page_type'];
+        if ($page_type === 'listing') {
+          $this->currentCategory->id = $trigger_elem['#attributes']['gredi_folder_id'];
+        }
         // Set the current category id to the id of the category, was clicked.
         $page = intval($trigger_elem['#gredidam_page']);
         $offset = $limit * $page;
@@ -395,7 +398,7 @@ class Gredidam extends WidgetBase {
       }
     }
 
-    if ($page_type == "search") {
+    if ($page_type === "search") {
       $sort_by = ($form_state->getValue('sortdir') == 'desc') ? '-orderBy' .
         $form_state->getValue('sortby') : '+orderBy' . $form_state->getValue('sortby');
 
@@ -404,7 +407,7 @@ class Gredidam extends WidgetBase {
         'search' => $keyword,
         'sort' => $sort_by,
       ];
-      $search_results = $this->damClient->searchAssets($params);
+      $search_results = $this->damClient->searchAssets($params, $limit, $offset);
 
       $content = $search_results['content'];
       $totalAssets = $search_results['total'] ?? 0;
@@ -467,11 +470,11 @@ class Gredidam extends WidgetBase {
    */
   public function validateUserDamCredentials(&$form, FormStateInterface $form_state) {
     if (empty($form_state->getValue('dam_username'))) {
-      return $form_state->setErrorByName('dam_username', $this->t('Dam Username field cannot be null!'));
+      $form_state->setErrorByName('dam_username', $this->t('Dam Username field cannot be null!'));
     }
 
     if (empty($form_state->getValue('dam_password'))) {
-      return $form_state->setErrorByName('dam_password', $this->t('Dam Password field cannot be null!'));
+      $form_state->setErrorByName('dam_password', $this->t('Dam Password field cannot be null!'));
     }
   }
 
@@ -856,7 +859,6 @@ class Gredidam extends WidgetBase {
         '#value' => '<<',
         '#name' => 'gredidam_pager',
         '#page_type' => $page_type,
-        '#current_category' => $category,
         '#gredidam_page' => 0,
         '#attributes' => [
           'class' => ['page-button', 'page-first'],
@@ -870,7 +872,6 @@ class Gredidam extends WidgetBase {
         '#name' => 'gredidam_pager',
         '#page_type' => $page_type,
         '#gredidam_page' => $page - 1,
-        '#current_category' => $category,
         '#attributes' => [
           'class' => ['page-button', 'page-previous'],
           'gredi_folder_id' => $category->id,
@@ -894,7 +895,6 @@ class Gredidam extends WidgetBase {
         '#name' => 'gredidam_pager',
         '#page_type' => $page_type,
         '#gredidam_page' => $i,
-        '#current_category' => $category,
         '#attributes' => [
           'class' => [($i == $page ? 'page-current' : ''), 'page-button'],
           'gredi_folder_id' => $category->id,
@@ -908,7 +908,6 @@ class Gredidam extends WidgetBase {
         '#type' => 'button',
         '#value' => '>',
         '#name' => 'gredidam_pager',
-        '#current_category' => $category,
         '#page_type' => $page_type,
         '#gredidam_page' => $page + 1,
         '#attributes' => [
@@ -921,7 +920,6 @@ class Gredidam extends WidgetBase {
         '#type' => 'button',
         '#value' => '>>',
         '#name' => 'gredidam_pager',
-        '#current_category' => $category,
         '#gredidam_page' => $lastPage,
         '#page_type' => $page_type,
         '#attributes' => [
@@ -959,11 +957,8 @@ class Gredidam extends WidgetBase {
           '#tag' => 'p',
           '#value' => $category->name,
         ],
-
       ];
     }
-
-    return $form;
   }
 
   /**
@@ -976,7 +971,7 @@ class Gredidam extends WidgetBase {
    */
   private function layoutMediaEntity(Asset $gredidamAsset, $key) {
     $assetName = $gredidamAsset->name;
-    $thumbnail = ($thumbUrl = $gredidamAsset->previewLink) ?
+    $thumbnail = ($thumbUrl = $gredidamAsset->apiPreviewLink) ?
       '<div class="gredidam-asset-thumb"><img src="' . $thumbUrl . '" width="100px" height="100px" /></div>' :
       '<span class="gredidam-browser-empty">No preview available.</span>';
     $element = '<div class="js-form-item form-item

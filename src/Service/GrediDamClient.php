@@ -15,7 +15,6 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use function PHPUnit\Framework\isEmpty;
 
 /**
  * Class ClientFactory.
@@ -118,7 +117,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     $this->config = $config;
     $this->grediDamAuthService = $grediDamAuthService;
     $this->loggerChannel = $loggerChannelFactory->get('media_gredidam');
-    $this->baseUrl = $this->grediDamAuthService->getConfig()->get('domain');
+    $this->baseUrl = trim($this->grediDamAuthService->getConfig()->get('domain'), '/');
   }
 
   /**
@@ -134,70 +133,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   }
 
   /**
-   * Setter method for upload folder id.
-   *
-   * @param $uploadFolderId
-   *   Upload folder id.
-   */
-  public function setUploadFolderId($uploadFolderId) {
-    $this->uploadFolderId = $uploadFolderId;
-  }
-
-  /**
-   * Getter method for upload folder id.
-   *
-   * @return string
-   *   Return $uploadFolderId
-   */
-  public function getUploadFolderId() {
-    return $this->uploadFolderId;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function getCustomerContent(array $params = []): array {
-    $parameters = '';
-    if (isset($params)) {
-      foreach ($params as $key => $param) {
-        $parameters .= '&' . $key . '=' . $param;
-      }
-    }
-    try {
-      $customerId = $this->grediDamAuthService->getCustomerId();
-    }
-    catch (\Exception $e) {
-      throw $e;
-    }
-    $url = sprintf("%s/customers/%d/contents?include=attachments%s", $this->baseUrl, $customerId, $parameters);
-    $userContent = $this->guzzleClient->request('GET', $url, [
-      'headers' => [
-        'Content-Type' => 'application/json',
-      ],
-      'cookies' => $this->grediDamAuthService->getCookieJar(),
-    ]);
-    $posts = $userContent->getBody()->getContents();
-    $content = [
-      'folders' => [],
-      'assets' => [],
-    ];
-    foreach (Json::decode($posts) as $post) {
-      if ($post['fileType'] == 'file' && $post['mimeGroup'] = 'picture') {
-        $expands = ['meta', 'attachments'];
-        $content['assets'][] = $this->getAsset($post['id'], $expands, $post['parentId']);
-      }
-      elseif ($post['fileType'] == 'folder') {
-        $content['folders'][] = Category::fromJson($post);
-      }
-    }
-
-    return [
-      'content' => $content,
-      'total' => count($content),
-    ];
-  }
-
-  /**
    * {@inheritDoc}
    */
   public function getCategoryTree(): array {
@@ -205,12 +140,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       return $this->categoryTree;
     }
 
-    try {
-      $customerId = $this->grediDamAuthService->getCustomerId();
-    }
-    catch (\Exception $e) {
-      throw $e;
-    }
+    $customerId = $this->grediDamAuthService->getCustomerId();
     $url = sprintf("%s/customers/%d/contents?materialType=folder", $this->baseUrl, $customerId);
     $userContent = $this->guzzleClient->request('GET', $url, [
       'headers' => [
@@ -221,10 +151,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     $posts = $userContent->getBody()->getContents();
     $this->categoryTree = [];
     foreach (Json::decode($posts) as $post) {
-
       // Set upload folder id.
       if ($post['name'] == 'UPLOAD' && $post['parentId'] == $this->getRootFolderId()) {
-        $this->setUploadFolderId($post['id']);
+        $this->uploadFolderId = $post['id'];
       }
 
       $category = Category::fromJson($post);
@@ -312,13 +241,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       }
     }
 
-    // Assign upload folder id if exists.
-//    foreach ($content['folders'] as $folder) {
-//      if ($folder->name == 'UPLOAD') {
-//        $this->setUploadFolderId($folder->id);
-//      }
-//    }
-
     return [
       'content' => $content,
       'total' => count($posts),
@@ -402,18 +324,20 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * @param \Drupal\helfi_gredi_image\Entity\Asset $asset
    *   The asset to fetch data for.
    * @param string $filename
-   *   The filename as a reference so it can be overridden.
+   *   The filename as a reference, so it can be overridden.
+   * @param bool $original
+   *   If true download the original data else the preview.
    *
    * @return false|string[]
    *   The remote asset contents or FALSE on failure.
    */
-  public function fetchRemoteAssetData(Asset $asset, &$filename) {
+  public function fetchRemoteAssetData(Asset $asset, &$filename, $original = TRUE) {
     // If the module was configured to enforce an image size limit then we
     // need to grab the nearest matching pre-created size.
-    $remote_base_url = Asset::getAssetRemoteBaseUrl();
-    $download_url = $remote_base_url . $asset->apiContentLink;
+    $remoteBaseUrl = Asset::getAssetRemoteBaseUrl();
+    $downloadUrl = $remoteBaseUrl . ($original ? $asset->apiContentLink : $asset->apiPreviewLink);
 
-    if (empty($download_url)) {
+    if (empty($downloadUrl)) {
       $this->loggerChannel->warning(
         'Unable to save file for asset ID @asset_id.
          Thumbnail has not been found.', [
@@ -426,7 +350,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     try {
       $response = $this->guzzleClient->request(
         "GET",
-        $download_url,
+        $downloadUrl,
         [
           'allow_redirects' => [
             'track_redirects' => TRUE,
@@ -442,7 +366,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         Received zero-byte response for download URL @url',
           [
             '@asset_id' => $asset->external_id,
-            '@url' => $download_url,
+            '@url' => $downloadUrl,
           ]);
         return FALSE;
       }
@@ -462,7 +386,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $context = [
         '@asset_id' => $asset->external_id,
         '%message' => $exception->getMessage(),
-        '@url' => $download_url,
+        '@url' => $downloadUrl,
         '@history' => '[empty request, cannot determine redirects]',
       ];
       $response = $exception->getResponse();
@@ -479,7 +403,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * {@inheritDoc}
    */
-  public function searchAssets(array $params): array {
+  public function searchAssets(array $params, $limit, $offset): array {
     $parameters = '';
 
     foreach ($params as $key => $param) {
@@ -489,12 +413,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $parameters .= '&' . $key . '=' . $param;
     }
 
-    try {
-      $customerId = $this->grediDamAuthService->getCustomerId();
-    }
-    catch (\Exception $e) {
-      throw $e;
-    }
+    $customerId = $this->grediDamAuthService->getCustomerId();
     $url = sprintf("%s/customers/%d/contents?include=object%s", $this->baseUrl, $customerId, $parameters);
     $response = $this->guzzleClient->request('GET', $url, [
       'headers' => [
@@ -513,37 +432,31 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         $content['assets'][] = Asset::fromJson($post);
       }
     }
+    $totalAssets = count($content['assets']);
+    $content['assets'] = array_slice($content['assets'], $offset, $limit);
     return [
       'content' => $content,
-      'total' => count($content['assets']),
+      'total' => $totalAssets,
     ];
   }
 
   /**
-   * Create POST request to upload file.
-   *
-   * @param \Drupal\file\Entity\File $image
-   *   Image file entity.
-   *
-   * @return string
-   *   Return the id of the created file.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
+   * {@inheritDoc}
    */
-  public function uploadImage(File $image) : string {
+  public function uploadImage(File $image): ?string {
 
-    // Call the list with all elements to find if upload folder exists.
+    // Call to check if UPLOAD folder exists.
     $this->getCategoryTree();
 
-    // If getCategoryTree found that UPLOAD folder exists it will assign the folder id to uploadFolderId.
-    if ($this->getUploadFolderId()) {
-      $urlUpload = sprintf("%sfolders/%d/files/", $this->baseUrl, $this->getUploadFolderId());
-    }
-    else {
-      // If upload folder doesn't exist, it will be created and the folder id will be assigned to uploadFolderId.
+    if (!$this->uploadFolderId) {
+      // If upload folder doesn't exist,
+      // it will be created and the folder id
+      // will be assigned to uploadFolderId.
       $this->createFolder('UPLOAD', 'Upload folder');
-      $urlUpload = sprintf("%sfolders/%d/files/", $this->baseUrl, $this->getUploadFolderId());
+      dd($this->uploadFolderId);
     }
+    // Assign the folder id to uploadFolderId.
+    $urlUpload = sprintf("%s/folders/%d/files/", $this->baseUrl, $this->uploadFolderId);
 
     $apiResponse = $this->guzzleClient->request('GET', $urlUpload, [
       'headers' => [
@@ -588,29 +501,29 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
           ],
           'body' => $requestBody,
         ])->getBody()->getContents();
+
+        // Return file ID from API as string.
+        return json_decode($response, TRUE)['id'];
       }
       catch (\Exception $e) {
         \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
       }
     }
-    // Return file ID from API as string.
-    return json_decode($response, TRUE)['id'];
+    return NULL;
   }
 
   /**
    * Function that creates a folder in the API root.
    *
-   * @param $folderName
+   * @param string $folderName
    *   Folder name.
-   *
-   * @param $folderDescription
+   * @param string $folderDescription
    *   Folder description.
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function createFolder($folderName, $folderDescription) {
-
-    $url = sprintf("%sfolders/%d/files", $this->baseUrl, $this->getRootFolderId());
+    $url = sprintf("%s/folders/%d/files", $this->baseUrl, $this->getRootFolderId());
 
     $fieldData = [
       "name" => $folderName,
@@ -631,19 +544,27 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         'body' => $fieldString,
       ])->getBody()->getContents();
 
-      $this->setUploadFolderId(Json::decode($response)['id']);
+      $this->uploadFolderId = Json::decode($response)['id'];
     }
     catch (\Exception $e) {
       \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
     }
   }
 
+  /**
+   * Get metafields.
+   *
+   * @return array
+   *   Return metafields array.
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
   public function getMetaFields() {
     if ($this->metafields) {
       return $this->metafields;
     }
     $customerId = $this->grediDamAuthService->getCustomerId();
-    $url = sprintf("%scustomers/%d/meta", $this->baseUrl, $customerId);
+    $url = sprintf("%s/customers/%d/meta", $this->baseUrl, $customerId);
     $response = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',

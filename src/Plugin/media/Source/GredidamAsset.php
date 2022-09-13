@@ -12,7 +12,6 @@ use Drupal\media\MediaSourceBase;
 use Drupal\helfi_gredi_image\Service\AssetImageHelper;
 use Drupal\helfi_gredi_image\Service\AssetMediaFactory;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
-use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -201,13 +200,8 @@ class GredidamAsset extends MediaSourceBase {
     }
 
     if ($this->currentAsset === NULL) {
-      try {
-        $asset = $this->assetMediaFactory->get($media)->getAsset();
-        $this->currentAsset = $asset;
-      }
-      catch (GuzzleException $exception) {
-        // Do nothing.
-      }
+      $asset = $this->assetMediaFactory->get($media)->getAsset();
+      $this->currentAsset = $asset;
     }
 
     // If we don't have the asset, we can't return additional metadata.

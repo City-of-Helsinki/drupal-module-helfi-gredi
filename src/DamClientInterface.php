@@ -11,17 +11,6 @@ use Drupal\helfi_gredi_image\Entity\Asset;
 interface DamClientInterface {
 
   /**
-   * Get folders and assets from Customer ID.
-   *
-   * @param array $params
-   *   Parameters.
-   *
-   * @return array
-   *   Customer content.
-   */
-  public function getCustomerContent(array $params = []): array;
-
-  /**
    * Get folders and assets from Customer's root.
    *
    * @param int $limit
@@ -101,14 +90,38 @@ interface DamClientInterface {
    *
    * @param array $params
    *   Params var.
+   * @param int $limit
+   *   Limit.
+   * @param int $offset
+   *   Offset.
    *
    * @return array
    *   A list of assets.
    */
-  public function searchAssets(array $params): array;
+  public function searchAssets(array $params, $limit, $offset): array;
 
-  public function uploadImage(File $image) : string;
+  /**
+   * Upload image to DAM.
+   *
+   * @param \Drupal\file\Entity\File $image
+   *   Image to upload.
+   *
+   * @return string|null
+   *   ID of the newly created DAM asset.
+   */
+  public function uploadImage(File $image): ?string;
 
+  /**
+   * Create folder.
+   *
+   * @param string $folderName
+   *   Image to upload.
+   * @param string $folderDescription
+   *   Image to upload.
+   *
+   * @return string|null
+   *   ID of the newly created DAM asset.
+   */
   public function createFolder($folderName, $folderDescription);
 
 }

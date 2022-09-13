@@ -10,8 +10,6 @@ use Drupal\user\Entity\User;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
-use Symfony\Component\HttpFoundation\Cookie;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Gredi DAM authentication service.
@@ -54,34 +52,26 @@ class GrediDamAuthService implements DamAuthServiceInterface {
   protected $user;
 
   /**
-   * Current request.
-   *
-   * @var \Symfony\Component\HttpFoundation\Request|null
-   */
-  protected $request;
-
-  /**
    * Class constructor.
    *
    * @param \GuzzleHttp\ClientInterface $guzzleClient
    *   HTTP client.
    * @param \Drupal\Core\Session\AccountInterface $account
    *   User account.
-   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
-   *   Request stack service.
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function __construct(ClientInterface $guzzleClient, AccountInterface $account, RequestStack $request_stack) {
+  public function __construct(ClientInterface $guzzleClient, AccountInterface $account) {
     $this->guzzleClient = $guzzleClient;
     $this->user = User::load($account->id());
-    $this->request = $request_stack->getCurrentRequest();
+    $config = $this->getConfig();
+    $this->baseUrl = trim($config->get('domain'), "/");
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function getConfig(): ImmutableConfig {
+  public function getConfig(): ImmutableConfig {
     return \Drupal::config('helfi_gredi_image.settings');
   }
 
@@ -102,8 +92,6 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getCustomerId() {
-    $config = self::getConfig();
-    $this->baseUrl = $config->get('domain');
     try {
       $url = sprintf("%s/customerIds/%s", $this->baseUrl, self::CUSTOMER);
       $apiCall = $this->guzzleClient->request('GET', $url, [
@@ -126,8 +114,6 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    *   The Gredi DAM client.
    */
   public function loginWithCredentials() {
-    $config = self::getConfig();
-    $this->baseUrl = $config->get('domain');
     $cookieDomain = parse_url($this->baseUrl);
     $username = $this->getUsername();
     $password = $this->getPassword();
@@ -158,7 +144,6 @@ class GrediDamAuthService implements DamAuthServiceInterface {
             'JSESSIONID' => $result,
           ], $cookieDomain['host']);
 
-          $this->request->headers->set('cookie', new Cookie('JSESSIONID', $result, time() + 3600, "/", $cookieDomain['host']));
           return $this->cookieJar;
         }
       }
