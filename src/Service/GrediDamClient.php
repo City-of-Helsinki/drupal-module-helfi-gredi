@@ -93,6 +93,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    */
   protected $uploadFolderId;
 
+  private $metafields;
+
   /**
    * ClientFactory constructor.
    *
@@ -217,7 +219,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       return NULL;
     }
 
-    $url = sprintf("%s/folders/%d/files/?include=attachments", $this->baseUrl, $folder_id);
+    $url = sprintf("%s/folders/%d/files/?include=attachments,meta", $this->baseUrl, $folder_id);
     $userContent = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
@@ -295,10 +297,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         'label' => 'External ID',
         'type' => 'string',
       ],
-      'name' => [
-        'label' => 'Filename',
-        'type' => 'string',
-      ],
       'keywords' => [
         'label' => 'Keywords',
         'type' => 'text_long',
@@ -307,8 +305,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         'label' => 'Alt text',
         'type' => 'string',
       ],
-      'size' => [
-        'label' => 'Filesize (kb)',
+      'created' => [
+        'label' => 'Created',
         'type' => 'string',
       ],
     ];
@@ -446,11 +444,16 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * {@inheritDoc}
    */
   public function uploadImage(File $image): ?string {
+
+    // Call to check if UPLOAD folder exists.
+    $this->getCategoryTree();
+
     if (!$this->uploadFolderId) {
       // If upload folder doesn't exist,
       // it will be created and the folder id
       // will be assigned to uploadFolderId.
       $this->createFolder('UPLOAD', 'Upload folder');
+      dd($this->uploadFolderId);
     }
     // Assign the folder id to uploadFolderId.
     $urlUpload = sprintf("%s/folders/%d/files/", $this->baseUrl, $this->uploadFolderId);
@@ -546,6 +549,30 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     catch (\Exception $e) {
       \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
     }
+  }
+
+  /**
+   * Get metafields.
+   *
+   * @return array
+   *   Return metafields array.
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
+   */
+  public function getMetaFields() {
+    if ($this->metafields) {
+      return $this->metafields;
+    }
+    $customerId = $this->grediDamAuthService->getCustomerId();
+    $url = sprintf("%s/customers/%d/meta", $this->baseUrl, $customerId);
+    $response = $this->guzzleClient->request('GET', $url, [
+      'headers' => [
+        'Content-Type' => 'application/json',
+      ],
+      'cookies' => $this->grediDamAuthService->getCookieJar(),
+    ])->getBody()->getContents();
+    $this->metafields = Json::decode($response);
+    return $this->metafields;
   }
 
 }

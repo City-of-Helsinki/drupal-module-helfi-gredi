@@ -5,12 +5,11 @@
  * Integrates Drupal with Gredi DAM.
  */
 
-use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use Drupal\file\Entity\File;
-use Drupal\Component\Serialization\Json;
 use \Drupal\media\Entity\Media;
+use \Drupal\Core\Entity\EntityInterface;
 
 /**
  * Implements hook_theme().
@@ -106,5 +105,15 @@ function gredi_image_upload_submit(&$form, FormStateInterface $form_state) {
     }
 
   }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete().
+ */
+function helfi_gredi_image_media_delete(EntityInterface $entity) {
+  // Delete media from public folder when a media is deleted from interface.
+  $target_id = $entity->field_media_image->target_id;
+  $file = File::load($target_id);
+  $file->delete();
 }
 

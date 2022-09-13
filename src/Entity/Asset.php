@@ -115,6 +115,13 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $apiPreviewLink;
 
   /**
+   * Upload date.
+   *
+   * @var string
+   */
+  public $file_upload_date;
+
+  /**
    * A list of allowed values for the "expand" query attribute.
    *
    * @return string[]
@@ -182,19 +189,52 @@ class Asset implements EntityInterface, \JsonSerializable {
     ];
     // Copy all the simple properties.
     $asset = new self();
+
+    // Get metafields.
+    $metaProperties = [];
+    $metafields = \Drupal::service('helfi_gredi_image.dam_client')->getMetaFields();
+    // Assign the id for each metafield.
+    foreach ($metafields as $fields) {
+      $metaProperties[$fields['namesByLang']['en']] = [
+        'id' => $fields['id'],
+        'lang' => array_keys($fields['namesByLang']),
+      ];
+    }
+
+    // Check all the translations from the API.
+    if (isset($json['metaById'])) {
+      // Keywords field.
+      foreach ($metaProperties['Keywords']['lang'] as $language) {
+        $buildMetaField = 'custom:meta-field-' . $metaProperties['Keywords']['id'] . '_' . $language;
+        if (isset($json['metaById'][$buildMetaField])) {
+          $asset->keywords[$language] = $json['metaById'][$buildMetaField];
+        }
+      }
+      // Alt text field.
+      foreach ($metaProperties['Alt text']['lang'] as $language) {
+        $buildMetaField = 'custom:meta-field-' . $metaProperties['Alt text']['id'] . '_' . $language;
+        if (isset($json['metaById'][$buildMetaField])) {
+          $asset->alt_text[$language] = $json['metaById'][$buildMetaField];
+        }
+      }
+    }
+
     foreach ($properties as $property) {
       if (isset($json[$property])) {
         if (isset($json['attachments']) && $property === 'attachments') {
           foreach ($json['attachments'] as $attachment) {
             if ($attachment['type'] === self::ATTACHMENT_TYPE_ORIGINAL) {
-              $asset->size = $attachment['propertiesById']['nibo:file-size'];
+              $asset->created = \DateTime::createFromFormat('Y-m-d\TH:i:s.u+', $json['created'])->format('Y-m-d H:i:s');
               $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
             }
           }
         }
+
         elseif (isset($json['object']) && $property === 'object') {
           $attachment = $json['object'];
-          $asset->size = $attachment['propertiesById']['nibo:file-size'];
+          $asset->keywords = NULL;
+          $asset->created = \DateTime::createFromFormat('Y-m-d\TH:i:s.u+', $json['created']);
+          $asset->alt_text = NULL;
           $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
           $asset->apiContentLink = $attachment['apiContentLink'];
           $asset->apiPreviewLink = $attachment['apiPreviewLink'];
@@ -208,6 +248,7 @@ class Asset implements EntityInterface, \JsonSerializable {
         }
       }
     }
+
     $location = 'public://gredidam/thumbs/' . $asset->name;
     $fileContent = \Drupal::service('helfi_gredi_image.dam_client')->fetchRemoteAssetData($asset, $asset->name, FALSE);
     $asset->apiPreviewLink = \Drupal::service('helfi_gredi_image.asset_file.helper')->drupalFileSaveData($fileContent, $location)->createFileUrl();

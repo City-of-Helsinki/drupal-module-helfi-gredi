@@ -1,5 +1,8 @@
 <?php
 
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+
 /**
  * @file
  * Installation related hooks and functions.
@@ -20,6 +23,58 @@ function helfi_gredi_image_install() {
     'weight' => -19,
     ]);
   $form_display->save();
+
+  // Creating fields for meta.
+
+  FieldStorageConfig::create([
+    'field_name' => 'field_external_id',
+    'entity_type' => 'media',
+    'type' => 'text',
+  ])->save();
+  FieldConfig::create([
+    'field_name' => 'field_external_id',
+    'entity_type' => 'media',
+    'bundle' => 'image',
+    'label' => 'External Id',
+  ])->save();
+
+  FieldStorageConfig::create([
+    'field_name' => 'field_keywords',
+    'entity_type' => 'media',
+    'type' => 'text',
+  ])->save();
+  FieldConfig::create([
+    'field_name' => 'field_keywords',
+    'entity_type' => 'media',
+    'bundle' => 'gredi_dam_assets',
+    'label' => 'Keywords',
+  ])->save();
+
+  FieldStorageConfig::create([
+    'field_name' => 'field_created',
+    'entity_type' => 'media',
+    'type' => 'text',
+  ])->save();
+  FieldConfig::create([
+    'field_name' => 'field_created',
+    'entity_type' => 'media',
+    'bundle' => 'gredi_dam_assets',
+    'label' => 'Created',
+  ])->save();
+
+  FieldStorageConfig::create([
+    'field_name' => 'field_alt_text',
+    'entity_type' => 'media',
+    'type' => 'text',
+  ])->save();
+  FieldConfig::create([
+    'field_name' => 'field_alt_text',
+    'entity_type' => 'media',
+    'bundle' => 'gredi_dam_assets',
+    'label' => 'Alt text',
+  ])->save();
+
+
 }
 /**
  * Implements hook_schema().
