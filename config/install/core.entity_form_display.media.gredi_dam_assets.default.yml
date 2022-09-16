@@ -3,14 +3,15 @@ langcode: en
 status: true
 dependencies:
   config:
-    - field.field.media.gredi_dam_assets.field_alt_text
-    - field.field.media.gredi_dam_assets.field_keywords
     - field.field.media.gredi_dam_assets.field_media_image
     - image.style.thumbnail
     - media.type.gredi_dam_assets
   module:
     - image
     - path
+  enforced:
+    module:
+      - helfi_gredi_image
 id: media.gredi_dam_assets.default
 targetEntityType: media
 bundle: gredi_dam_assets
@@ -57,14 +58,6 @@ content:
   field_name:
     type: string_textfield
     weight: 106
-    region: content
-    settings:
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-  field_size:
-    type: string_textfield
-    weight: 108
     region: content
     settings:
       size: 60

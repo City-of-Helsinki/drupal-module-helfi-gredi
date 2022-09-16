@@ -2,10 +2,10 @@ uuid: 7d8a8df3-9033-439d-bfa1-70da66b03e7a
 langcode: en
 status: true
 dependencies:
+  enforced:
+    module:
+      - helfi_gredi_image
   config:
-    - core.entity_form_mode.media.media_library
-    - field.field.media.gredi_dam_assets.field_alt_text
-    - field.field.media.gredi_dam_assets.field_keywords
     - field.field.media.gredi_dam_assets.field_media_image
     - media.type.gredi_dam_assets
 id: media.gredi_dam_assets.media_library
@@ -27,7 +27,6 @@ hidden:
   field_external_id: true
   field_keywords: true
   field_media_image: true
-  field_size: true
   path: true
   status: true
   uid: true

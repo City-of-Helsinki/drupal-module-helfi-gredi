@@ -2,6 +2,9 @@ uuid: c5d2a600-0fae-4453-8a75-7a3618ee8827
 langcode: en
 status: true
 dependencies:
+  enforced:
+    module:
+      - helfi_gredi_image
   config:
     - field.storage.media.field_media_image
     - media.type.gredi_dam_assets

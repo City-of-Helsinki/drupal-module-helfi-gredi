@@ -2,6 +2,9 @@ uuid: f5fb22e0-fffe-463d-9b66-f182f0be6f06
 langcode: en
 status: true
 dependencies:
+  enforced:
+    module:
+      - helfi_gredi_image
   config:
     - field.storage.user.field_gredi_dam_username
   module:

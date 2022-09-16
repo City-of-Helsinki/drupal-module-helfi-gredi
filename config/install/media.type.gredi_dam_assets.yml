@@ -2,8 +2,9 @@ uuid: a4956838-45ee-4537-8b84-3e7cbabb99d9
 langcode: en
 status: true
 dependencies:
-  module:
-    - helfi_gredi_image
+  enforced:
+    module:
+      - helfi_gredi_image
 _core:
   default_config_hash: TjxgQbAO1LM_pdThkq8tI7SEqclzQzGg783ePS8xylI
 id: gredi_dam_assets
