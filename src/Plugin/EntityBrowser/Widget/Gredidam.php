@@ -25,6 +25,7 @@ use Drupal\media\Entity\Media;
 use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Drupal\Core\Extension\ModuleInstallerInterface;
 
 /**
  * Uses a view to provide entity listing in a browser's widget.
@@ -123,6 +124,13 @@ class Gredidam extends WidgetBase {
   protected $breadcrumb;
 
   /**
+   * Module installer service.
+   *
+   * @var \Drupal\Core\Extension\ModuleInstallerInterface.
+   */
+  protected $moduleInstaller;
+
+  /**
    * Gredidam constructor.
    *
    * {@inheritdoc}
@@ -142,7 +150,8 @@ class Gredidam extends WidgetBase {
     ConfigFactoryInterface $config,
     PagerManagerInterface $pagerManager,
     AssetFileEntityHelper $assetFileEntityHelper,
-    GrediDamAuthService $grediDamAuthService
+    GrediDamAuthService $grediDamAuthService,
+    ModuleInstallerInterface $moduleInstaller,
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $event_dispatcher, $entity_type_manager, $validation_manager);
     $this->damClient = $damClient;
@@ -154,6 +163,7 @@ class Gredidam extends WidgetBase {
     $this->pagerManager = $pagerManager;
     $this->fileHelper = $assetFileEntityHelper;
     $this->authService = $grediDamAuthService;
+    $this->moduleInstaller = $moduleInstaller;
   }
 
   /**
@@ -175,7 +185,8 @@ class Gredidam extends WidgetBase {
       $container->get('config.factory'),
       $container->get('pager.manager'),
       $container->get('helfi_gredi_image.asset_file.helper'),
-      $container->get('helfi_gredi_image.auth_service')
+      $container->get('helfi_gredi_image.auth_service'),
+      $container->get('module_installer'),
     );
   }
 
@@ -666,6 +677,9 @@ class Gredidam extends WidgetBase {
 
       $currentLanguage = $this->languageManager->getCurrentLanguage()->getId();
       $siteLanguages = array_keys($this->languageManager->getLanguages());
+      if (!$this->moduleHandler->moduleExists('language')) {
+        $this->moduleInstaller->install(['language']);
+      }
       // Add language translations.
       foreach ($asset->keywords as $key => $lang) {
         if ($key == 'se') {
