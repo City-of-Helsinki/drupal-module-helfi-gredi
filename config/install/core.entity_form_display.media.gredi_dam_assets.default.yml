@@ -4,10 +4,8 @@ status: true
 dependencies:
   config:
     - field.field.media.gredi_dam_assets.field_alt_text
-    - field.field.media.gredi_dam_assets.field_external_id
     - field.field.media.gredi_dam_assets.field_keywords
     - field.field.media.gredi_dam_assets.field_media_image
-    - field.field.media.gredi_dam_assets.field_size
     - image.style.thumbnail
     - media.type.gredi_dam_assets
   module:
