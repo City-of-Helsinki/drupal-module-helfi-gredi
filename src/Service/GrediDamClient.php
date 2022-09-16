@@ -453,7 +453,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       // it will be created and the folder id
       // will be assigned to uploadFolderId.
       $this->createFolder('UPLOAD', 'Upload folder');
-      dd($this->uploadFolderId);
     }
     // Assign the folder id to uploadFolderId.
     $urlUpload = sprintf("%s/folders/%d/files/", $this->baseUrl, $this->uploadFolderId);
