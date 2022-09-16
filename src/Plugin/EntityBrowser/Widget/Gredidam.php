@@ -151,7 +151,7 @@ class Gredidam extends WidgetBase {
     PagerManagerInterface $pagerManager,
     AssetFileEntityHelper $assetFileEntityHelper,
     GrediDamAuthService $grediDamAuthService,
-    ModuleInstallerInterface $moduleInstaller,
+    ModuleInstallerInterface $moduleInstaller
   ) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $event_dispatcher, $entity_type_manager, $validation_manager);
     $this->damClient = $damClient;
@@ -628,7 +628,7 @@ class Gredidam extends WidgetBase {
     /** @var \Drupal\media\MediaTypeInterface $media_type */
     $media_type = $this->entityTypeManager->getStorage('media_type')
       ->load($this->configuration['media_type']);
-
+    
     // Get the source field for this type which stores the asset id.
     $source_field = $media_type->getSource()
       ->getSourceFieldDefinition($media_type)
