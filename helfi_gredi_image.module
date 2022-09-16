@@ -5,6 +5,7 @@
  * Integrates Drupal with Gredi DAM.
  */
 
+use Drupal\Core\Entity\Display\EntityFormDisplayInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use Drupal\file\Entity\File;
@@ -96,7 +97,7 @@ function gredi_image_upload_submit(&$form, FormStateInterface $form_state) {
     // If request response is OK then update external_field_id.
     if ($external_id) {
       $media_var = Media::load($media->id());
-      $media_var->field_external_id = $external_id;
+      $media_var->field_external_id_image = $external_id;
       $media_var->save();
     }
     // Else delete created media file.
@@ -116,4 +117,3 @@ function helfi_gredi_image_media_delete(EntityInterface $entity) {
   $file = File::load($target_id);
   $file->delete();
 }
-

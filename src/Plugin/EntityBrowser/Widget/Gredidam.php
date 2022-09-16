@@ -628,7 +628,7 @@ class Gredidam extends WidgetBase {
     /** @var \Drupal\media\MediaTypeInterface $media_type */
     $media_type = $this->entityTypeManager->getStorage('media_type')
       ->load($this->configuration['media_type']);
-    
+
     // Get the source field for this type which stores the asset id.
     $source_field = $media_type->getSource()
       ->getSourceFieldDefinition($media_type)
@@ -672,7 +672,7 @@ class Gredidam extends WidgetBase {
           'asset_id' => $asset->external_id,
         ],
         'created' => strtotime($asset->created),
-        'changed' => strtotime($asset->modified),
+        'changed' => strtotime($asset->created),
       ]);
 
       $currentLanguage = $this->languageManager->getCurrentLanguage()->getId();
@@ -696,6 +696,10 @@ class Gredidam extends WidgetBase {
           continue;
         }
         $entity->addTranslation($key, [
+          'name' => $asset->name,
+          'field_media_image' => [
+            'target_id' => $file->id(),
+          ],
           'field_keywords' => $asset->keywords[$key],
           'field_alt_text' => $asset->alt_text[$key],
         ]);

@@ -27,6 +27,18 @@ function helfi_gredi_image_install() {
   // Creating fields for meta.
 
   FieldStorageConfig::create([
+    'field_name' => 'field_external_id_image',
+    'entity_type' => 'media',
+    'type' => 'text',
+  ])->save();
+  FieldConfig::create([
+    'field_name' => 'field_external_id_image',
+    'entity_type' => 'media',
+    'bundle' => 'image',
+    'label' => 'External Id',
+  ])->save();
+
+  FieldStorageConfig::create([
     'field_name' => 'field_external_id',
     'entity_type' => 'media',
     'type' => 'text',
@@ -34,7 +46,7 @@ function helfi_gredi_image_install() {
   FieldConfig::create([
     'field_name' => 'field_external_id',
     'entity_type' => 'media',
-    'bundle' => 'image',
+    'bundle' => 'gredi_dam_assets',
     'label' => 'External Id',
   ])->save();
 
@@ -73,7 +85,6 @@ function helfi_gredi_image_install() {
     'bundle' => 'gredi_dam_assets',
     'label' => 'Alt text',
   ])->save();
-
 
 }
 /**
@@ -136,4 +147,16 @@ function helfi_gredi_image_update_8101(&$sandbox) {
 
   $new_schema = helfi_gredi_image_schema();
   $db_schema->createTable($table_name, $new_schema[$table_name]);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function helfi_gredi_image_uninstall($is_syncing) {
+  FieldStorageConfig::load('media.field_external_id')->delete();
+  FieldStorageConfig::load('media.field_alt_text')->delete();
+  FieldStorageConfig::load('media.field_keywords')->delete();
+  FieldStorageConfig::load('media.field_created')->delete();
+  FieldStorageConfig::load('media.field_external_id_image')->delete();
+
 }
