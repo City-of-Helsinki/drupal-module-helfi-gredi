@@ -3,15 +3,17 @@
  * Resize the asset browser frame.
  */
 
-(function ($, Drupal) {
+(function ($, Drupal, drupalSettings, once) {
 
   Drupal.behaviors.acquiadamAssetBrowser = {
-    attach: function () {
-      $(".acquiadam-asset-browser").height($(window).height() - $(".filter-sort-container").height());
-      $(window).on('resize', function () {
+    attach: function (context, settings) {
+      once('acquiadamAssetBrowser', 'html', context).forEach( function (element) {
         $(".acquiadam-asset-browser").height($(window).height() - $(".filter-sort-container").height());
+        $(window).on('resize', function () {
+          $(".acquiadam-asset-browser").height($(window).height() - $(".filter-sort-container").height());
+        });
       });
     }
   };
 
-})(jQuery, Drupal);
+} (jQuery, Drupal, drupalSettings, once));
