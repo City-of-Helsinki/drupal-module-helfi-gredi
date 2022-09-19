@@ -121,7 +121,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     $this->guzzleClient = $guzzleClient;
     $this->config = $config;
     $this->grediDamAuthService = $grediDamAuthService;
-    $this->loggerChannel = $loggerChannelFactory->get('media_gredidam');
+    $this->loggerChannel = $loggerChannelFactory->get('helfi_gredi_image');
     $this->baseUrl = trim($this->grediDamAuthService->getConfig()->get('domain'), '/');
   }
 
@@ -509,7 +509,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         return json_decode($response, TRUE)['id'];
       }
       catch (\Exception $e) {
-        \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
+        $this->loggerChannel->error($e->getMessage());
       }
     }
     return NULL;
@@ -550,7 +550,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $this->uploadFolderId = Json::decode($response)['id'];
     }
     catch (\Exception $e) {
-      \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
+      $this->loggerChannel->error($e->getMessage());
     }
   }
 

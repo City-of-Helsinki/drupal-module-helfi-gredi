@@ -5,6 +5,7 @@ namespace Drupal\helfi_gredi_image\Service;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ExtensionPathResolver;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\ProxyClass\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\Image\ImageFactory;
@@ -54,6 +55,12 @@ class AssetImageHelper implements ContainerInjectionInterface {
    */
   protected $entityTypeManager;
 
+  /** Extension path resolver.
+   *
+   * @var \Drupal\Core\Extension\ExtensionPathResolver $extensionPathResolver
+   */
+  protected $extensionPathResolver;
+
   /**
    * AssetImageHelper constructor.
    *
@@ -67,18 +74,22 @@ class AssetImageHelper implements ContainerInjectionInterface {
    *   Drupal ImageFactory service.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
+   * @param \Drupal\Core\Extension\ExtensionPathResolver $extensionPathResolver
+   *   The path resolver.
    */
   public function __construct(
     ConfigFactoryInterface $configFactory,
     FileSystemInterface $fileSystem,
     MimeTypeGuesser $mimeTypeGuesser,
     ImageFactory $imageFactory,
-    EntityTypeManagerInterface $entityTypeManager) {
+    EntityTypeManagerInterface $entityTypeManager,
+    ExtensionPathResolver $extensionPathResolver) {
     $this->configFactory = $configFactory;
     $this->fileSystem = $fileSystem;
     $this->mimeTypeGuesser = $mimeTypeGuesser;
     $this->imageFactory = $imageFactory;
     $this->entityTypeManager = $entityTypeManager;
+    $this->extensionPathResolver = $extensionPathResolver;
   }
 
   /**
@@ -90,7 +101,8 @@ class AssetImageHelper implements ContainerInjectionInterface {
       $container->get('file_system'),
       $container->get('file.mime_type.guesser'),
       $container->get('image.factory'),
-      $container->get('entity_type.manager')
+      $container->get('entity_type.manager'),
+      $container->get('extension.path.resolver')
     );
   }
 
@@ -156,7 +168,6 @@ class AssetImageHelper implements ContainerInjectionInterface {
    *   The Drupal image path to use.
    */
   public function getFallbackThumbnail() {
-
     // @BUG: Can default to any image named widen.png, not necessarily ours.
     $default_scheme = $this->configFactory->get('system.file')->get('default_scheme');
 
@@ -211,9 +222,7 @@ class AssetImageHelper implements ContainerInjectionInterface {
    *   The path to the Gredi DAM module.
    */
   protected function getGrediDamModulePath() {
-    /** @var \Drupal\Core\Extension\ExtensionPathResolver $path_resolver */
-    $path_resolver = \Drupal::service('extension.path.resolver');
-    return $path_resolver->getPath('module', 'helfi_gredi_image');
+    return $this->extensionPathResolver->getPath('module', 'helfi_gredi_image');
   }
 
   /**
