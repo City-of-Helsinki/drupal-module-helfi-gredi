@@ -12,6 +12,7 @@ use Drupal\entity_browser\WidgetValidationManager;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Extension\ModuleInstallerInterface;
 use Drupal\Core\Url;
 use Drupal\entity_browser\WidgetBase;
 use Drupal\helfi_gredi_image\DamClientInterface;
@@ -25,7 +26,6 @@ use Drupal\media\Entity\Media;
 use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Drupal\Core\Extension\ModuleInstallerInterface;
 
 /**
  * Uses a view to provide entity listing in a browser's widget.
@@ -126,7 +126,7 @@ class Gredidam extends WidgetBase {
   /**
    * Module installer service.
    *
-   * @var \Drupal\Core\Extension\ModuleInstallerInterface.
+   * @var \Drupal\Core\Extension\ModuleInstallerInterface
    */
   protected $moduleInstaller;
 
@@ -392,7 +392,7 @@ class Gredidam extends WidgetBase {
     }
     catch (\Exception $e) {
       if ($e->getMessage() == '401') {
-        $userProfileEditLink = Link::createFromRoute(t('user edit'),
+        $userProfileEditLink = Link::createFromRoute($this->t('user edit'),
           'entity.user.edit_form',
           [
             'user' => $this->user->id(),

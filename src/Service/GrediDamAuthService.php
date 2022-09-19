@@ -179,6 +179,10 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    * {@inheritDoc}
    */
   public function getUsername(): ?string {
+    if (PHP_SAPI === 'cli') {
+      $config = $this->getConfig();
+      return $config->get('user');
+    }
     $user_field = $this->user->field_gredi_dam_username;
     if ($user_field !== NULL) {
       return $user_field->getString() ?? NULL;
@@ -190,6 +194,10 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    * {@inheritDoc}
    */
   public function getPassword(): ?string {
+    if (PHP_SAPI === 'cli') {
+      $config = $this->getConfig();
+      return $config->get('pass');
+    }
     $pass_field = $this->user->field_gredi_dam_password;
     if ($pass_field !== NULL) {
       return $pass_field->getString() ?? NULL;
