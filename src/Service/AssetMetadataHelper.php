@@ -2,6 +2,7 @@
 
 namespace Drupal\helfi_gredi_image\Service;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -18,6 +19,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class AssetMetadataHelper implements ContainerInjectionInterface {
 
   use StringTranslationTrait;
+
+  /**
+   * Gredi DAM config.
+   *
+   * @var \Drupal\Core\Config\ImmutableConfig
+   */
+  protected $config;
 
   /**
    * Drupal date formatter service.
@@ -43,12 +51,19 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
   /**
    * AssetImageHelper constructor.
    *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   Drupal config factory.
    * @param \Drupal\Core\Datetime\DateFormatterInterface $dateFormatter
    *   A Drupal date formatter service.
    * @param \Drupal\helfi_gredi_image\DamClientInterface $damClient
    *   A configured API object.
    */
-  public function __construct(DateFormatterInterface $dateFormatter, DamClientInterface $damClient) {
+  public function __construct(
+    ConfigFactoryInterface $configFactory,
+    DateFormatterInterface $dateFormatter,
+    DamClientInterface $damClient) {
+    $this->configFactory = $configFactory;
+    $this->config = $configFactory->get('media_gredidam.settings');
     $this->dateFormatter = $dateFormatter;
     $this->damClient = $damClient;
   }
@@ -58,6 +73,7 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
    */
   public static function create(ContainerInterface $container) {
     return new static(
+      $container->get('config.factory'),
       $container->get('date.formatter'),
       $container->get('helfi_gredi_image.dam_client')
     );
@@ -223,7 +239,7 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
    */
   private function getMapping(): array {
     /** @var \Drupal\Core\Config\ImmutableConfig $config */
-    $config = \Drupal::config('media.type.gredi_dam_assets');
+    $config = $this->config('media.type.gredi_dam_assets');
     /** @var array $original_data */
     $original_data = $config->getOriginal();
 

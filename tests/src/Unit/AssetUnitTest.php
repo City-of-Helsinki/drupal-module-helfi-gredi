@@ -120,6 +120,7 @@ class AssetUnitTest extends UnitTestCase {
     $this->assertInstanceOf('\Drupal\helfi_gredi_image\Entity\Asset', $result, 'Object is of type Asset!');
 
     $metadataHelperService = new AssetMetadataHelper(
+      \Drupal::service('config.factory'),
       \Drupal::service('date.formatter'),
       \Drupal::service('helfi_gredi_image.dam_client')
     );
