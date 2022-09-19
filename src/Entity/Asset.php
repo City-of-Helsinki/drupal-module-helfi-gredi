@@ -192,29 +192,28 @@ class Asset implements EntityInterface, \JsonSerializable {
 
     // Get metafields.
     $metaProperties = [];
-    $metafields = \Drupal::service('helfi_gredi_image.dam_client')->getMetaFields();
-    // Assign the id for each metafield.
-    foreach ($metafields as $fields) {
-      $metaProperties[$fields['namesByLang']['en']] = [
-        'id' => $fields['id'],
-        'lang' => array_keys($fields['namesByLang']),
-      ];
-    }
+    $metaFields = \Drupal::service('helfi_gredi_image.dam_client')->getMetaFields();
+    $mappingFields = \Drupal::service('helfi_gredi_image.dam_client')->mapMetaData();
 
+    // Assign the id for each metafield.
+    foreach ($metaFields as $fields) {
+      $metaProperties[$fields['id']] = array_keys($fields['namesByLang']);
+    }
     // Check all the translations from the API.
     if (isset($json['metaById'])) {
-      // Keywords field.
-      foreach ($metaProperties['Keywords']['lang'] as $language) {
-        $buildMetaField = 'custom:meta-field-' . $metaProperties['Keywords']['id'] . '_' . $language;
-        if (isset($json['metaById'][$buildMetaField])) {
-          $asset->keywords[$language] = $json['metaById'][$buildMetaField];
-        }
-      }
-      // Alt text field.
-      foreach ($metaProperties['Alt text']['lang'] as $language) {
-        $buildMetaField = 'custom:meta-field-' . $metaProperties['Alt text']['id'] . '_' . $language;
-        if (isset($json['metaById'][$buildMetaField])) {
-          $asset->alt_text[$language] = $json['metaById'][$buildMetaField];
+
+      foreach ($metaProperties as $key => $languages) {
+        // Check if mapping is available for the field.
+        if (in_array($key, array_keys($mappingFields))) {
+          // Go through all field translations.
+          foreach ($languages as $language) {
+            // Build the format from the API field.
+            $buildMetaField = 'custom:meta-field-' . $key . '_' . $language;
+            if (isset($json['metaById'][$buildMetaField])) {
+              $field_name = $mappingFields[$key];
+              $asset->$field_name[$language] = $json['metaById'][$buildMetaField];
+            }
+          }
         }
       }
     }

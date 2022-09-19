@@ -578,4 +578,17 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     return $this->metafields;
   }
 
+  /**
+   * Mapping metadata fields.
+   *
+   * @return string[]
+   *   Return mapped fields by id.
+   */
+  public function mapMetaData() {
+    return [
+      '257' => 'keywords',
+      '1410' => 'alt_text',
+    ];
+  }
+
 }
