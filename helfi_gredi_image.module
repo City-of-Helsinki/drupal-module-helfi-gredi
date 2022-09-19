@@ -50,7 +50,9 @@ function helfi_gredi_image_cron()
  * Implements hook_form_id_alter().
  */
 function helfi_gredi_image_form_media_gredi_dam_assets_edit_form_alter(&$form, FormStateInterface $form_state) {
-  $form['field_external_id']['#access'] = FALSE;
+  $form['field_external_id']['widget'][0]['#attributes'] = [
+    'readonly' => 'readonly',
+  ];
 }
 
 /**
@@ -58,54 +60,6 @@ function helfi_gredi_image_form_media_gredi_dam_assets_edit_form_alter(&$form, F
  */
 function helfi_gredi_image_form_user_form_alter(&$form, FormStateInterface $form_state) {
   $form['field_gredi_dam_password']['widget'][0]['value']['#type'] = 'password';
-}
-
-/**
- * Edit specific entity browser form. Edit upload image form.
- *
- * Implements hook_form_FORM_ID_alter().
- */
-function helfi_gredi_image_form_entity_browser_gredi_dam_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-  if (isset($form['widget']['upload'])) {
-    if ($form_state->hasFileElement()) {
-      $form['#submit'][] = 'gredi_image_upload_submit';
-    }
-  }
-}
-
-/**
- * Upload file function.
- *
- * @param $form
- * @param \Drupal\Core\Form\FormStateInterface $form_state
- *
- * @return void
- */
-function gredi_image_upload_submit(&$form, FormStateInterface $form_state) {
-  $files = $form_state->getValue('upload');
-  if (!empty($files)) {
-    foreach ($files as $file) {
-      if (empty($file)) {
-        continue;
-      }
-      $file_entity = File::load($file);
-    }
-    $external_id = \Drupal::service('helfi_gredi_image.dam_client')->uploadImage($file_entity);
-
-    $media = $form_state->getStorage()['entity_browser']['selected_entities'][0];
-
-    // If request response is OK then update external_field_id.
-    if ($external_id) {
-      $media_var = Media::load($media->id());
-      $media_var->field_external_id_image = $external_id;
-      $media_var->save();
-    }
-    // Else delete created media file.
-    else {
-      $media_var = Media::load($media->id())->delete();
-    }
-
-  }
 }
 
 /**

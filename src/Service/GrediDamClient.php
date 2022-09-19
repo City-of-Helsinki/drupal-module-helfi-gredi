@@ -93,6 +93,11 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    */
   protected $uploadFolderId;
 
+  /**
+   * Metafields array.
+   *
+   * @var array.
+   */
   private $metafields;
 
   /**
