@@ -444,7 +444,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * {@inheritDoc}
    */
   public function uploadImage(File $image): ?string {
-
     // Call to check if UPLOAD folder exists.
     $this->getCategoryTree();
 
