@@ -96,7 +96,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * Metafields array.
    *
-   * @var array.
+   * @var array
    */
   private $metafields;
 

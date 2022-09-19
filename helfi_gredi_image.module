@@ -5,7 +5,6 @@
  * Integrates Drupal with Gredi DAM.
  */
 
-use Drupal\Core\Entity\Display\EntityFormDisplayInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use Drupal\file\Entity\File;
@@ -35,12 +34,14 @@ function helfi_gredi_image_cron()
   $request_time = \Drupal::time()->getRequestTime();
   // If 60 minutes passed since last time.
   if (($request_time - $last_run) > 60 * 60 * 24) {
+    /** @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
+    $config_factory = \Drupal::service('config.factory');
     /** @var \Drupal\Core\Datetime\DateFormatterInterface $date_formatter */
     $date_formatter = \Drupal::service('date.formatter');
     /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $gradi_dam_client */
     $gradi_dam_client = \Drupal::service('helfi_gredi_image.dam_client');
     /** @var \Drupal\helfi_gredi_image\Service\AssetMetadataHelper $metadata_helper */
-    $metadata_helper = new AssetMetadataHelper($date_formatter, $gradi_dam_client);
+    $metadata_helper = new AssetMetadataHelper($config_factory, $date_formatter, $gradi_dam_client);
     $metadata_helper->populateMetadataUpdateQueue();
     \Drupal::state()->set('helfi_gredi_image.last_run', $request_time);
   }
