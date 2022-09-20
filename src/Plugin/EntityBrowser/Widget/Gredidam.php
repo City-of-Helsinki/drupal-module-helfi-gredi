@@ -682,9 +682,6 @@ class Gredidam extends WidgetBase {
       }
       // Add language translations.
       foreach ($asset->keywords as $key => $lang) {
-        if ($key == 'se') {
-          $key = 'sv';
-        }
         if (!in_array($key, $siteLanguages)) {
           $language = ConfigurableLanguage::createFromLangcode($key);
           $language->save();
