@@ -6,6 +6,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Drupal\file\Entity\File;
 use Drupal\helfi_gredi_image\DamClientInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Drupal\media\Entity\Media;
@@ -63,7 +64,7 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
     DateFormatterInterface $dateFormatter,
     DamClientInterface $damClient) {
     $this->configFactory = $configFactory;
-    $this->config = $configFactory->get('media_gredidam.settings');
+    $this->config = $configFactory->get('media.type.gredi_dam_assets');
     $this->dateFormatter = $dateFormatter;
     $this->damClient = $damClient;
   }
@@ -189,10 +190,11 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
       $gredi_asset = Media::load($value);
       /** @var \stdClass $item */
       $item = new \stdClass();
-      $item->media_id = $value;
+      $item->media_id = $gredi_asset->id();
       $item->external_id = $gredi_asset->get('field_external_id')->getString();
       $queue->createItem($item);
     }
+
     echo count($results) . " assets added to the queue.";
   }
 
@@ -205,10 +207,22 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
    *   The Gredi DAM asset.
    */
   public function performMetadataUpdate(Media $media, Asset $gredi_asset): void {
+
     /** @var array $mapping */
     $mapping = $this->getMapping();
+
     foreach ($mapping as $gredi_field => $drupal_field) {
-      if ($gredi_asset->{$gredi_field} != $media->get($drupal_field)->getString()) {
+      if ($gredi_field == 'media_image') {
+        continue;
+      }
+      if (is_array($gredi_asset->{$gredi_field})) {
+        foreach ($gredi_asset->{$gredi_field} as $lang => $value) {
+          if ($media->getTranslation($lang)->get($drupal_field)->getString() != $value) {
+            $media->getTranslation($lang)->set($drupal_field, $value);
+          }
+        }
+      }
+      elseif ($gredi_asset->{$gredi_field} != $media->get($drupal_field)->getString()) {
         $media->set($drupal_field, $gredi_asset->{$gredi_field});
       }
     }
@@ -239,7 +253,7 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
    */
   private function getMapping(): array {
     /** @var \Drupal\Core\Config\ImmutableConfig $config */
-    $config = $this->config('media.type.gredi_dam_assets');
+    $config = $this->config;
     /** @var array $original_data */
     $original_data = $config->getOriginal();
 

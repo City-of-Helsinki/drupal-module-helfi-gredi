@@ -36,13 +36,6 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
   protected $configFactory;
 
   /**
-   * Gredi DAM config.
-   *
-   * @var \Drupal\Core\Config\ImmutableConfig
-   */
-  protected $config;
-
-  /**
    * Drupal filesystem service.
    *
    * @var \Drupal\Core\File\FileSystemInterface
@@ -105,7 +98,6 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
     LoggerChannelFactoryInterface $loggerChannelFactory) {
     $this->entityFieldManager = $entityFieldManager;
     $this->configFactory = $configFactory;
-    $this->config = $configFactory->get('media_gredidam.settings');
     $this->fileSystem = $fileSystem;
     $this->token = $token;
     $this->damClient = $damClient;
@@ -199,11 +191,7 @@ class AssetFileEntityHelper implements ContainerInjectionInterface {
 
     $destination_path = sprintf('%s/%s', $destination_folder, $filename);
 
-    $existing = $this->assetMediaFactory->getFileEntity($asset->external_id);
-
-    $file = $existing instanceof FileInterface ?
-      $this->replaceExistingFile($existing, $file_contents, $destination_path) :
-      $this->drupalFileSaveData($file_contents, $destination_path);
+    $file = $this->drupalFileSaveData($file_contents, $destination_path);
 
     if ($file instanceof FileInterface) {
       return $file;

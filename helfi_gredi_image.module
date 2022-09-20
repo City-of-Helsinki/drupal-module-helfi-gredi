@@ -53,6 +53,7 @@ function helfi_gredi_image_cron()
 function helfi_gredi_image_form_media_gredi_dam_assets_edit_form_alter(&$form, FormStateInterface $form_state) {
   $form['field_external_id']['widget'][0]['#attributes'] = [
     'readonly' => 'readonly',
+    'disabled' => 'disabled',
   ];
 }
 

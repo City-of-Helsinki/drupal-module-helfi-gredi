@@ -688,6 +688,7 @@ class Gredidam extends WidgetBase {
         }
         // For english case no translation will be added.
         if ($key == $currentLanguage) {
+          $entity->field_media_image = $file->id();
           $entity->field_keywords = $asset->keywords[$key];
           $entity->field_alt_text = $asset->alt_text[$key];
           continue;

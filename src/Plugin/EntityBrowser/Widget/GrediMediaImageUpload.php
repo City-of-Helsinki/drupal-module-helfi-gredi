@@ -123,10 +123,7 @@ class GrediMediaImageUpload extends MediaImageUpload {
     }
 
     $form = Upload::getForm($original_form, $form_state, $aditional_widget_parameters);
-    $form['action_upload'] = [
-      '#type' => 'hidden',
-      '#value' => TRUE,
-    ];
+
     if ($media_type->getSource()->getPluginId() != 'gredidam_asset') {
       return ['#markup' => $this->t('The configured media type is not using the gredidam plugin.')];
     }
