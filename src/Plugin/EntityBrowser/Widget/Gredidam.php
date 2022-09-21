@@ -680,12 +680,21 @@ class Gredidam extends WidgetBase {
       if (!$this->moduleHandler->moduleExists('language')) {
         $this->moduleInstaller->install(['language']);
       }
-      // Add language translations.
+      $languages = 0;
       foreach ($asset->keywords as $key => $lang) {
         if (!in_array($key, $siteLanguages)) {
           $language = ConfigurableLanguage::createFromLangcode($key);
+          $languages++;
           $language->save();
         }
+      }
+      if ($languages != 0) {
+        \Drupal::messenger()->addStatus('Translation languages are installed. Please select asset again.');
+        $form_state->setRebuild();
+        return [];
+      }
+      // Add language translations.
+      foreach ($asset->keywords as $key => $lang) {
         // For english case no translation will be added.
         if ($key == $currentLanguage) {
           $entity->field_media_image = $file->id();
