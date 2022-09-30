@@ -13,8 +13,6 @@ use Drupal\Core\File\FileSystemInterface;
 class Asset implements EntityInterface, \JsonSerializable {
 
   const ATTACHMENT_TYPE_ORIGINAL = 'original';
-  const ATTACHMENT_TYPE_PREVIEW = 'preview';
-  const ATTACHMENT_TYPE_THUMBNAIL = 'thumbnail';
 
   /**
    * The ID of the asset.
@@ -147,22 +145,6 @@ class Asset implements EntityInterface, \JsonSerializable {
   public static function getRequiredExpands(): array {
     return [
       'meta',
-    ];
-  }
-
-  /**
-   * Gredi DAM supported file formats.
-   *
-   * @todo Get these values from Config.
-   * @todo Check if the values should be translatable.
-   *
-   * @return string[]
-   *   An array of supported file formats.
-   */
-  public static function getFileFormats(): array {
-    return [
-      0 => 'All',
-      'IMAGE' => 'Image',
     ];
   }
 

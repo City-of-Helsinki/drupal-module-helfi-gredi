@@ -124,4 +124,20 @@ interface DamClientInterface {
    */
   public function createFolder($folderName, $folderDescription);
 
+  /**
+   * Retrieves metadata fields.
+   *
+   * @return array
+   *   Return array of fields.
+   */
+  public function getMetaFields(): array;
+
+  /**
+   * Mapping of metafields by API id's.
+   *
+   * @return array
+   *   Return array of mapped fields by id.
+   */
+  public function mapMetaData(): array;
+
 }

@@ -707,8 +707,8 @@ class Gredidam extends WidgetBase {
           'field_media_image' => [
             'target_id' => $file->id(),
           ],
-          'field_keywords' => $asset->keywords[$key],
-          'field_alt_text' => $asset->alt_text[$key],
+          'field_keywords' => (!empty($asset->keywords[$key]) ? $asset->keywords[$key] : ''),
+          'field_alt_text' => (!empty($asset->alt_text[$key]) ? $asset->alt_text[$key] : ''),
         ]);
       }
 
@@ -818,13 +818,6 @@ class Gredidam extends WidgetBase {
       ],
       '#default_value' => 'asc',
     ];
-    // Add dropdown for filtering on asset type.
-    // $form['filter-sort-container']['format_type'] = [
-    // '#type' => 'select',
-    // '#title' => 'File format',
-    // '#options' => Asset::getFileFormats(),
-    // '#default_value' => 0,
-    // ];
     // Add textfield for keyword search.
     $form['filter-sort-container']['query'] = [
       '#type' => 'textfield',

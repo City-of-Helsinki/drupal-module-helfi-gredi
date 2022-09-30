@@ -8,7 +8,6 @@
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use Drupal\file\Entity\File;
-use \Drupal\media\Entity\Media;
 use \Drupal\Core\Entity\EntityInterface;
 
 /**

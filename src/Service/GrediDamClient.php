@@ -562,7 +562,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function getMetaFields() {
+  public function getMetaFields(): array {
     if ($this->metafields) {
       return $this->metafields;
     }
@@ -584,7 +584,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * @return string[]
    *   Return mapped fields by id.
    */
-  public function mapMetaData() {
+  public function mapMetaData(): array {
     return [
       '257' => 'keywords',
       '1410' => 'alt_text',
