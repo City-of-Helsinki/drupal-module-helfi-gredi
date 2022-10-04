@@ -16,7 +16,7 @@ services:
     arguments: [ '@entity_field.manager', '@config.factory', '@file_system', '@token', '@helfi_gredi_image.dam_client', '@helfi_gredi_image.asset_media.factory', '@logger.factory' ]
   helfi_gredi_image.asset_data:
     class: Drupal\helfi_gredi_image\Service\AssetData
-    arguments: [ '@database' ]
+    arguments: [ '@database','@serialization.phpserialize' ]
     tags:
       - { name: backend_overridable }
   helfi_gredi_image.auth_service:
