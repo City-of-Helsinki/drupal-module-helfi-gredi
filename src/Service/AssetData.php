@@ -6,6 +6,7 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\helfi_gredi_image\Entity\Asset;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Component\Serialization\PhpSerialize;
 
 /**
  * Gredi DAM Asset Data service implementation.
@@ -20,20 +21,31 @@ class AssetData implements ContainerInjectionInterface {
   protected $connection;
 
   /**
+   * The serializer object.
+   *
+   * @var \Drupal\Component\Serialization\PhpSerialize
+   *   The serialization variable.
+   */
+  protected $serializer;
+
+  /**
    * Constructs a new asset data service.
    *
    * @param \Drupal\Core\Database\Connection $connection
    *   The database connection to use.
+   * @param \Drupal\Component\Serialization\PhpSerialize $serializer
+   *   The serialization parameter.
    */
-  public function __construct(Connection $connection) {
+  public function __construct(Connection $connection, PhpSerialize $serializer) {
     $this->connection = $connection;
+    $this->serializer = $serializer;
   }
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    return new static($container->get('database'));
+    return new static($container->get('database'), $container->get('serialization.phpserialize'));
   }
 
   /**
@@ -84,7 +96,7 @@ class AssetData implements ContainerInjectionInterface {
       $result = $result->fetchAllAssoc('asset_id');
       if (isset($result[$assetID])) {
         return $result[$assetID]->serialized ?
-          unserialize($result[$assetID]->value) : $result[$assetID]->value;
+          $this->serializer->decode($result[$assetID]->value) : $result[$assetID]->value;
       }
       return NULL;
     }
@@ -97,7 +109,7 @@ class AssetData implements ContainerInjectionInterface {
 
       foreach ($result as $record) {
         $return[$record->{$key}] = $record->serialized ?
-          unserialize($record->value) : $record->value;
+          $this->serializer->decode($record->value) : $record->value;
       }
       return $return;
     }
@@ -105,7 +117,7 @@ class AssetData implements ContainerInjectionInterface {
     // Everything was requested.
     foreach ($result as $record) {
       $return[$record->asset_id][$record->name] = $record->serialized ?
-        unserialize($record->value) : $record->value;
+        $this->serializer->decode($record->value) : $record->value;
     }
 
     return $return;
@@ -124,7 +136,7 @@ class AssetData implements ContainerInjectionInterface {
   public function set(int $assetID, string $name, $value) {
     $serialized = (int) !is_scalar($value);
     if ($serialized) {
-      $value = serialize($value);
+      $value = $this->serializer->encode($value);
     }
     $this->connection->merge('gredidam_assets_data')->keys(
       [
