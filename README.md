@@ -3,6 +3,8 @@ Drupal module for Gredi image service.
 
 Specification based on meeting with City of Helsinki 2022.06.21:
 
+IF YOU DONT HAVE FORM DISPLAY `user.user.default` YOU HAVE TO PUT `field_gredi_dam_username` and `field_gredi_dam_password` MANUALLY IN YOUR USER EDIT FORM DISPLAY.
+
 Target of the project
 ---------------------
 

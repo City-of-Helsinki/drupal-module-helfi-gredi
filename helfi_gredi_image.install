@@ -14,15 +14,18 @@ function helfi_gredi_image_install() {
   $form_display = \Drupal::entityTypeManager()
     ->getStorage('entity_form_display')
     ->load('user.user.default');
-  $form_display->setComponent('field_gredi_dam_username', [
-    'region' => 'content',
-    'weight' => -20,
-  ]);
-  $form_display->setComponent('field_gredi_dam_password', [
-    'region' => 'content',
-    'weight' => -19,
+  if ($form_display) {
+    $form_display->setComponent('field_gredi_dam_username', [
+      'region' => 'content',
+      'weight' => -20,
     ]);
-  $form_display->save();
+    $form_display->setComponent('field_gredi_dam_password', [
+      'region' => 'content',
+      'weight' => -19,
+    ]);
+    $form_display->save();
+  }
+
 
   // Creating fields for meta.
 
