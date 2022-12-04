@@ -675,6 +675,8 @@ class Gredidam extends WidgetBase {
         'changed' => strtotime($asset->created),
       ]);
 
+      // TODO we should not enable translation here.
+      // TODO only add translations if enabled on the website and only for enabled languages.
       $currentLanguage = $this->languageManager->getCurrentLanguage()->getId();
       $siteLanguages = array_keys($this->languageManager->getLanguages());
       if (!$this->moduleHandler->moduleExists('language')) {

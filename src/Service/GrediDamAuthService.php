@@ -172,6 +172,8 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    *   TRUE if user is logged in FALSE otherwise.
    */
   public function checkLogin() {
+    // TODO we should store the session ID in the Drupal user session instead of always checking for valid session (for auth users, not cli/cron)
+    // TODO if an api call throws auth error (401), we should than try a new login. and if that try fails, throw the error
     return is_int($this->loginWithCredentials()) && $this->loginWithCredentials() == 401;
   }
 

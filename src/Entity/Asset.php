@@ -230,6 +230,10 @@ class Asset implements EntityInterface, \JsonSerializable {
       }
     }
 
+    // TODO The folder should have some subfolders, to prevent too many images in a fodler
+    // TODO it should have in the name the asset id + lastupdated timestamp.
+    // TODO it should also check for existing images so that we don't fetch always the image.
+    // TODO we should decide how we can clean up the old images (maybe use cache data binary instead of saving as image)
     $location = 'public://gredidam/thumbs/' . $asset->name;
     $fileContent = \Drupal::service('helfi_gredi_image.dam_client')->fetchRemoteAssetData($asset, $asset->name, FALSE);
     $asset->apiPreviewLink = \Drupal::service('helfi_gredi_image.asset_file.helper')->drupalFileSaveData($fileContent, $location)->createFileUrl();

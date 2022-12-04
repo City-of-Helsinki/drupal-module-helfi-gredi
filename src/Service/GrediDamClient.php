@@ -137,6 +137,10 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     );
   }
 
+  // TODO create a single method to call the API and handle the login retry in case of 401 exception.
+  // TODO the method should accept a type, replacements, query params, body (for post)
+  // TODO define the api call types in static variable
+
   /**
    * {@inheritDoc}
    */
@@ -187,7 +191,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     ])->getBody()->getContents();
     $this->rootFolderId = Json::decode($apiSettings)['contentFolderId'];
 
-    return Json::decode($apiSettings)['contentFolderId'];
+    return $this->rootFolderId;
   }
 
   /**
