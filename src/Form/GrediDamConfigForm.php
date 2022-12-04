@@ -80,6 +80,7 @@ class GrediDamConfigForm extends ConfigFormBase {
       '#description' => $this->t('example: demo.gredidam.fi'),
       '#required' => TRUE,
     ];
+    // TODO add the customer path instead of GrediDamAuthService::CUSTOMER
 
     $form['drupal_auth'] = [
       '#type' => 'fieldset',
@@ -101,6 +102,8 @@ class GrediDamConfigForm extends ConfigFormBase {
       '#description' => $this->t('passexample'),
       '#required' => TRUE,
     ];
+    // TODO add the clientID here.
+    // TODO Upon submit, we could get this from api.
 
     $form['entity_browser'] = [
       '#type' => 'fieldset',
@@ -166,12 +169,14 @@ class GrediDamConfigForm extends ConfigFormBase {
         $this->t('Provided password is not valid.')
       );
     }
+    // TODO validate the API login
   }
 
   /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
+    // TODO get the client ID from API and save it.
     $this->config('helfi_gredi_image.settings')
       ->set('domain', $form_state->getValue('domain_value'))
       ->set('user', $form_state->getValue('drupal_gredidam_user'))

@@ -21,6 +21,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    *
    * @var string
    */
+  // TODO - this should be in config
   const CUSTOMER = "helsinki";
 
   /**
@@ -92,6 +93,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getCustomerId() {
+    // TODO store it in config (upon config save) it's the id based on client path.
     try {
       $url = sprintf("%s/customerIds/%s", $this->baseUrl, self::CUSTOMER);
       $apiCall = $this->guzzleClient->request('GET', $url, [
