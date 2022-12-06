@@ -71,45 +71,38 @@ class GrediDamConfigForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state): array {
     $config = $this->config('helfi_gredi_image.settings');
 
-    $form['domain'] = [
+    $form['auth'] = [
       '#type' => 'fieldset',
-      '#title' => $this->t('Base URL detail'),
+      '#title' => $this->t('API Authentication'),
     ];
 
-    $form['domain']['domain_value'] = [
+    $form['auth']['domain'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Gredi DAM Base URL'),
+      '#title' => $this->t('Base URL'),
       '#default_value' => $config->get('domain'),
-      '#description' => $this->t('example: demo.gredidam.fi'),
+      '#description' => $this->t('The base URL for the API v1. ex: https://api4.domain.net/api/v1/'),
       '#required' => TRUE,
     ];
 
-    $form['drupal_auth'] = [
-      '#type' => 'fieldset',
-      '#title' => $this->t('Gredi DAM Drupal Account'),
-    ];
-
-    $form['drupal_auth']['drupal_gredidam_user'] = [
+    $form['auth']['username'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Drupal Gredi DAM Username'),
+      '#title' => $this->t('Username'),
       '#default_value' => $config->get('user'),
-      '#description' => $this->t('drupaluser'),
       '#required' => TRUE,
     ];
 
-    $form['drupal_auth']['drupal_gredidam_password'] = [
+    $form['auth']['password'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Drupal Gredi DAM Password'),
       '#default_value' => $config->get('pass'),
-      '#description' => $this->t('passexample'),
       '#required' => TRUE,
     ];
 
-    $form['drupal_auth']['drupal_gredidam_client'] = [
+    $form['auth']['customer'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Drupal Gredi DAM Client Name'),
-      '#default_value' => $config->get('client'),
-      '#description' => $this->t('clientName'),
+      '#title' => $this->t('Customer path'),
+      '#default_value' => $config->get('customer'),
+      '#description' => $this->t('Customer path based on which customer id is fetched.'),
       '#required' => TRUE,
     ];
 
@@ -153,88 +146,102 @@ class GrediDamConfigForm extends ConfigFormBase {
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void {
     // Validations for the form input values.
-    $domain = Xss::filter($form_state->getValue('domain_value'));
+    $domain = Xss::filter($form_state->getValue('domain'));
     if (!$domain) {
       $form_state->setErrorByName(
-        'domain_value',
+        'domain',
         $this->t('Provided domain is not valid.')
       );
       return;
     }
 
-    $user = Xss::filter($form_state->getValue('drupal_gredidam_user'));
+    $user = Xss::filter($form_state->getValue('username'));
     if (!$user) {
       $form_state->setErrorByName(
-        'drupal_gredidam_user',
+        'username',
         $this->t('Provided username is not valid.')
       );
       return;
     }
 
-    $pass = Xss::filter($form_state->getValue('drupal_gredidam_password'));
+    $pass = Xss::filter($form_state->getValue('password'));
     if (!$pass) {
       $form_state->setErrorByName(
-        'drupal_gredidam_password',
+        'password',
         $this->t('Provided password is not valid.')
       );
       return;
     }
 
-    $client = Xss::filter($form_state->getValue('drupal_gredidam_client'));
-    if (!$client) {
+    $customer = Xss::filter($form_state->getValue('customer'));
+    if (!$customer) {
       $form_state->setErrorByName(
-        'drupal_gredidam_client',
-        $this->t('Provided client name is not valid.')
+        'customer',
+        $this->t('Provided customer name is not valid.')
       );
       return;
     }
+
+
     // Validation for the API login.
     // Set the configuration for authentication.
-    $this->config('helfi_gredi_image.settings')
-      ->set('domain', $form_state->getValue('domain_value'))
-      ->set('user', $form_state->getValue('drupal_gredidam_user'))
-      ->set('pass', $form_state->getValue('drupal_gredidam_password'))
-      ->set('client', $form_state->getValue('drupal_gredidam_client'))
-      ->set('num_assets_per_page', $form_state->getValue('num_assets_per_page'))
-      ->save();
+//    $this->config('helfi_gredi_image.settings')
+//      ->set('domain', $form_state->getValue('domain_value'))
+//      ->set('user', $form_state->getValue('drupal_gredidam_user'))
+//      ->set('pass', $form_state->getValue('drupal_gredidam_password'))
+//      ->set('client', $form_state->getValue('drupal_gredidam_client'))
+//      ->set('num_assets_per_page', $form_state->getValue('num_assets_per_page'))
+//      ->save();
 
     // Retrieve client ID based on customer ID(name) from API.
     /** @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService $auth_service */
     $auth_service = \Drupal::service('helfi_gredi_image.auth_service');
+
+    $auth_service->setUsername($user);
+    $auth_service->setPassword($pass);
+    $auth_service->setCustomer($customer);
+    // Clear existing customer id to fetch new one.
+    $auth_service->setCustomerId('');
+
     try {
-      $url = sprintf("%s/customerIds/%s", $form_state->getValue('domain_value'), $form_state->getValue('drupal_gredidam_client'));
-
-      // A valid CookieJar is received on OK loginWithCredentials.
-      if ($auth_service->getCookieJar() instanceof CookieJarInterface) {
-        $apiCall = $auth_service->getGuzzleClient()->request('GET', $url, [
-          'cookies' => $auth_service->getCookieJar(),
-        ]);
-        $client_id = Json::decode($apiCall->getBody()->getContents())['id'];
-        $auth_service->setClientId($client_id);
-      }
-      else {
-        $client_id = NULL;
-      }
-
+      $auth_service->authenticate();
     }
-    catch (ClientException $e) {
-      $statusCode = $e->getResponse()->getStatusCode();
-      if ($statusCode === 401) {
-        throw new \Exception($statusCode);
-      }
-    }
-
-    // Save the client_id.
-    $this->config('helfi_gredi_image.settings')->set('client_id', $client_id)->save();
-
-    $client_id = $this->config('helfi_gredi_image.settings')->get('client_id');
-    if ($client_id === NULL) {
+    catch (\Exception $e) {
       $form_state->setErrorByName(
-        'drupal_gredidam_client',
-        $this->t('Provided client name is not valid.')
+        'username',
+        $this->t('Authentication failed - @error', ['@error' => $e->getMessage()])
       );
+
+      return;
     }
 
+    try {
+      $customerId = $auth_service->getCustomerId();
+    }
+    catch (\Exception $e) {
+      $form_state->setErrorByName(
+        'username',
+        $this->t('Customer id fetching failed - @error', ['@error' => $e->getMessage()])
+      );
+
+      return;
+    }
+
+    $form_state->set('customerId', $customerId);
+  }
+
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    $customerId = $form_state->get('customerId');
+
+    $this->config('helfi_gredi_image.settings')
+      ->set('domain', $form_state->getValue('domain'))
+      ->set('user', $form_state->getValue('username'))
+      ->set('pass', $form_state->getValue('password'))
+      ->set('customer', $form_state->getValue('customer'))
+      ->set('customer_id', $customerId)
+      ->set('num_assets_per_page', $form_state->getValue('num_assets_per_page'))
+      ->save();
+    parent::submitForm($form, $form_state);
   }
 
 }
