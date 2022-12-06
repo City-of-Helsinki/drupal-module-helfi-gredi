@@ -265,7 +265,6 @@ class Gredidam extends WidgetBase {
       '#suffix' => '</div>',
     ];
 
-
     // Attach the modal library.
     $form['modal-content']['#attached']['library'][] = 'core/drupal.dialog.ajax';
 

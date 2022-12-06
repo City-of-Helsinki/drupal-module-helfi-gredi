@@ -80,21 +80,21 @@ class GrediDamConfigForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Base URL'),
       '#default_value' => $config->get('api_url'),
-      '#description' => $this->t('The base URL for the API v1. ex: https://api4.domain.net/api/v1/'),
+      '#description' => $this->t('The base URL for the API v1. ex: https://api4.domain.net/api/v1'),
       '#required' => TRUE,
     ];
 
     $form['auth']['username'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Username'),
-      '#default_value' => $config->get('user'),
+      '#default_value' => $config->get('username'),
       '#required' => TRUE,
     ];
 
     $form['auth']['password'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Drupal Gredi DAM Password'),
-      '#default_value' => $config->get('pass'),
+      '#title' => $this->t('Password'),
+      '#default_value' => $config->get('password'),
       '#required' => TRUE,
     ];
 
@@ -104,6 +104,14 @@ class GrediDamConfigForm extends ConfigFormBase {
       '#default_value' => $config->get('customer'),
       '#description' => $this->t('Customer path based on which customer id is fetched.'),
       '#required' => TRUE,
+    ];
+
+    $form['auth']['customer_id'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Customer ID'),
+      '#default_value' => $config->get('customer_id'),
+      '#description' => $this->t('This will be fetched upon submission.'),
+      '#disabled' => TRUE,
     ];
 
     $form['entity_browser'] = [
@@ -129,7 +137,7 @@ class GrediDamConfigForm extends ConfigFormBase {
     $form['actions']['#type'] = 'actions';
     $form['actions']['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Save DAM configuration'),
+      '#value' => $this->t('Save'),
       '#button_type' => 'primary',
     ];
 
@@ -145,50 +153,13 @@ class GrediDamConfigForm extends ConfigFormBase {
    *   Form state instance.
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void {
-    // Validations for the form input values.
-    $domain = Xss::filter($form_state->getValue('api_url'));
-    if (!$domain) {
-      $form_state->setErrorByName(
-        'api_url',
-        $this->t('Provided domain is not valid.')
-      );
-      return;
-    }
-
-    $user = Xss::filter($form_state->getValue('username'));
-    if (!$user) {
-      $form_state->setErrorByName(
-        'username',
-        $this->t('Provided username is not valid.')
-      );
-      return;
-    }
-
-    $pass = Xss::filter($form_state->getValue('password'));
-    if (!$pass) {
-      $form_state->setErrorByName(
-        'password',
-        $this->t('Provided password is not valid.')
-      );
-      return;
-    }
-
-    $customer = Xss::filter($form_state->getValue('customer'));
-    if (!$customer) {
-      $form_state->setErrorByName(
-        'customer',
-        $this->t('Provided customer name is not valid.')
-      );
-      return;
-    }
-
-    // Retrieve client ID based on customer ID(name) from API.
+    // Validate authentication and fetch customer id.
     /** @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService $auth_service */
     $auth_service = \Drupal::service('helfi_gredi_image.auth_service');
-
-    $auth_service->username = $user;
-    $auth_service->password = $pass;
-    $auth_service->customer = $customer;
+    $auth_service->apiUrl = $form_state->getValue('api_url');
+    $auth_service->username = $form_state->getValue('username');
+    $auth_service->password = $form_state->getValue('password');
+    $auth_service->customer = $form_state->getValue('customer');
     // Clear existing customer id to fetch new one.
     $auth_service->customerId = '';
 
@@ -200,37 +171,36 @@ class GrediDamConfigForm extends ConfigFormBase {
         'username',
         $this->t('Authentication failed - @error', ['@error' => $e->getMessage()])
       );
-
       return;
     }
 
     try {
       $customerId = $auth_service->getCustomerId();
+      $form_state->set('customerId', $customerId);
     }
     catch (\Exception $e) {
       $form_state->setErrorByName(
         'username',
         $this->t('Customer id fetching failed - @error', ['@error' => $e->getMessage()])
       );
-
       return;
     }
-
-    $form_state->set('customerId', $customerId);
   }
 
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $customerId = $form_state->get('customerId');
 
-    $this->config('helfi_gredi_image.settings')
-      ->set('api_url', $form_state->getValue('api_url'))
-      ->set('username', $form_state->getValue('username'))
-      ->set('password', $form_state->getValue('password'))
-      ->set('customer', $form_state->getValue('customer'))
-      ->set('customer_id', $customerId)
-      ->set('num_assets_per_page', $form_state->getValue('num_assets_per_page'))
-      ->save();
-
+    $this->config('helfi_gredi_image.settings')->setData(
+      [
+        'api_url' => $form_state->getValue('api_url'),
+        'username' => $form_state->getValue('username'),
+        'password' => $form_state->getValue('password'),
+        'customer' => $form_state->getValue('customer'),
+        'customer_id' => $customerId,
+        'num_assets_per_page' => $form_state->getValue('num_assets_per_page'),
+      ]
+    )
+    ->save();
     parent::submitForm($form, $form_state);
   }
 

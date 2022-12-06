@@ -30,12 +30,13 @@ class GrediDamAuthService implements DamAuthServiceInterface {
   protected string $sessionId;
 
   const SESSION_ID_STATE_NAME = 'helfi_gredi_image_session';
+
   /**
    * The base URL of the Gredi DAM API.
    *
    * @var string
    */
-  public string $baseUrl;
+  public string $apiUrl;
 
   /**
    * A fully-configured Guzzle client to pass to the dam client.
@@ -64,7 +65,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
   public function __construct(ClientInterface $guzzleClient) {
     $this->guzzleClient = $guzzleClient;
     $config = $this->getConfig();
-    $this->baseUrl = trim($config->get('api_url') ?? '', "/");
+    $this->apiUrl = trim($config->get('api_url') ?? '', "/");
     $this->username = $config->get('username') ?? '';
     $this->password = $config->get('password') ?? '';
     $this->customer = $config->get('customer') ?? '';
@@ -89,7 +90,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
     // TODO inject service with dep injection.
     $sessionId = \Drupal::state()->get(self::SESSION_ID_STATE_NAME);
     if ($sessionId) {
-      $urlParts = parse_url($this->baseUrl);
+      $urlParts = parse_url($this->apiUrl);
       $this->cookieJar = CookieJar::fromArray([
         'JSESSIONID' => $sessionId,
       ], $urlParts['host']);
@@ -134,7 +135,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
     }
     $this->customerId = '';
     try {
-      $url = sprintf("%s/customerIds/%s", $this->baseUrl, $this->customer);
+      $url = sprintf("%s/customerIds/%s", $this->apiUrl, $this->customer);
       $apiCall = $this->guzzleClient->request('GET', $url, [
         'cookies' => $this->getCookieJar(),
       ]);
@@ -154,7 +155,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    *   The Gredi DAM client.
    */
   public function loginWithCredentials() {
-    $cookieDomain = parse_url($this->baseUrl);
+    $cookieDomain = parse_url($this->apiUrl);
     $username = $this->username;
     $password = $this->password;
     $customer = $this->customer;
@@ -172,7 +173,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
       ];
 
       try {
-        $url = sprintf("%s/sessions", $this->baseUrl);
+        $url = sprintf("%s/sessions", $this->apiUrl);
         $response = $this->guzzleClient->request("POST", $url, $data);
         if ($response->getStatusCode() == 200 && $response->getReasonPhrase() == 'OK') {
           $getCookie = $response->getHeader('Set-Cookie')[0];
@@ -226,7 +227,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
     ];
 
     try {
-      $url = sprintf("%s/sessions", $this->baseUrl);
+      $url = sprintf("%s/sessions", $this->apiUrl);
       $response = $this->guzzleClient->request("POST", $url, $data);
       if ($response->getStatusCode() == 200 && $response->getReasonPhrase() == 'OK') {
         $getCookie = $response->getHeader('Set-Cookie')[0];
