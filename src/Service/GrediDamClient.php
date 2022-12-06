@@ -137,42 +137,42 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     );
   }
 
-  public function call($httpMethod, $apiUri, $queryParams = [], $data = []) {
+  public function apiCallGet($apiUri, $queryParams = []) {
+    $retry = TRUE;
+    $login_tries = 0;
+    if (!$this->authService->isAuthenticated()) {
+      $this->authService->authenticate();
+      $login_tries++;
+    }
+    while ($retry) {
+      $headers = [
+        'headers' => [
+          'Content-Type' => 'application/json',
+        ],
+        'cookies' => $this->authService->getCookieJar(),
+      ];
+      $url = sprintf("%s/%s", $this->baseUrl, $apiUri);
+      if ($queryParams) {
+        $url = sprintf("%s?%s", $url, http_build_query($queryParams));
+      }
+      try {
+        $response = $this->guzzleClient->get($url, $headers);
+        $retry = FALSE;
+      }
+      catch (\Exception $e) {
+        // TODO if Unauthorized try a new login
+        if ($login_tries === 0) {
+          $this->authService->authenticate();
+          $login_tries++;
+        }
+        else {
+          throw $e;
+        }
+      }
+    }
 
-//    $retry = TRUE;
-//    $counts = 0;
-//    while ($retry) {
-//      try {
-//        $counts++;
-//        $response = $this->guzzleClient->request(
-//          $method,
-//          $url . '/' . $uri,
-//          [
-//            'headers' => [
-//              'Content-Type' => 'application/json',
-//            ],
-//            'cookies' => $this->authService->getCookieJar(),
-//          ]
-//        );
-//        $retry = FALSE;
-//      }
-//      catch (\Exception $e) {
-//        // TODO if Unauthorized try a new login
-//        if ($counts > 1) {
-//          $this->authService->authenticate();
-//        }
-//        else {
-//          throw $e;
-//        }
-//      }
-//    }
-//
-//    return $response;
+    return $response;
   }
-
-  // TODO create a single method to call the API and handle the login retry in case of 401 exception.
-  // TODO the method should accept a type, replacements, query params, body (for post)
-  // TODO define the api call types in static variable
 
   /**
    * {@inheritDoc}
@@ -186,13 +186,11 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $this->authService->authenticate();
     }
     $customerId = $this->authService->getCustomerId();
-    $url = sprintf("%s/customers/%d/contents?materialType=folder", $this->baseUrl, $customerId);
-    $userContent = $this->guzzleClient->request('GET', $url, [
-      'headers' => [
-        'Content-Type' => 'application/json',
-      ],
-      'cookies' => $this->authService->getCookieJar(),
-    ]);
+    $uri = sprintf("customers/%d/contents", $customerId);
+    $queryParams = [
+      'materialType' => 'folder',
+    ];
+    $userContent = $this->apiCallGet($uri, $queryParams);
     $posts = $userContent->getBody()->getContents();
     $this->categoryTree = [];
     foreach (Json::decode($posts) as $post) {
@@ -538,7 +536,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       ];
       $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
       $base64EncodedFile = base64_encode(file_get_contents($image->getFileUri()));
-
+      // TODO check this instead of this hardcoded string.
+      // https://docs.guzzlephp.org/en/stable/quickstart.html#sending-form-fields
       $boundary = "helfiboundary";
       $requestBody = "";
       $requestBody .= "\r\n";
@@ -550,6 +549,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $requestBody .= $fieldString . "\r\n";
       $requestBody .= "--" . $boundary . "\r\n";
       $requestBody .= "Content-Disposition: form-data; name=\"file\"\r\n";
+      // TODO this content type should not be hardcoded.
       $requestBody .= "Content-Type: image/jpeg\r\n";
       $requestBody .= "Content-Transfer-Encoding: base64\r\n";
       $requestBody .= "\r\n";
