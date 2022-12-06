@@ -149,6 +149,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       return $this->categoryTree;
     }
 
+    if (!$this->grediDamAuthService->isAuthenticated()) {
+      $this->grediDamAuthService->authenticate();
+    }
     $customerId = $this->grediDamAuthService->getCustomerId();
     $url = sprintf("%s/customers/%d/contents?materialType=folder", $this->baseUrl, $customerId);
     $userContent = $this->guzzleClient->request('GET', $url, [
@@ -182,6 +185,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       return $this->rootFolderId;
     }
 
+    if (!$this->grediDamAuthService->isAuthenticated()) {
+      $this->grediDamAuthService->authenticate();
+    }
     $url = sprintf("%s/settings", $this->baseUrl);
     $apiSettings = $this->guzzleClient->request('GET', $url, [
       'headers' => [
@@ -205,6 +211,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * {@inheritDoc}
    */
   public function getFolderId(string $path = ""): ?int {
+    if (!$this->grediDamAuthService->isAuthenticated()) {
+      $this->grediDamAuthService->authenticate();
+    }
     $url = sprintf("%s/fileIds/%s", $this->baseUrl, $path);
     try {
       $apiCall = $this->guzzleClient->request('GET', $url, [
@@ -228,6 +237,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       return NULL;
     }
 
+    if (!$this->grediDamAuthService->isAuthenticated()) {
+      $this->grediDamAuthService->authenticate();
+    }
     $url = sprintf("%s/folders/%d/files/?include=attachments,meta", $this->baseUrl, $folder_id);
     $userContent = $this->guzzleClient->request('GET', $url, [
       'headers' => [
@@ -283,6 +295,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     $allowed_expands = Asset::getAllowedExpands();
     $expands = array_intersect(array_unique($expands + $required_expands), $allowed_expands);
 
+    if (!$this->grediDamAuthService->isAuthenticated()) {
+      $this->grediDamAuthService->authenticate();
+    }
     $url = sprintf("%s/files/%s?include=%s", $this->baseUrl, $id, implode('%2C', $expands));
     $response = $this->guzzleClient->request(
       "GET",
@@ -357,6 +372,10 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     }
 
     try {
+      if (!$this->grediDamAuthService->isAuthenticated()) {
+        $this->grediDamAuthService->authenticate();
+      }
+
       $response = $this->guzzleClient->request(
         "GET",
         $downloadUrl,
@@ -424,6 +443,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
 
     $customerId = $this->grediDamAuthService->getCustomerId();
     $url = sprintf("%s/customers/%d/contents?include=object%s", $this->baseUrl, $customerId, $parameters);
+    if (!$this->grediDamAuthService->isAuthenticated()) {
+      $this->grediDamAuthService->authenticate();
+    }
     $response = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
@@ -464,7 +486,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     }
     // Assign the folder id to uploadFolderId.
     $urlUpload = sprintf("%s/folders/%d/files/", $this->baseUrl, $this->uploadFolderId);
-
+    if (!$this->grediDamAuthService->isAuthenticated()) {
+      $this->grediDamAuthService->authenticate();
+    }
     $apiResponse = $this->guzzleClient->request('GET', $urlUpload, [
       'headers' => [
         'Content-Type' => 'application/json',
@@ -543,6 +567,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
 
     try {
+      if (!$this->grediDamAuthService->isAuthenticated()) {
+        $this->grediDamAuthService->authenticate();
+      }
       $response = $this->guzzleClient->request('POST', $url, [
         'cookies' => $this->grediDamAuthService->getCookieJar(),
         'headers' => [
@@ -572,6 +599,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     }
     $customerId = $this->grediDamAuthService->getCustomerId();
     $url = sprintf("%s/customers/%d/meta", $this->baseUrl, $customerId);
+    if (!$this->grediDamAuthService->isAuthenticated()) {
+      $this->grediDamAuthService->authenticate();
+    }
     $response = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',

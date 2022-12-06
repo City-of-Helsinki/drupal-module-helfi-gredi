@@ -33,20 +33,4 @@ interface DamAuthServiceInterface {
    */
   public function getCustomerId();
 
-  /**
-   * Get DAM Username from user profile.
-   *
-   * @return string|null
-   *   Username.
-   */
-  public function getUsername(): ?string;
-
-  /**
-   * Get DAM Password from user profile.
-   *
-   * @return string|null
-   *   Password.
-   */
-  public function getPassword(): ?string;
-
 }

@@ -19,13 +19,15 @@ class GrediDamAuthService implements DamAuthServiceInterface {
   /**
    * The client ID for the Gredi DAM API.
    */
-  protected string $customerId;
+  public string $customerId;
 
-  protected string $username;
+  public string $username;
 
-  protected string $password;
+  public string $password;
 
-  protected string $customer;
+  public string $customer;
+
+  protected string $sessionId;
 
   const SESSION_ID_STATE_NAME = 'helfi_gredi_image_session';
   /**
@@ -62,11 +64,12 @@ class GrediDamAuthService implements DamAuthServiceInterface {
   public function __construct(ClientInterface $guzzleClient) {
     $this->guzzleClient = $guzzleClient;
     $config = $this->getConfig();
-    $this->baseUrl = trim($config->get('domain'), "/");
-    $this->username = $config->get('username');
-    $this->password = $config->get('password');
-    $this->customer = $config->get('customer');
-    $this->customerId = $config->get('customer_id');
+    $this->baseUrl = trim($config->get('api_url') ?? '', "/");
+    $this->username = $config->get('username') ?? '';
+    $this->password = $config->get('password') ?? '';
+    $this->customer = $config->get('customer') ?? '';
+    $this->customerId = $config->get('customer_id') ?? '';
+    $this->sessionId = $this->getStoredSessionId() ?? '';
   }
 
   /**
@@ -97,9 +100,27 @@ class GrediDamAuthService implements DamAuthServiceInterface {
     return NULL;
   }
 
-  public function storeSessionId(string $session) {
+  public function setSessionId(string $session) :void {
+    $this->storeSessionId($session);
+    $this->sessionId = $session;
+  }
+
+  protected function storeSessionId(string $session) :void {
     // TODO inject service with dep injection.
     \Drupal::state()->set(self::SESSION_ID_STATE_NAME, $session);
+  }
+
+  protected function getStoredSessionId() :string {
+    // TODO inject service with dep injection.
+    return \Drupal::state()->get(self::SESSION_ID_STATE_NAME, '');
+  }
+
+  public function getSessionId() {
+    return $this->sessionId;
+  }
+
+  public function isAuthenticated() {
+    return !empty($this->sessionId);
   }
 
   /**
@@ -111,9 +132,9 @@ class GrediDamAuthService implements DamAuthServiceInterface {
     if (!empty($this->customerId)) {
       return $this->customerId;
     }
-    $this->customerId = NULL;
+    $this->customerId = '';
     try {
-      $url = sprintf("%s/customerIds/%s", $this->baseUrl, $this->getCustomer());
+      $url = sprintf("%s/customerIds/%s", $this->baseUrl, $this->customer);
       $apiCall = $this->guzzleClient->request('GET', $url, [
         'cookies' => $this->getCookieJar(),
       ]);
@@ -134,17 +155,17 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    */
   public function loginWithCredentials() {
     $cookieDomain = parse_url($this->baseUrl);
-    $username = $this->getUsername();
-    $password = $this->getPassword();
-    $customer = $this->getCustomer();
+    $username = $this->username;
+    $password = $this->password;
+    $customer = $this->customer;
 
-    if (isset($username) && isset($password) && $this->getConfig()->get('client')) {
+    if (isset($username) && isset($password) && $customer) {
       $data = [
         'headers' => [
           'Content-Type' => 'application/json',
         ],
         'body' => '{
-        "customer": "' . $this->getConfig()->get('client') . '",
+        "customer": "' . $customer . '",
         "username": "' . $username . '",
         "password": "' . $password . '"
       }',
@@ -186,9 +207,9 @@ class GrediDamAuthService implements DamAuthServiceInterface {
   }
 
   public function authenticate() {
-    $username = $this->getUsername();
-    $password = $this->getPassword();
-    $customer = $this->getCustomer();
+    $username = $this->username;
+    $password = $this->password;
+    $customer = $this->customer;
 
     if (empty($username) || empty($password) || empty($customer)) {
       throw new \Exception('Credentials not filled in');
@@ -214,7 +235,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
         $size = strpos($getCookie, ';', $subtring_start) - $subtring_start;
         $sessionId = substr($getCookie, $subtring_start, $size);
 
-        $this->storeSessionId($sessionId);
+        $this->setSessionId($sessionId);
         return TRUE;
       }
       else {
@@ -245,53 +266,6 @@ class GrediDamAuthService implements DamAuthServiceInterface {
     // TODO we should store the session ID in the Drupal user session instead of always checking for valid session (for auth users, not cli/cron)
     // TODO if an api call throws auth error (401), we should than try a new login. and if that try fails, throw the error
     return is_int($this->loginWithCredentials()) && $this->loginWithCredentials() == 401;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function getUsername(): ?string {
-    return $this->username;
-  }
-
-  public function setUsername($username): self {
-    $this->username = $username;
-    return $this;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function getPassword(): ?string {
-    return $this->password;
-  }
-
-  public function setPassword(string $password): self {
-    $this->password = $password;
-    return $this;
-  }
-
-  /**
-   * Setter method for clientId.
-   */
-  public function setCustomerId(string $customerId) : self {
-    $this->customerId = $customerId;
-    return $this;
-  }
-
-  /**
-   * Setter method for clientId.
-   */
-  public function setCustomer(string $customer) : self {
-    $this->customer = $customer;
-    return $this;
-  }
-
-  /**
-   * Setter method for clientId.
-   */
-  public function getCustomer() : ?string {
-    return $this->customer;
   }
 
   /**

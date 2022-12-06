@@ -10,22 +10,6 @@ use Drupal\field\Entity\FieldStorageConfig;
 
 
 function helfi_gredi_image_install() {
-  /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $form_display */
-  $form_display = \Drupal::entityTypeManager()
-    ->getStorage('entity_form_display')
-    ->load('user.user.default');
-  if ($form_display) {
-    $form_display->setComponent('field_gredi_dam_username', [
-      'region' => 'content',
-      'weight' => -20,
-    ]);
-    $form_display->setComponent('field_gredi_dam_password', [
-      'region' => 'content',
-      'weight' => -19,
-    ]);
-    $form_display->save();
-  }
-
 
   // Creating fields for meta.
 

@@ -76,10 +76,10 @@ class GrediDamConfigForm extends ConfigFormBase {
       '#title' => $this->t('API Authentication'),
     ];
 
-    $form['auth']['domain'] = [
+    $form['auth']['api_url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Base URL'),
-      '#default_value' => $config->get('domain'),
+      '#default_value' => $config->get('api_url'),
       '#description' => $this->t('The base URL for the API v1. ex: https://api4.domain.net/api/v1/'),
       '#required' => TRUE,
     ];
@@ -146,10 +146,10 @@ class GrediDamConfigForm extends ConfigFormBase {
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void {
     // Validations for the form input values.
-    $domain = Xss::filter($form_state->getValue('domain'));
+    $domain = Xss::filter($form_state->getValue('api_url'));
     if (!$domain) {
       $form_state->setErrorByName(
-        'domain',
+        'api_url',
         $this->t('Provided domain is not valid.')
       );
       return;
@@ -182,26 +182,15 @@ class GrediDamConfigForm extends ConfigFormBase {
       return;
     }
 
-
-    // Validation for the API login.
-    // Set the configuration for authentication.
-//    $this->config('helfi_gredi_image.settings')
-//      ->set('domain', $form_state->getValue('domain_value'))
-//      ->set('user', $form_state->getValue('drupal_gredidam_user'))
-//      ->set('pass', $form_state->getValue('drupal_gredidam_password'))
-//      ->set('client', $form_state->getValue('drupal_gredidam_client'))
-//      ->set('num_assets_per_page', $form_state->getValue('num_assets_per_page'))
-//      ->save();
-
     // Retrieve client ID based on customer ID(name) from API.
     /** @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService $auth_service */
     $auth_service = \Drupal::service('helfi_gredi_image.auth_service');
 
-    $auth_service->setUsername($user);
-    $auth_service->setPassword($pass);
-    $auth_service->setCustomer($customer);
+    $auth_service->username = $user;
+    $auth_service->password = $pass;
+    $auth_service->customer = $customer;
     // Clear existing customer id to fetch new one.
-    $auth_service->setCustomerId('');
+    $auth_service->customerId = '';
 
     try {
       $auth_service->authenticate();
@@ -234,13 +223,14 @@ class GrediDamConfigForm extends ConfigFormBase {
     $customerId = $form_state->get('customerId');
 
     $this->config('helfi_gredi_image.settings')
-      ->set('domain', $form_state->getValue('domain'))
-      ->set('user', $form_state->getValue('username'))
-      ->set('pass', $form_state->getValue('password'))
+      ->set('api_url', $form_state->getValue('api_url'))
+      ->set('username', $form_state->getValue('username'))
+      ->set('password', $form_state->getValue('password'))
       ->set('customer', $form_state->getValue('customer'))
       ->set('customer_id', $customerId)
       ->set('num_assets_per_page', $form_state->getValue('num_assets_per_page'))
       ->save();
+
     parent::submitForm($form, $form_state);
   }
 

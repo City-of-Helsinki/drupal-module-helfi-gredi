@@ -264,43 +264,7 @@ class Gredidam extends WidgetBase {
       '#prefix' => '<div id="asset-container">',
       '#suffix' => '</div>',
     ];
-    if ($this->authService->checkLogin()) {
-      $form['modal-content']['dam_auth'] = [
-        '#type' => 'fieldset',
-        '#title' => $this->t('Dam Authentication'),
-      ];
 
-      $form['modal-content']['dam_auth']['dam_username'] = [
-        '#type' => 'textfield',
-        '#title' => $this->t('Dam Username'),
-        '#description' => $this->t('User Dam Credentials: Username'),
-      ];
-
-      $form['modal-content']['dam_auth']['dam_password'] = [
-        '#type' => 'password',
-        '#title' => $this->t('Dam Password'),
-        '#description' => $this->t('User Dam Credentials: Password'),
-      ];
-
-      $form['modal-content']['dam_auth']['actions']['submit'] = [
-        '#type' => 'submit',
-        '#value' => 'Update credentials',
-        '#attributes' => [
-          'class' => ['button button--primary is-entity-browser-submit'],
-        ],
-      ];
-
-      $form['modal-content']['dam_auth']['actions']['submit']['#submit'][] = [
-        $this, 'updateUserDamCredentials',
-      ];
-
-      $form['modal-content']['dam_auth']['actions']['submit']['#validate'][] = [
-        $this, 'validateUserDamCredentials',
-      ];
-
-      unset($form['actions']);
-      return $form;
-    }
 
     // Attach the modal library.
     $form['modal-content']['#attached']['library'][] = 'core/drupal.dialog.ajax';
@@ -477,31 +441,6 @@ class Gredidam extends WidgetBase {
     return $form;
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  public function validateUserDamCredentials(&$form, FormStateInterface $form_state) {
-    if (empty($form_state->getValue('dam_username'))) {
-      $form_state->setErrorByName('dam_username', $this->t('Dam Username field cannot be null!'));
-    }
-
-    if (empty($form_state->getValue('dam_password'))) {
-      $form_state->setErrorByName('dam_password', $this->t('Dam Password field cannot be null!'));
-    }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function updateUserDamCredentials(&$form, FormStateInterface $form_state) {
-    $username = $form_state->getValue('dam_username');
-    $password = $form_state->getValue('dam_password');
-
-    $this->user->set('field_gredi_dam_username', $username);
-    $this->user->set('field_gredi_dam_password', $password);
-    $this->user->save();
-    $form_state->setRebuild();
-  }
 
   /**
    * {@inheritdoc}
