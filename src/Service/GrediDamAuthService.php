@@ -17,12 +17,11 @@ use GuzzleHttp\Exception\ClientException;
 class GrediDamAuthService implements DamAuthServiceInterface {
 
   /**
-   * Client id to identify the Gredi DAM client.
+   * The client ID for the Gredi DAM API.
    *
    * @var string
    */
-  // TODO - this should be in config
-  const CUSTOMER = "helsinki";
+  private $clientID;
 
   /**
    * The base URL of the Gredi DAM API.
@@ -93,20 +92,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function getCustomerId() {
-    // TODO store it in config (upon config save) it's the id based on client path.
-    try {
-      $url = sprintf("%s/customerIds/%s", $this->baseUrl, self::CUSTOMER);
-      $apiCall = $this->guzzleClient->request('GET', $url, [
-        'cookies' => $this->getCookieJar(),
-      ]);
-      return Json::decode($apiCall->getBody()->getContents())['id'];
-    }
-    catch (ClientException $e) {
-      $statusCode = $e->getResponse()->getStatusCode();
-      if ($statusCode === 401) {
-        throw new \Exception($statusCode);
-      }
-    }
+    return $this->getConfig()->get('client_id');
   }
 
   /**
@@ -120,13 +106,13 @@ class GrediDamAuthService implements DamAuthServiceInterface {
     $username = $this->getUsername();
     $password = $this->getPassword();
 
-    if (isset($username) && isset($password)) {
+    if (isset($username) && isset($password) && $this->getConfig()->get('client')) {
       $data = [
         'headers' => [
           'Content-Type' => 'application/json',
         ],
         'body' => '{
-        "customer": "' . self::CUSTOMER . '",
+        "customer": "' . $this->getConfig()->get('client') . '",
         "username": "' . $username . '",
         "password": "' . $password . '"
       }',
@@ -208,6 +194,23 @@ class GrediDamAuthService implements DamAuthServiceInterface {
       return $pass_field->getString() ?? NULL;
     }
     return NULL;
+  }
+
+  /**
+   * Getter method for guzzleClient.
+   *
+   * @return \GuzzleHttp\ClientInterface
+   *   Return this guzzle client.
+   */
+  public function getGuzzleClient() : ClientInterface {
+    return $this->guzzleClient;
+  }
+
+  /**
+   * Setter method for clientID.
+   */
+  public function setClientId($clientID) {
+    $this->clientID = $clientID;
   }
 
 }

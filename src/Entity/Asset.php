@@ -4,6 +4,10 @@ namespace Drupal\helfi_gredi_image\Entity;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\File\FileUrlGeneratorInterface;
+use Drupal\Core\Url;
+use Drupal\file\Entity\File;
+use Drupal\file\FileInterface;
 
 /**
  * The asset entity describing the asset object shared by Gredi DAM.
@@ -230,13 +234,35 @@ class Asset implements EntityInterface, \JsonSerializable {
       }
     }
 
-    // TODO The folder should have some subfolders, to prevent too many images in a fodler
-    // TODO it should have in the name the asset id + lastupdated timestamp.
-    // TODO it should also check for existing images so that we don't fetch always the image.
     // TODO we should decide how we can clean up the old images (maybe use cache data binary instead of saving as image)
-    $location = 'public://gredidam/thumbs/' . $asset->name;
+    // Create subfolders by month.
+    $current_timestamp = \Drupal::time()->getCurrentTime();
+    $date_output = \Drupal::service('date.formatter')->format($current_timestamp, 'custom', 'd/M/Y');
+    $date = str_replace('/', '-', substr($date_output, 3, 8));
+
+    // Asset name contains id and last updated date.
+    $asset_name = $asset->id . '_' . \DateTime::createFromFormat('Y-m-d\TH:i:s.u+', $asset->modified)
+      ->format('d-M-Y_H-i') . substr($asset->name, strpos($asset->name, "."));
+    // Create month folder.
+    /** @var \Drupal\Core\File\FileSystemInterface $file_service */
+    $file_service = \Drupal::service('file_system');
+
+    $directory = sprintf('public://gredidam/thumbs/' . $date);
+
+    $file_service->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
+
+    $location = sprintf('public://gredidam/thumbs/%s/%s', $date, $asset_name);
     $fileContent = \Drupal::service('helfi_gredi_image.dam_client')->fetchRemoteAssetData($asset, $asset->name, FALSE);
-    $asset->apiPreviewLink = \Drupal::service('helfi_gredi_image.asset_file.helper')->drupalFileSaveData($fileContent, $location)->createFileUrl();
+
+    /** @var \Drupal\Core\File\FileUrlGeneratorInterface $url_generator */
+    $url_generator = \Drupal::service('file_url_generator');
+
+    $url = $url_generator->generate($location)->toString();
+
+    if (!file_exists($location)) {
+      $file_service->saveData($fileContent, $location, FileSystemInterface::EXISTS_REPLACE);
+    }
+    $asset->apiPreviewLink = $url;
 
     return $asset;
   }

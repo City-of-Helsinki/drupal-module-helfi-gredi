@@ -675,43 +675,28 @@ class Gredidam extends WidgetBase {
         'changed' => strtotime($asset->created),
       ]);
 
-      // TODO we should not enable translation here.
-      // TODO only add translations if enabled on the website and only for enabled languages.
       $currentLanguage = $this->languageManager->getCurrentLanguage()->getId();
+      // Check enabled languages.
       $siteLanguages = array_keys($this->languageManager->getLanguages());
-      if (!$this->moduleHandler->moduleExists('language')) {
-        $this->moduleInstaller->install(['language']);
-      }
-      $languages = 0;
+
       foreach ($asset->keywords as $key => $lang) {
-        if (!in_array($key, $siteLanguages)) {
-          $language = ConfigurableLanguage::createFromLangcode($key);
-          $languages++;
-          $language->save();
+        if (in_array($key, $siteLanguages)) {
+          // For current language case no translation will be added.
+          if ($key == $currentLanguage) {
+            $entity->field_media_image = $file->id();
+            $entity->field_keywords = $asset->keywords[$key];
+            $entity->field_alt_text = $asset->alt_text[$key];
+            continue;
+          }
+          $entity->addTranslation($key, [
+            'name' => $asset->name,
+            'field_media_image' => [
+              'target_id' => $file->id(),
+            ],
+            'field_keywords' => (!empty($asset->keywords[$key]) ? $asset->keywords[$key] : ''),
+            'field_alt_text' => (!empty($asset->alt_text[$key]) ? $asset->alt_text[$key] : ''),
+          ]);
         }
-      }
-      if ($languages != 0) {
-        \Drupal::messenger()->addStatus('Translation languages are installed. Please select asset again.');
-        $form_state->setRebuild();
-        return [];
-      }
-      // Add language translations.
-      foreach ($asset->keywords as $key => $lang) {
-        // For english case no translation will be added.
-        if ($key == $currentLanguage) {
-          $entity->field_media_image = $file->id();
-          $entity->field_keywords = $asset->keywords[$key];
-          $entity->field_alt_text = $asset->alt_text[$key];
-          continue;
-        }
-        $entity->addTranslation($key, [
-          'name' => $asset->name,
-          'field_media_image' => [
-            'target_id' => $file->id(),
-          ],
-          'field_keywords' => (!empty($asset->keywords[$key]) ? $asset->keywords[$key] : ''),
-          'field_alt_text' => (!empty($asset->alt_text[$key]) ? $asset->alt_text[$key] : ''),
-        ]);
       }
 
       $entity->save();
