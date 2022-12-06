@@ -63,7 +63,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    *
    * @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService
    */
-  protected GrediDamAuthService $grediDamAuthService;
+  protected GrediDamAuthService $authService;
 
   /**
    * Gredi DAM logger channel.
@@ -120,9 +120,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   ) {
     $this->guzzleClient = $guzzleClient;
     $this->config = $config;
-    $this->grediDamAuthService = $grediDamAuthService;
+    $this->authService = $grediDamAuthService;
     $this->loggerChannel = $loggerChannelFactory->get('helfi_gredi_image');
-    $this->baseUrl = trim($this->grediDamAuthService->getConfig()->get('domain'), '/');
+    $this->baseUrl = $this->authService->apiUrl;
   }
 
   /**
@@ -137,6 +137,39 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     );
   }
 
+  public function call($httpMethod, $apiUri, $queryParams = [], $data = []) {
+
+//    $retry = TRUE;
+//    $counts = 0;
+//    while ($retry) {
+//      try {
+//        $counts++;
+//        $response = $this->guzzleClient->request(
+//          $method,
+//          $url . '/' . $uri,
+//          [
+//            'headers' => [
+//              'Content-Type' => 'application/json',
+//            ],
+//            'cookies' => $this->authService->getCookieJar(),
+//          ]
+//        );
+//        $retry = FALSE;
+//      }
+//      catch (\Exception $e) {
+//        // TODO if Unauthorized try a new login
+//        if ($counts > 1) {
+//          $this->authService->authenticate();
+//        }
+//        else {
+//          throw $e;
+//        }
+//      }
+//    }
+//
+//    return $response;
+  }
+
   // TODO create a single method to call the API and handle the login retry in case of 401 exception.
   // TODO the method should accept a type, replacements, query params, body (for post)
   // TODO define the api call types in static variable
@@ -149,16 +182,16 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       return $this->categoryTree;
     }
 
-    if (!$this->grediDamAuthService->isAuthenticated()) {
-      $this->grediDamAuthService->authenticate();
+    if (!$this->authService->isAuthenticated()) {
+      $this->authService->authenticate();
     }
-    $customerId = $this->grediDamAuthService->getCustomerId();
+    $customerId = $this->authService->getCustomerId();
     $url = sprintf("%s/customers/%d/contents?materialType=folder", $this->baseUrl, $customerId);
     $userContent = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
-      'cookies' => $this->grediDamAuthService->getCookieJar(),
+      'cookies' => $this->authService->getCookieJar(),
     ]);
     $posts = $userContent->getBody()->getContents();
     $this->categoryTree = [];
@@ -185,15 +218,15 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       return $this->rootFolderId;
     }
 
-    if (!$this->grediDamAuthService->isAuthenticated()) {
-      $this->grediDamAuthService->authenticate();
+    if (!$this->authService->isAuthenticated()) {
+      $this->authService->authenticate();
     }
     $url = sprintf("%s/settings", $this->baseUrl);
     $apiSettings = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
-      'cookies' => $this->grediDamAuthService->getCookieJar(),
+      'cookies' => $this->authService->getCookieJar(),
     ])->getBody()->getContents();
     $this->rootFolderId = Json::decode($apiSettings)['contentFolderId'];
 
@@ -211,8 +244,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * {@inheritDoc}
    */
   public function getFolderId(string $path = ""): ?int {
-    if (!$this->grediDamAuthService->isAuthenticated()) {
-      $this->grediDamAuthService->authenticate();
+    if (!$this->authService->isAuthenticated()) {
+      $this->authService->authenticate();
     }
     $url = sprintf("%s/fileIds/%s", $this->baseUrl, $path);
     try {
@@ -220,7 +253,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         'headers' => [
           'Content-Type' => 'application/json',
         ],
-        'cookies' => $this->grediDamAuthService->getCookieJar(),
+        'cookies' => $this->authService->getCookieJar(),
       ]);
       return Json::decode($apiCall->getBody()->getContents())['id'];
     }
@@ -237,15 +270,15 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       return NULL;
     }
 
-    if (!$this->grediDamAuthService->isAuthenticated()) {
-      $this->grediDamAuthService->authenticate();
+    if (!$this->authService->isAuthenticated()) {
+      $this->authService->authenticate();
     }
     $url = sprintf("%s/folders/%d/files/?include=attachments,meta", $this->baseUrl, $folder_id);
     $userContent = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
-      'cookies' => $this->grediDamAuthService->getCookieJar(),
+      'cookies' => $this->authService->getCookieJar(),
     ]);
     $posts = Json::decode($userContent->getBody()->getContents());
     $pageContent = array_slice($posts, $offset, $limit);
@@ -295,8 +328,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     $allowed_expands = Asset::getAllowedExpands();
     $expands = array_intersect(array_unique($expands + $required_expands), $allowed_expands);
 
-    if (!$this->grediDamAuthService->isAuthenticated()) {
-      $this->grediDamAuthService->authenticate();
+    if (!$this->authService->isAuthenticated()) {
+      $this->authService->authenticate();
     }
     $url = sprintf("%s/files/%s?include=%s", $this->baseUrl, $id, implode('%2C', $expands));
     $response = $this->guzzleClient->request(
@@ -306,7 +339,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         'headers' => [
           'Content-Type' => 'application/json',
         ],
-        'cookies' => $this->grediDamAuthService->getCookieJar(),
+        'cookies' => $this->authService->getCookieJar(),
       ]
     );
     return Asset::fromJson($response->getBody()->getContents());
@@ -372,8 +405,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     }
 
     try {
-      if (!$this->grediDamAuthService->isAuthenticated()) {
-        $this->grediDamAuthService->authenticate();
+      if (!$this->authService->isAuthenticated()) {
+        $this->authService->authenticate();
       }
 
       $response = $this->guzzleClient->request(
@@ -383,7 +416,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
           'allow_redirects' => [
             'track_redirects' => TRUE,
           ],
-          'cookies' => $this->grediDamAuthService->getCookieJar(),
+          'cookies' => $this->authService->getCookieJar(),
         ]
       );
 
@@ -441,16 +474,16 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $parameters .= '&' . $key . '=' . $param;
     }
 
-    $customerId = $this->grediDamAuthService->getCustomerId();
+    $customerId = $this->authService->getCustomerId();
     $url = sprintf("%s/customers/%d/contents?include=object%s", $this->baseUrl, $customerId, $parameters);
-    if (!$this->grediDamAuthService->isAuthenticated()) {
-      $this->grediDamAuthService->authenticate();
+    if (!$this->authService->isAuthenticated()) {
+      $this->authService->authenticate();
     }
     $response = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
-      'cookies' => $this->grediDamAuthService->getCookieJar(),
+      'cookies' => $this->authService->getCookieJar(),
     ]);
 
     $posts = Json::decode($response->getBody()->getContents());
@@ -486,14 +519,14 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     }
     // Assign the folder id to uploadFolderId.
     $urlUpload = sprintf("%s/folders/%d/files/", $this->baseUrl, $this->uploadFolderId);
-    if (!$this->grediDamAuthService->isAuthenticated()) {
-      $this->grediDamAuthService->authenticate();
+    if (!$this->authService->isAuthenticated()) {
+      $this->authService->authenticate();
     }
     $apiResponse = $this->guzzleClient->request('GET', $urlUpload, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
-      'cookies' => $this->grediDamAuthService->getCookieJar(),
+      'cookies' => $this->authService->getCookieJar(),
     ])->getStatusCode();
 
     if ($apiResponse == '200') {
@@ -525,7 +558,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $requestBody .= "\r\n";
       try {
         $response = $this->guzzleClient->request('POST', $urlUpload, [
-          'cookies' => $this->grediDamAuthService->getCookieJar(),
+          'cookies' => $this->authService->getCookieJar(),
           'headers' => [
             'Content-Type' => 'multipart/form-data;boundary=' . $boundary,
             'Content-Length' => strlen($requestBody),
@@ -567,11 +600,11 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
 
     try {
-      if (!$this->grediDamAuthService->isAuthenticated()) {
-        $this->grediDamAuthService->authenticate();
+      if (!$this->authService->isAuthenticated()) {
+        $this->authService->authenticate();
       }
       $response = $this->guzzleClient->request('POST', $url, [
-        'cookies' => $this->grediDamAuthService->getCookieJar(),
+        'cookies' => $this->authService->getCookieJar(),
         'headers' => [
           'Content-Type' => 'application/json',
         ],
@@ -597,16 +630,16 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     if ($this->metafields) {
       return $this->metafields;
     }
-    $customerId = $this->grediDamAuthService->getCustomerId();
+    $customerId = $this->authService->getCustomerId();
     $url = sprintf("%s/customers/%d/meta", $this->baseUrl, $customerId);
-    if (!$this->grediDamAuthService->isAuthenticated()) {
-      $this->grediDamAuthService->authenticate();
+    if (!$this->authService->isAuthenticated()) {
+      $this->authService->authenticate();
     }
     $response = $this->guzzleClient->request('GET', $url, [
       'headers' => [
         'Content-Type' => 'application/json',
       ],
-      'cookies' => $this->grediDamAuthService->getCookieJar(),
+      'cookies' => $this->authService->getCookieJar(),
     ])->getBody()->getContents();
     $this->metafields = Json::decode($response);
     return $this->metafields;
