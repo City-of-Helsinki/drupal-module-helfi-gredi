@@ -219,13 +219,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
-    $url = sprintf("%s/settings", $this->baseUrl);
-    $apiSettings = $this->guzzleClient->request('GET', $url, [
-      'headers' => [
-        'Content-Type' => 'application/json',
-      ],
-      'cookies' => $this->authService->getCookieJar(),
-    ])->getBody()->getContents();
+
+    $apiSettings = $this->apiCallGet('settings')->getBody()->getContents();
+
     $this->rootFolderId = Json::decode($apiSettings)['contentFolderId'];
 
     return $this->rootFolderId;
@@ -241,28 +237,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * {@inheritDoc}
    */
-  public function getFolderId(string $path = ""): ?int {
-    if (!$this->authService->isAuthenticated()) {
-      $this->authService->authenticate();
-    }
-    $url = sprintf("%s/fileIds/%s", $this->baseUrl, $path);
-    try {
-      $apiCall = $this->guzzleClient->request('GET', $url, [
-        'headers' => [
-          'Content-Type' => 'application/json',
-        ],
-        'cookies' => $this->authService->getCookieJar(),
-      ]);
-      return Json::decode($apiCall->getBody()->getContents())['id'];
-    }
-    catch (ClientException $e) {
-      return NULL;
-    }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
   public function getFolderContent(int $folder_id, int $limit, int $offset): ?array {
     if (empty($folder_id)) {
       return NULL;
@@ -271,13 +245,11 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
-    $url = sprintf("%s/folders/%d/files/?include=attachments,meta", $this->baseUrl, $folder_id);
-    $userContent = $this->guzzleClient->request('GET', $url, [
-      'headers' => [
-        'Content-Type' => 'application/json',
-      ],
-      'cookies' => $this->authService->getCookieJar(),
-    ]);
+    $url = sprintf("folders/%d/files", $folder_id);
+    $queryParams = [
+      'include' => 'attachments,meta',
+    ];
+    $userContent = $this->apiCallGet($url, $queryParams);
     $posts = Json::decode($userContent->getBody()->getContents());
     $pageContent = array_slice($posts, $offset, $limit);
     $content = [
@@ -329,17 +301,11 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
-    $url = sprintf("%s/files/%s?include=%s", $this->baseUrl, $id, implode('%2C', $expands));
-    $response = $this->guzzleClient->request(
-      "GET",
-      $url,
-      [
-        'headers' => [
-          'Content-Type' => 'application/json',
-        ],
-        'cookies' => $this->authService->getCookieJar(),
-      ]
-    );
+    $url = sprintf("files/%s", $id);
+    $queryParams = [
+      'include' => implode('%2C', $expands),
+    ];
+    $response = $this->apiCallGet($url, $queryParams);
     return Asset::fromJson($response->getBody()->getContents());
   }
 
@@ -389,8 +355,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   public function fetchRemoteAssetData(Asset $asset, &$filename, $original = TRUE) {
     // If the module was configured to enforce an image size limit then we
     // need to grab the nearest matching pre-created size.
-    $remoteBaseUrl = Asset::getAssetRemoteBaseUrl();
-    $downloadUrl = $remoteBaseUrl . ($original ? $asset->apiContentLink : $asset->apiPreviewLink);
+    $downloadUrl = $original ? $asset->apiContentLink : $asset->apiPreviewLink;
 
     if (empty($downloadUrl)) {
       $this->loggerChannel->warning(
@@ -406,17 +371,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       if (!$this->authService->isAuthenticated()) {
         $this->authService->authenticate();
       }
-
-      $response = $this->guzzleClient->request(
-        "GET",
-        $downloadUrl,
-        [
-          'allow_redirects' => [
-            'track_redirects' => TRUE,
-          ],
-          'cookies' => $this->authService->getCookieJar(),
-        ]
-      );
+      $response = $this->apiCallGet($downloadUrl);
 
       $size = $response->getBody()->getSize();
 
@@ -473,16 +428,14 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     }
 
     $customerId = $this->authService->getCustomerId();
-    $url = sprintf("%s/customers/%d/contents?include=object%s", $this->baseUrl, $customerId, $parameters);
+    $url = sprintf("customers/%d/contents", $customerId);
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
-    $response = $this->guzzleClient->request('GET', $url, [
-      'headers' => [
-        'Content-Type' => 'application/json',
-      ],
-      'cookies' => $this->authService->getCookieJar(),
-    ]);
+    $queryParams = [
+      'include' => sprintf('object%s', $parameters),
+    ];
+    $response = $this->apiCallGet($url, $queryParams);
 
     $posts = Json::decode($response->getBody()->getContents());
     $content = [
@@ -516,16 +469,11 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $this->createFolder('UPLOAD', 'Upload folder');
     }
     // Assign the folder id to uploadFolderId.
-    $urlUpload = sprintf("%s/folders/%d/files/", $this->baseUrl, $this->uploadFolderId);
+    $urlUpload = sprintf("folders/%d/files/", $this->uploadFolderId);
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
-    $apiResponse = $this->guzzleClient->request('GET', $urlUpload, [
-      'headers' => [
-        'Content-Type' => 'application/json',
-      ],
-      'cookies' => $this->authService->getCookieJar(),
-    ])->getStatusCode();
+    $apiResponse = $this->apiCallGet($urlUpload)->getStatusCode();
 
     if ($apiResponse == '200') {
       $fieldData = [
@@ -631,16 +579,11 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       return $this->metafields;
     }
     $customerId = $this->authService->getCustomerId();
-    $url = sprintf("%s/customers/%d/meta", $this->baseUrl, $customerId);
+    $url = sprintf("customers/%d/meta", $customerId);
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
-    $response = $this->guzzleClient->request('GET', $url, [
-      'headers' => [
-        'Content-Type' => 'application/json',
-      ],
-      'cookies' => $this->authService->getCookieJar(),
-    ])->getBody()->getContents();
+    $response = $this->apiCallGet($url)->getBody()->getContents();
     $this->metafields = Json::decode($response);
     return $this->metafields;
   }

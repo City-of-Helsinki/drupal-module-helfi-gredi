@@ -24,17 +24,6 @@ interface DamClientInterface {
   public function getRootContent(int $limit, int $offset): array;
 
   /**
-   * Get folder ID by path.
-   *
-   * @param string $path
-   *   Folder oath.
-   *
-   * @return int|null
-   *   Folder ID.
-   */
-  public function getFolderId(string $path = ""): ?int;
-
-  /**
    * Get assets and sub-folders from folders.
    *
    * @param int $folder_id
