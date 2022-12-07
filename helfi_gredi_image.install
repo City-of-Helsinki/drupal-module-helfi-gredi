@@ -12,19 +12,6 @@ use Drupal\field\Entity\FieldStorageConfig;
 function helfi_gredi_image_install() {
 
   // Creating fields for meta.
-
-  FieldStorageConfig::create([
-    'field_name' => 'field_external_id_image',
-    'entity_type' => 'media',
-    'type' => 'text',
-  ])->save();
-  FieldConfig::create([
-    'field_name' => 'field_external_id_image',
-    'entity_type' => 'media',
-    'bundle' => 'image',
-    'label' => 'External Id',
-  ])->save();
-
   FieldStorageConfig::create([
     'field_name' => 'field_external_id',
     'entity_type' => 'media',

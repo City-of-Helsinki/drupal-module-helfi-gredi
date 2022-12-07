@@ -9,3 +9,4 @@ dependencies:
   - drupal:media_library
   - drupal:media_entity_browser
   - drupal:content_translation
+  - drupal:views_remote_data

@@ -1,0 +1,21 @@
+uuid: 94f5914e-e1e2-4205-b151-b76c7faad4f9
+langcode: fi
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_created
+    - media.type.gredi_dam_assets
+  module:
+    - text
+id: media.gredi_dam_assets.field_created
+field_name: field_created
+entity_type: media
+bundle: gredi_dam_assets
+label: Created
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: text

@@ -1,0 +1,21 @@
+uuid: cd6850a5-524f-4805-9077-d4769a1e8a75
+langcode: fi
+status: true
+dependencies:
+  config:
+    - field.storage.media.field_keywords
+    - media.type.gredi_dam_assets
+  module:
+    - text
+id: media.gredi_dam_assets.field_keywords
+field_name: field_keywords
+entity_type: media
+bundle: gredi_dam_assets
+label: Keywords
+description: ''
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: text
