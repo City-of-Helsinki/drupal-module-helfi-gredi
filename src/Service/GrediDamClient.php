@@ -453,7 +453,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     }
 
     try {
-      $downloadUrl = str_replace('/api/v1' , '');
+      $downloadUrl = str_replace('/api/v1' , '', $downloadUrl);
       if (!$this->authService->isAuthenticated()) {
         $this->authService->authenticate();
       }

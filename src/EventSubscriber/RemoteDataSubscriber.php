@@ -80,7 +80,13 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
         ]);
         /** @var \Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset $source */
         $source = $result->_entity->getSource();
-        $source->setAssetData($result->object);
+        if (!empty($result->object)) {
+          $source->setAssetData($result->object);
+        }
+        else {
+          $source->setAssetData('');
+        }
+
       }
     }
   }

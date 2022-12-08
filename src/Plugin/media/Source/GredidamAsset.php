@@ -233,7 +233,7 @@ class GredidamAsset extends MediaSourceBase {
       case 'thumbnail_uri':
         // TODO if media exists
 
-        if ($this->assetData) {
+        if (!empty($this->assetData)) {
           try {
             $assetId = $this->assetData['id'];
             $assetName = $this->assetData['name'];
