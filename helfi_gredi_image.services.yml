@@ -27,3 +27,7 @@ services:
     arguments: ['@helfi_gredi_image.dam_client']
     tags:
       - { name: event_subscriber }
+  helfi_gredi_image.asset_library_builder:
+    class: Drupal\helfi_gredi_image\AssetLibraryBuilder
+    parent: 'media_library.ui_builder'
+    decorates: 'media_library.ui_builder'

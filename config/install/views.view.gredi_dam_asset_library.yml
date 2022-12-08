@@ -1,16 +1,21 @@
+uuid: b51efbc1-f8a9-4b73-ad1e-0e7bf99c5cdb
 langcode: en
 status: true
 dependencies:
+  config:
+    - core.entity_view_mode.media.media_library
   module:
     - helfi_gredi_image
     - views_remote_data
+_core:
+  default_config_hash: YAOzgQgahWe03rvrf3BVlYu4gamADaeGowLaL2fSVBo
 id: gredi_dam_asset_library
 label: 'Gredi DAM Asset Library'
 module: views
 description: ''
 tag: ''
 base_table: gredidam_assets
-base_field: nid
+base_field: ''
 display:
   default:
     id: default
@@ -20,16 +25,15 @@ display:
     display_options:
       title: 'Gredi DAM Asset Library'
       fields:
-        property:
-          id: property
+        rendered_entity:
+          id: rendered_entity
           table: gredidam_assets
-          field: property
+          field: rendered_entity
           relationship: none
           group_type: group
           admin_label: ''
-          entity_type: null
-          entity_field: null
-          plugin_id: views_remote_data_property
+          entity_type: media
+          plugin_id: rendered_entity
           label: ''
           exclude: false
           alter:
@@ -63,7 +67,7 @@ display:
           element_class: ''
           element_label_type: ''
           element_label_class: ''
-          element_label_colon: true
+          element_label_colon: false
           element_wrapper_type: ''
           element_wrapper_class: ''
           element_default_classes: true
@@ -71,7 +75,57 @@ display:
           hide_empty: false
           empty_zero: false
           hide_alter_empty: true
-          property_path: ''
+          view_mode: media_library
+        media_library_select_form:
+          id: media_library_select_form
+          table: gredidam_assets
+          field: media_library_select_form
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: media
+          plugin_id: gredidam_media_library_select_form
+          label: ''
+          exclude: false
+          alter:
+            alter_text: false
+            text: ''
+            make_link: false
+            path: ''
+            absolute: false
+            external: false
+            replace_spaces: false
+            path_case: none
+            trim_whitespace: false
+            alt: ''
+            rel: ''
+            link_class: ''
+            prefix: ''
+            suffix: ''
+            target: ''
+            nl2br: false
+            max_length: 0
+            word_boundary: true
+            ellipsis: true
+            more_link: false
+            more_link_text: ''
+            more_link_path: ''
+            strip_tags: false
+            trim: false
+            preserve_tags: ''
+            html: false
+          element_type: ''
+          element_class: ''
+          element_label_type: ''
+          element_label_class: ''
+          element_label_colon: false
+          element_wrapper_type: ''
+          element_wrapper_class: ''
+          element_default_classes: true
+          empty: ''
+          hide_empty: false
+          empty_zero: false
+          hide_alter_empty: true
       pager:
         type: mini
         options:
@@ -120,20 +174,44 @@ display:
       relationships: {  }
       header: {  }
       footer: {  }
+      display_extenders: {  }
     cache_metadata:
       max-age: -1
       contexts:
         - 'languages:language_interface'
         - url.query_args
       tags:
+        - 'config:core.entity_view_display.media.file.default'
+        - 'config:core.entity_view_display.media.file.media_library'
+        - 'config:core.entity_view_display.media.gredi_dam_assets.default'
+        - 'config:core.entity_view_display.media.gredi_dam_assets.media_library'
+        - 'config:core.entity_view_display.media.hel_map.default'
+        - 'config:core.entity_view_display.media.hel_map.media_library'
+        - 'config:core.entity_view_display.media.helfi_chart.default'
+        - 'config:core.entity_view_display.media.helfi_chart.media_library'
+        - 'config:core.entity_view_display.media.image.content_card'
+        - 'config:core.entity_view_display.media.image.default'
+        - 'config:core.entity_view_display.media.image.hero'
+        - 'config:core.entity_view_display.media.image.image'
+        - 'config:core.entity_view_display.media.image.image_content_area'
+        - 'config:core.entity_view_display.media.image.list_of_links'
+        - 'config:core.entity_view_display.media.image.media_library'
+        - 'config:core.entity_view_display.media.remote_video.default'
+        - 'config:core.entity_view_display.media.remote_video.media_library'
+        - 'config:core.entity_view_display.media.soundcloud.default'
+        - 'config:core.entity_view_display.media.soundcloud.media_library'
         - views_remote_data
-  page_1:
-    id: page_1
-    display_title: Page
+  widget:
+    id: widget
+    display_title: Widget
     display_plugin: page
     position: 1
     display_options:
-      display_extenders: {  }
+      display_description: ''
+      display_extenders:
+        metatag_display_extender:
+          metatags: {  }
+          tokenize: false
       path: gredi-dam-asset-library
     cache_metadata:
       max-age: -1
@@ -141,4 +219,23 @@ display:
         - 'languages:language_interface'
         - url.query_args
       tags:
+        - 'config:core.entity_view_display.media.file.default'
+        - 'config:core.entity_view_display.media.file.media_library'
+        - 'config:core.entity_view_display.media.gredi_dam_assets.default'
+        - 'config:core.entity_view_display.media.gredi_dam_assets.media_library'
+        - 'config:core.entity_view_display.media.hel_map.default'
+        - 'config:core.entity_view_display.media.hel_map.media_library'
+        - 'config:core.entity_view_display.media.helfi_chart.default'
+        - 'config:core.entity_view_display.media.helfi_chart.media_library'
+        - 'config:core.entity_view_display.media.image.content_card'
+        - 'config:core.entity_view_display.media.image.default'
+        - 'config:core.entity_view_display.media.image.hero'
+        - 'config:core.entity_view_display.media.image.image'
+        - 'config:core.entity_view_display.media.image.image_content_area'
+        - 'config:core.entity_view_display.media.image.list_of_links'
+        - 'config:core.entity_view_display.media.image.media_library'
+        - 'config:core.entity_view_display.media.remote_video.default'
+        - 'config:core.entity_view_display.media.remote_video.media_library'
+        - 'config:core.entity_view_display.media.soundcloud.default'
+        - 'config:core.entity_view_display.media.soundcloud.media_library'
         - views_remote_data

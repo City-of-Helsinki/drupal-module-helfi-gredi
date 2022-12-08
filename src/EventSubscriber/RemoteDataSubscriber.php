@@ -24,7 +24,7 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
   /**
    * Constructs a new ViewsRemoteDataSubscriber object.
    *
-   * @param \Drupal\helfi_gredi_image\Service\GrediDamClient $poke_api
+   * @param \Drupal\helfi_gredi_image\Service\GrediDamClient $client
    *   The client.
    */
   public function __construct(GrediDamClient $client) {

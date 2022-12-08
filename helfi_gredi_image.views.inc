@@ -21,6 +21,15 @@ function helfi_gredi_image_views_data(): array {
     'query_id' => 'views_remote_data_query',
   ];
 
+  $data['gredidam_assets']['media_library_select_form'] = [
+    'title' => t('Select asset'),
+    'help' => t('Provides a field for selecting Assets in our media library view'),
+    'real field' => 'id',
+    'field' => [
+      'id' => 'gredidam_media_library_select_form',
+    ],
+  ];
+
   return $data;
 
 }
