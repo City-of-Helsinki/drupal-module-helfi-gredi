@@ -417,42 +417,31 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * {@inheritDoc}
    */
-  public function searchAssets(array $params, $limit, $offset): array {
-    $parameters = '';
-
-    foreach ($params as $key => $param) {
-      if (empty($param)) {
-        continue;
-      }
-      $parameters .= '&' . $key . '=' . $param;
-    }
-
-    $customerId = $this->authService->getCustomerId();
-    $url = sprintf("customers/%d/contents", $customerId);
+  public function searchAssets($search = '', $sort = '', $limit = 10, $offset = 0): array {
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
+    $customerId = $this->authService->getCustomerId();
+    $url = sprintf("customers/%d/contents", $customerId);
     $queryParams = [
-      'include' => sprintf('object%s', $parameters),
+      'include' => 'object',
+      'mimeGroups' => 'picture',
+      'search' => $search,
+      'sort' => $sort,
+      'limit' => $limit,
+      'offset' => $offset,
     ];
+    $queryParams = array_filter($queryParams);
     $response = $this->apiCallGet($url, $queryParams);
 
-    $posts = Json::decode($response->getBody()->getContents());
-    $content = [
-      'assets' => [],
-    ];
-
-    foreach ($posts as $post) {
-      if (!$post['folder']) {
-        $content['assets'][] = Asset::fromJson($post);
-      }
+    $items = Json::decode($response->getBody()->getContents());
+    $result = [];
+    foreach ($items as $item) {
+      $asset = Asset::fromJson($item);
+      $result[] = $asset->jsonSerialize();
     }
-    $totalAssets = count($content['assets']);
-    $content['assets'] = array_slice($content['assets'], $offset, $limit);
-    return [
-      'content' => $content,
-      'total' => $totalAssets,
-    ];
+
+    return $result;
   }
 
   /**

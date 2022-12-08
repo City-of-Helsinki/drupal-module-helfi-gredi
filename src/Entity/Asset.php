@@ -241,8 +241,7 @@ class Asset implements EntityInterface, \JsonSerializable {
     $date = str_replace('/', '-', substr($date_output, 3, 8));
 
     // Asset name contains id and last updated date.
-    $asset_name = $asset->id . '_' . \DateTime::createFromFormat('Y-m-d\TH:i:s.u+', $asset->modified)
-      ->format('d-M-Y_H-i') . substr($asset->name, strpos($asset->name, "."));
+    $asset_name = $asset->id . '_' . strtotime($asset->modified) . substr($asset->name, strrpos($asset->name, "."));
     // Create month folder.
     /** @var \Drupal\Core\File\FileSystemInterface $file_service */
     $file_service = \Drupal::service('file_system');

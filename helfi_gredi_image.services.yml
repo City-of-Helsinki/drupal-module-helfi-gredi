@@ -22,3 +22,8 @@ services:
   helfi_gredi_image.auth_service:
     class: Drupal\helfi_gredi_image\Service\GrediDamAuthService
     arguments: ['@http_client']
+  helfi_gredi_image_remote.event_subscriber:
+    class: Drupal\helfi_gredi_image\EventSubscriber\RemoteDataSubscriber
+    arguments: ['@helfi_gredi_image.dam_client']
+    tags:
+      - { name: event_subscriber }
