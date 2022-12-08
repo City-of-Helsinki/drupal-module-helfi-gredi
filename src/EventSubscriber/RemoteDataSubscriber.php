@@ -74,10 +74,13 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
           'bundle' => 'gredi_dam_assets',
           'name' => $result->name,
           // TODO how we inject the thumnail here?
-//          MediaSourceField::SOURCE_FIELD_NAME => [
-//            'asset_id' => $result->id,
-//          ],
+          'gredi_asset_id' => [
+            'value' => $result->id,
+          ],
         ]);
+        /** @var \Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset $source */
+        $source = $result->_entity->getSource();
+        $source->setAssetData($result->object);
       }
     }
   }

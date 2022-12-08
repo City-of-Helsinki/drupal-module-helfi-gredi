@@ -233,35 +233,35 @@ class Asset implements EntityInterface, \JsonSerializable {
         }
       }
     }
-
-    // TODO we should decide how we can clean up the old images (maybe use cache data binary instead of saving as image)
-    // Create subfolders by month.
-    $current_timestamp = \Drupal::time()->getCurrentTime();
-    $date_output = \Drupal::service('date.formatter')->format($current_timestamp, 'custom', 'd/M/Y');
-    $date = str_replace('/', '-', substr($date_output, 3, 8));
-
-    // Asset name contains id and last updated date.
-    $asset_name = $asset->id . '_' . strtotime($asset->modified) . substr($asset->name, strrpos($asset->name, "."));
-    // Create month folder.
-    /** @var \Drupal\Core\File\FileSystemInterface $file_service */
-    $file_service = \Drupal::service('file_system');
-
-    $directory = sprintf('public://gredidam/thumbs/' . $date);
-
-    $file_service->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
-
-    $location = sprintf('public://gredidam/thumbs/%s/%s', $date, $asset_name);
-    $fileContent = \Drupal::service('helfi_gredi_image.dam_client')->fetchRemoteAssetData($asset, $asset->name, FALSE);
-
-    /** @var \Drupal\Core\File\FileUrlGeneratorInterface $url_generator */
-    $url_generator = \Drupal::service('file_url_generator');
-
-    $url = $url_generator->generate($location)->toString();
-
-    if (!file_exists($location)) {
-      $file_service->saveData($fileContent, $location, FileSystemInterface::EXISTS_REPLACE);
-    }
-    $asset->apiPreviewLink = $url;
+//
+//    // TODO we should decide how we can clean up the old images (maybe use cache data binary instead of saving as image)
+//    // Create subfolders by month.
+//    $current_timestamp = \Drupal::time()->getCurrentTime();
+//    $date_output = \Drupal::service('date.formatter')->format($current_timestamp, 'custom', 'd/M/Y');
+//    $date = str_replace('/', '-', substr($date_output, 3, 8));
+//
+//    // Asset name contains id and last updated date.
+//    $asset_name = $asset->id . '_' . strtotime($asset->modified) . substr($asset->name, strrpos($asset->name, "."));
+//    // Create month folder.
+//    /** @var \Drupal\Core\File\FileSystemInterface $file_service */
+//    $file_service = \Drupal::service('file_system');
+//
+//    $directory = sprintf('public://gredidam/thumbs/' . $date);
+//
+//    $file_service->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
+//
+//    $location = sprintf('public://gredidam/thumbs/%s/%s', $date, $asset_name);
+//    $fileContent = \Drupal::service('helfi_gredi_image.dam_client')->fetchRemoteAssetData($asset, $asset->name, FALSE);
+//
+//    /** @var \Drupal\Core\File\FileUrlGeneratorInterface $url_generator */
+//    $url_generator = \Drupal::service('file_url_generator');
+//
+//    $url = $url_generator->generate($location)->toString();
+//
+//    if (!file_exists($location)) {
+//      $file_service->saveData($fileContent, $location, FileSystemInterface::EXISTS_REPLACE);
+//    }
+//    $asset->apiPreviewLink = $url;
 
     return $asset;
   }

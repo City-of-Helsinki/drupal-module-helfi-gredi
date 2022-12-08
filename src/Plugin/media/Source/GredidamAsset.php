@@ -6,6 +6,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldTypePluginManagerInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\media\MediaInterface;
 use Drupal\media\MediaSourceBase;
@@ -54,6 +55,8 @@ class GredidamAsset extends MediaSourceBase {
    * @var \Drupal\helfi_gredi_image\Service\AssetMediaFactory
    */
   protected $assetMediaFactory;
+
+  protected $assetData = [];
 
   /**
    * GredidamAsset constructor.
@@ -118,7 +121,7 @@ class GredidamAsset extends MediaSourceBase {
    */
   public function defaultConfiguration() {
     return [
-      'source_field' => 'field_external_id',
+      'source_field' => 'gredi_asset_id',
     ];
   }
 
@@ -189,16 +192,95 @@ class GredidamAsset extends MediaSourceBase {
    *   The metadata value or NULL if unset.
    */
   public function getMetadata(MediaInterface $media, $attribute_name) {
+//    switch ($attribute_name) {
+//      case 'default_name':
+//        return 'media:' . $media->bundle() . ':' . $media->uuid();
+//
+//      case 'thumbnail_uri':
+//        $default_thumbnail_filename = $this->pluginDefinition['default_thumbnail_filename'];
+//        return $this->configFactory->get('media.settings')->get('icon_base_uri') . '/' . $default_thumbnail_filename;
+//    }
+//
+//    [$asset_id, $version_id] = array_values($this->getSourceFieldValue($media));
+//
+//    if (empty($asset_id)) {
+//      return NULL;
+//    }
+//    if ($version_id === NULL) {
+//      $version_id = '';
+//    }
+//
+//    $asset = $this->assetData;
+//    if ($asset === []) {
+//      try {
+//        $asset = $this->clientFactory->getSiteClient()->getAsset($asset_id, $version_id);
+//      }
+//      catch (\Exception $exception) {
+//        $this->damLoggerChannel->error(sprintf(
+//            'Following error occurred while trying to get asset from dam. Asset: %s, error: %s',
+//            $asset_id,
+//            $exception->getMessage()
+//          )
+//        );
+//        return NULL;
+//      }
+//    }
+
     switch ($attribute_name) {
       case 'name':
         return parent::getMetadata($media, 'default_name');
 
       case 'thumbnail_uri':
+        // TODO if media exists
+
+        if ($this->assetData) {
+          try {
+            $assetId = $this->assetData['id'];
+            $assetName = $this->assetData['name'];
+            $assetModified = $this->assetData['modified'];
+            // Create subfolders by month.
+            $current_timestamp = \Drupal::time()->getCurrentTime();
+            $date_output = \Drupal::service('date.formatter')->format($current_timestamp, 'custom', 'd/M/Y');
+            $date = str_replace('/', '-', substr($date_output, 3, 8));
+
+            // Asset name contains id and last updated date.
+            $asset_name = $assetId . '_' . strtotime($assetModified) . substr($assetName, strrpos($assetName, "."));
+            // Create month folder.
+            /** @var \Drupal\Core\File\FileSystemInterface $file_service */
+            $file_service = \Drupal::service('file_system');
+
+            $directory = sprintf('public://gredidam/thumbs/' . $date);
+
+            $file_service->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
+
+            $location = sprintf('public://gredidam/thumbs/%s/%s', $date, $asset_name);
+            /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $service */
+            $client = \Drupal::service('helfi_gredi_image.dam_client');
+            $fileContent = $client->getFileContent($assetId, $this->assetData['apiPreviewLink']);
+
+            /** @var \Drupal\Core\File\FileUrlGeneratorInterface $url_generator */
+            $url_generator = \Drupal::service('file_url_generator');
+            //          $url = $url_generator->generate($location)->toString();
+            if (!file_exists($location)) {
+              $file_service->saveData($fileContent, $location, FileSystemInterface::EXISTS_REPLACE);
+            }
+
+            return $location;
+          }
+          catch (\Exception $e) {
+            return '';
+          }
+
+
+        }
+        else {
+          return '';
+        }
         return $this->assetImageHelper->getThumbnail(
           $this->assetMediaFactory->get($media)->getFile('field_media_image', 'target_id')
         );
     }
-
+    // TODO - refactor this !?
     if ($this->currentAsset === NULL) {
       $asset = $this->assetMediaFactory->get($media)->getAsset();
       $this->currentAsset = $asset;
@@ -212,4 +294,17 @@ class GredidamAsset extends MediaSourceBase {
     return $this->assetMetadataHelper->getMetadataFromAsset($this->currentAsset, $attribute_name);
   }
 
+
+  /**
+   * Sets the asset data.
+   *
+   * @param array $data
+   *   The asset data.
+   */
+  public function setAssetData(array $data) {
+    $this->assetData = $data;
+  }
+
 }
+
+

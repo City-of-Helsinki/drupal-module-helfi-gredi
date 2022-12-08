@@ -65,7 +65,8 @@ class GrediDamAuthService implements DamAuthServiceInterface {
   public function __construct(ClientInterface $guzzleClient) {
     $this->guzzleClient = $guzzleClient;
     $config = $this->getConfig();
-    $this->apiUrl = trim($config->get('api_url') ?? '', "/");
+    $this->baseApiUrl = trim($config->get('api_url') ?? '', "/");
+    $this->apiUrl = $this->baseApiUrl . '/api/v1';
     $this->username = $config->get('username') ?? '';
     $this->password = $config->get('password') ?? '';
     $this->customer = $config->get('customer') ?? '';
@@ -84,12 +85,12 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    * {@inheritDoc}
    */
   public function getCookieJar() {
-    if ($this->cookieJar) {
+    if ($this->cookieJar instanceof CookieJar) {
       return $this->cookieJar;
     }
     // TODO inject service with dep injection.
     $sessionId = \Drupal::state()->get(self::SESSION_ID_STATE_NAME);
-    if ($sessionId) {
+    if (!empty($sessionId)) {
       $urlParts = parse_url($this->apiUrl);
       $this->cookieJar = CookieJar::fromArray([
         'JSESSIONID' => $sessionId,
@@ -236,19 +237,19 @@ class GrediDamAuthService implements DamAuthServiceInterface {
         $size = strpos($getCookie, ';', $subtring_start) - $subtring_start;
         $sessionId = substr($getCookie, $subtring_start, $size);
 
+        $this->cookieJar = NULL;
         $this->setSessionId($sessionId);
+        $this->getCookieJar();
         return TRUE;
       }
       else {
         throw new \Exception('Authentication failed');
       }
     }
-    catch (ClientException $e) {
-      $status_code = $e->getResponse()->getStatusCode();
+    catch (\Exception $e) {
       \Drupal::logger('helfi_gredi_image')->error(
-        'Unable to authenticate. DAM API client returned a @code exception code with the following message: %message',
+        'Unable to authenticate. DAM API client returned with the following message: %message',
         [
-          '@code' => $status_code,
           '%message' => $e->getMessage(),
         ]
       );

@@ -6,10 +6,15 @@
  */
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\entity\BundleFieldDefinition;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use Drupal\file\Entity\File;
-use \Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\media\MediaTypeInterface;
+use Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset;
 
 /**
  * Implements hook_theme().
@@ -22,6 +27,43 @@ function media_gredidam_theme($existing, $type, $theme, $path) {
     ],
   ];
 }
+
+/**
+ * Implements hook_entity_field_storage_info().
+ */
+function media_gredidam_entity_field_storage_info(EntityTypeInterface $entity_type): array {
+  $definitions = [];
+  if ($entity_type->id() === 'media') {
+    $definitions['gredi_asset_id'] = BundleFieldDefinition::create('string')
+      ->setName('gredi_asset_id')
+      ->setLabel('gredi_asset_id')
+//      ->setTargetEntityTypeId('gredi_dam_assets')
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
+  }
+  return $definitions;
+}
+
+/**
+ * Implements hook_entity_bundle_field_info().
+ */
+function media_gredidam_entity_bundle_field_info(EntityTypeInterface $entity_type, $bundle, array $base_field_definitions) {
+  $definitions = [];
+  if ($entity_type->id() === 'media') {
+    $media_type_storage = Drupal::entityTypeManager()->getStorage('media_type');
+    $media_type = $media_type_storage->load($bundle);
+    if (!$media_type instanceof MediaTypeInterface) {
+      return $definitions;
+    }
+    if ($media_type->getSource() instanceof GredidamAsset) {
+      $definitions['gredi_asset_id'] = BundleFieldDefinition::create('string')
+        ->setName('gredi_asset_id')
+        ->setLabel(new TranslatableMarkup('Asset reference'));
+    }
+  }
+  return $definitions;
+}
+
 
 /**
  * Implements hook_cron().
