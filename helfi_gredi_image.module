@@ -31,13 +31,15 @@ function media_gredidam_theme($existing, $type, $theme, $path) {
 /**
  * Implements hook_entity_field_storage_info().
  */
-function media_gredidam_entity_field_storage_info(EntityTypeInterface $entity_type): array {
+function helfi_gredi_image_entity_field_storage_info(EntityTypeInterface $entity_type): array {
   $definitions = [];
   if ($entity_type->id() === 'media') {
     $definitions['gredi_asset_id'] = BundleFieldDefinition::create('string')
       ->setName('gredi_asset_id')
       ->setLabel('gredi_asset_id')
-//      ->setTargetEntityTypeId('gredi_dam_assets')
+      ->setTranslatable(FALSE)
+      ->setRevisionable(FALSE)
+      ->setTargetEntityTypeId('media')
       ->setDisplayConfigurable('view', TRUE)
       ->setDisplayConfigurable('form', TRUE);
   }
@@ -47,7 +49,7 @@ function media_gredidam_entity_field_storage_info(EntityTypeInterface $entity_ty
 /**
  * Implements hook_entity_bundle_field_info().
  */
-function media_gredidam_entity_bundle_field_info(EntityTypeInterface $entity_type, $bundle, array $base_field_definitions) {
+function helfi_gredi_image_entity_bundle_field_info(EntityTypeInterface $entity_type, $bundle, array $base_field_definitions) {
   $definitions = [];
   if ($entity_type->id() === 'media') {
     $media_type_storage = Drupal::entityTypeManager()->getStorage('media_type');
@@ -58,7 +60,9 @@ function media_gredidam_entity_bundle_field_info(EntityTypeInterface $entity_typ
     if ($media_type->getSource() instanceof GredidamAsset) {
       $definitions['gredi_asset_id'] = BundleFieldDefinition::create('string')
         ->setName('gredi_asset_id')
-        ->setLabel(new TranslatableMarkup('Asset reference'));
+        ->setLabel(new TranslatableMarkup('Asset reference'))
+        ->setTranslatable(FALSE)
+        ->setRevisionable(FALSE);
     }
   }
   return $definitions;

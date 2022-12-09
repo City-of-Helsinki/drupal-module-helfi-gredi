@@ -191,7 +191,7 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
       /** @var \stdClass $item */
       $item = new \stdClass();
       $item->media_id = $gredi_asset->id();
-      $item->external_id = $gredi_asset->get('field_external_id')->getString();
+      $item->external_id = $gredi_asset->get('gredi_asset_id')->getString();
       $queue->createItem($item);
     }
 

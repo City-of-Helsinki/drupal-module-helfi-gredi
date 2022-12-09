@@ -92,71 +92,106 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
 
     $location = 'public://gredidam';
 
-    /** @var \Drupal\helfi_gredi_image\Service\AssetFileEntityHelper $fileHelper */
-    $fileHelper = \Drupal::service('helfi_gredi_image.asset_file.helper');
-    $file = $fileHelper->createNewFile($asset, $location);
+    $assetsData = $form_state->get('assetsData');
+
+    $media_ids = [];
+    foreach ($selected_ids as $id) {
+      if (empty($assetsData[$id])) {
+        // TODO nasol
+        continue;
+      }
+      // TODO Entity query by gredi_asset_id = $id - maybe in a service method if not already?
+      // TODO if media exists, than skip the creation part.
+      // TODO maybe check for changes !? modified since !?
+
+      // Query for existing entities.
+      /** @var \Drupal\Core\Entity\EntityTypeManager $entityTypeManager */
+      $entityTypeManager = \Drupal::service('entity_type.manager');
+      $existing_ids = $entityTypeManager
+        ->getStorage('media')
+        ->getQuery()
+        ->condition('bundle', 'gredi_dam_assets')
+        ->condition('gredi_asset_id', $id)
+        ->execute();
+
+//      $entities = $this->entityTypeManager->getStorage('media')
+//        ->loadMultiple($existing_ids);
+      if ($existing_ids) {
+        $media_ids[] = end($existing_ids);
+      }
+      else {
+        /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
+        $entityTypeManager = \Drupal::service('entity_type.manager');
+        /** @var \Drupal\media\MediaTypeInterface $media_type */
+        $media_type = $entityTypeManager->getStorage('media_type')
+          ->load('gredi_dam_assets');
+
+        $source_field = $media_type->getSource()
+          ->getSourceFieldDefinition($media_type)
+          ->getName();
+
+        $entity = Media::create([
+          'bundle' => $media_type->id(),
+          'uid' => \Drupal::currentUser()->id(),
+          'langcode' => \Drupal::languageManager()->getCurrentLanguage()->getId(),
+          // @todo Find out if we can use status from Gredi DAM.
+          'status' => 1,
+          'gredi_asset_id' => $id,
+        ]);
+        /** @var \Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset $source */
+        $source = $entity->getSource();
+        $source->setAssetData($assetsData[$id]);
+        $assetName = $source->getMetadata($entity, 'name');
+        $entity->set('name', $assetName);
+
+        $file = $source->getMetadata($entity, 'original_file');
+        if (empty($file)) {
+          \Drupal::messenger()->addError('Unable to fetch or create file');
+        }
+        else {
+          $entity->set('field_media_image', ['target_id' => $file->id()]);
 
 
-//    /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
-//    $entityTypeManager = \Drupal::service('entity_type.manager');
-//    /** @var \Drupal\media\MediaTypeInterface $media_type */
-//    $media_type = $entityTypeManager->getStorage('media_type');
-//      ->load($this->configuration['media_type']);
+        // TODO what changed/modified should we store?
+//          'created' => strtotime($asset->created),
+//          'changed' => strtotime($asset->created),
 
-    // Get the source field for this type which stores the asset id.
-//    $source_field = $media_type->getSource()
-//      ->getSourceFieldDefinition($media_type)
-//      ->getName();
+//        $currentLanguage = $this->languageManager->getCurrentLanguage()->getId();
+//        // Check enabled languages.
+//        $siteLanguages = array_keys($this->languageManager->getLanguages());
 //
-//    $entity = Media::create([
-//      'bundle' => $media_type->id(),
-//      'uid' => $this->user->id(),
-//      'langcode' => $this->languageManager->getCurrentLanguage()->getId(),
-//      // @todo Find out if we can use status from Gredi DAM.
-//      'status' => 1,
-//      'name' => $asset->name,
-//      'field_media_image' => [
-//        'target_id' => $file->id(),
-//      ],
-//      $source_field => [
-//        'asset_id' => $asset->external_id,
-//      ],
-//      'created' => strtotime($asset->created),
-//      'changed' => strtotime($asset->created),
-//    ]);
-//
-//    $currentLanguage = $this->languageManager->getCurrentLanguage()->getId();
-//    // Check enabled languages.
-//    $siteLanguages = array_keys($this->languageManager->getLanguages());
-//
-//    foreach ($asset->keywords as $key => $lang) {
-//      if (in_array($key, $siteLanguages)) {
-//        // For current language case no translation will be added.
-//        if ($key == $currentLanguage) {
-//          $entity->field_media_image = $file->id();
-//          $entity->field_keywords = $asset->keywords[$key];
-//          $entity->field_alt_text = $asset->alt_text[$key];
-//          continue;
+//        foreach ($asset->keywords as $key => $lang) {
+//          if (in_array($key, $siteLanguages)) {
+//            // For current language case no translation will be added.
+//            if ($key == $currentLanguage) {
+//              $entity->field_media_image = $file->id();
+//              $entity->field_keywords = $asset->keywords[$key];
+//              $entity->field_alt_text = $asset->alt_text[$key];
+//              continue;
+//            }
+//            $entity->addTranslation($key, [
+//              'name' => $asset->name,
+//              'field_media_image' => [
+//                'target_id' => $file->id(),
+//              ],
+//              'field_keywords' => (!empty($asset->keywords[$key]) ? $asset->keywords[$key] : ''),
+//              'field_alt_text' => (!empty($asset->alt_text[$key]) ? $asset->alt_text[$key] : ''),
+//            ]);
+//          }
 //        }
-//        $entity->addTranslation($key, [
-//          'name' => $asset->name,
-//          'field_media_image' => [
-//            'target_id' => $file->id(),
-//          ],
-//          'field_keywords' => (!empty($asset->keywords[$key]) ? $asset->keywords[$key] : ''),
-//          'field_alt_text' => (!empty($asset->alt_text[$key]) ? $asset->alt_text[$key] : ''),
-//        ]);
-//      }
-//    }
-//
-//    $entity->save();
+
+          $entity->save();
+          $media_ids[] = $entity->id();
+        }
+      }
+    }
 
     // Allow the opener service to handle the selection.
     $state = MediaLibraryState::fromRequest($request);
 
     return \Drupal::service('media_library.opener_resolver')
       ->get($state)
-      ->getSelectionResponse($state, $selected_ids)
+      ->getSelectionResponse($state, $media_ids)
       ->addCommand(new CloseDialogCommand());
   }
 
@@ -179,17 +214,22 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
     // Render checkboxes for all rows.
     $form[$this->options['id']]['#tree'] = TRUE;
     foreach ($this->view->result as $row_index => $row) {
+      /** @var \Drupal\media\MediaInterface $entity */
       $entity = $this->getEntity($row);
+      $externalId = $entity->get('gredi_asset_id')->value;
       $form[$this->options['id']][$row_index] = [
         '#type' => 'checkbox',
         '#title' => $this->t('Select @label', [
           '@label' => $entity->label(),
         ]),
         '#title_display' => 'invisible',
-        // TODO change with asset->id
-        '#return_value' => $entity->id(),
+        '#return_value' => $externalId,
       ];
+      /** @var \Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset $source */
+      $source = $entity->getSource();
+      $assetsData[$externalId] = $source->getAssetData();
     }
+    $form_state->set('assetsData', $assetsData);
 
     // The selection is persistent across different pages in the media library
     // and populated via JavaScript.

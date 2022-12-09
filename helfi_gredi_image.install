@@ -58,8 +58,8 @@ function helfi_gredi_image_uninstall() {
   FieldStorageConfig::load('media.field_alt_text')->delete();
   FieldStorageConfig::load('media.field_keywords')->delete();
   FieldStorageConfig::load('media.field_created')->delete();
-  FieldStorageConfig::load('media.field_external_id_image')->delete();
-//
+
+  //
 //  $table_name = 'gredidam_assets_data';
 //  $db_schema = Drupal::database()->schema();
 //  if ($db_schema->tableExists($table_name)) {

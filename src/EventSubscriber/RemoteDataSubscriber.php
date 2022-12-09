@@ -73,7 +73,6 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
           'mid' => $result->id,
           'bundle' => 'gredi_dam_assets',
           'name' => $result->name,
-          // TODO how we inject the thumnail here?
           'gredi_asset_id' => [
             'value' => $result->id,
           ],
@@ -86,7 +85,6 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
         else {
           $source->setAssetData('');
         }
-
       }
     }
   }
