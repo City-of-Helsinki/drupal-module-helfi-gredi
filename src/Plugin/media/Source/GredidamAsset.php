@@ -8,11 +8,13 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldTypePluginManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Image\ImageFactory;
 use Drupal\media\MediaInterface;
 use Drupal\media\MediaSourceBase;
 use Drupal\helfi_gredi_image\Service\AssetImageHelper;
 use Drupal\helfi_gredi_image\Service\AssetMediaFactory;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
+use Drupal\media\Plugin\media\Source\Image;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -26,7 +28,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   allowed_field_types = {"string"},
  * )
  */
-class GredidamAsset extends MediaSourceBase {
+class GredidamAsset extends Image {
 
   /**
    * The asset that we're going to render details for.
@@ -58,6 +60,12 @@ class GredidamAsset extends MediaSourceBase {
 
   protected $assetData = [];
 
+  /** @var ImageFactory */
+  protected $imageFactory;
+
+  /** @var FileSystemInterface */
+  protected $fileSystem;
+
   /**
    * GredidamAsset constructor.
    *
@@ -73,7 +81,9 @@ class GredidamAsset extends MediaSourceBase {
     ConfigFactoryInterface $config_factory,
     AssetImageHelper $assetImageHelper,
     AssetMetadataHelper $assetMetadataHelper,
-    AssetMediaFactory $assetMediaFactory) {
+    AssetMediaFactory $assetMediaFactory,
+    ImageFactory $imageFactory,
+    FileSystemInterface $fileSystem) {
     parent::__construct(
       $configuration,
       $plugin_id,
@@ -81,7 +91,9 @@ class GredidamAsset extends MediaSourceBase {
       $entity_type_manager,
       $entity_field_manager,
       $field_type_manager,
-      $config_factory
+      $config_factory,
+      $imageFactory,
+      $fileSystem
     );
 
     $this->assetImageHelper = $assetImageHelper;
@@ -112,7 +124,9 @@ class GredidamAsset extends MediaSourceBase {
       $container->get('config.factory'),
       $container->get('helfi_gredi_image.asset_image.helper'),
       $container->get('helfi_gredi_image.asset_metadata.helper'),
-      $container->get('helfi_gredi_image.asset_media.factory')
+      $container->get('helfi_gredi_image.asset_media.factory'),
+      $container->get('image.factory'),
+      $container->get('file_system')
     );
   }
 
@@ -121,7 +135,7 @@ class GredidamAsset extends MediaSourceBase {
    */
   public function defaultConfiguration() {
     return [
-      'source_field' => 'gredi_asset_id',
+      'source_field' => 'field_media_image',
     ];
   }
 
@@ -192,42 +206,11 @@ class GredidamAsset extends MediaSourceBase {
    *   The metadata value or NULL if unset.
    */
   public function getMetadata(MediaInterface $media, $attribute_name) {
-//    switch ($attribute_name) {
-//      case 'default_name':
-//        return 'media:' . $media->bundle() . ':' . $media->uuid();
-//
-//      case 'thumbnail_uri':
-//        $default_thumbnail_filename = $this->pluginDefinition['default_thumbnail_filename'];
-//        return $this->configFactory->get('media.settings')->get('icon_base_uri') . '/' . $default_thumbnail_filename;
-//    }
-//
-//    [$asset_id, $version_id] = array_values($this->getSourceFieldValue($media));
-//
-//    if (empty($asset_id)) {
-//      return NULL;
-//    }
-//    if ($version_id === NULL) {
-//      $version_id = '';
-//    }
-//
-//    $asset = $this->assetData;
-//    if ($asset === []) {
-//      try {
-//        $asset = $this->clientFactory->getSiteClient()->getAsset($asset_id, $version_id);
-//      }
-//      catch (\Exception $exception) {
-//        $this->damLoggerChannel->error(sprintf(
-//            'Following error occurred while trying to get asset from dam. Asset: %s, error: %s',
-//            $asset_id,
-//            $exception->getMessage()
-//          )
-//        );
-//        return NULL;
-//      }
-//    }
-
     switch ($attribute_name) {
       case 'name':
+        if (!$media->isNew()) {
+          return $media->getName();
+        }
         if (!empty($this->assetData['name'])) {
           return $this->assetData['name'];
         }
@@ -235,14 +218,13 @@ class GredidamAsset extends MediaSourceBase {
 
       case 'thumbnail_uri':
         if (!$media->isNew()) {
-          /** @var \Drupal\file\FileInterface $file */
-          $file = $media->get('field_media_image')->entity;
-          // TODO return the thumbnail uri.
-          return $file->getFileUri();
+          return parent::getMetadata($media, $attribute_name);
         }
         if (empty($this->assetData)) {
-          return '';
+          $default_thumbnail_filename = $this->pluginDefinition['default_thumbnail_filename'];
+          return $this->configFactory->get('media.settings')->get('icon_base_uri') . '/' . $default_thumbnail_filename;
         }
+        // Fetching asset thumbnail or from local.
         try {
           $assetId = $this->assetData['id'];
           $assetName = $this->assetData['name'];
@@ -254,71 +236,37 @@ class GredidamAsset extends MediaSourceBase {
 
           // Asset name contains id and last updated date.
           $asset_name = $assetId . '_' . strtotime($assetModified) . substr($assetName, strrpos($assetName, "."));
-          // Create month folder.
-          /** @var \Drupal\Core\File\FileSystemInterface $file_service */
-          $file_service = \Drupal::service('file_system');
+          $directory = 'public://gredidam/thumbs/' . $date;
+          $this->fileSystem->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
 
-          $directory = 'public://gredidam/thumbs';
-
-          $file_service->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
-
-          $location = sprintf($directory . '/%s/%s', $date, $asset_name);
-
+          $location = $directory . '/' .$asset_name;
           if (!file_exists($location)) {
-            /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $service */
+            /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $client */
             $client = \Drupal::service('helfi_gredi_image.dam_client');
             $fileContent = $client->getFileContent($assetId, $this->assetData['apiPreviewLink']);
-            $file_service->saveData($fileContent, $location, FileSystemInterface::EXISTS_REPLACE);
+            $this->fileSystem->saveData($fileContent, $location, FileSystemInterface::EXISTS_REPLACE);
           }
 
           return $location;
         }
         catch (\Exception $e) {
+          $this->messenger()->addError('Error fetching and saving thumbnail');
           return '';
         }
 
       case 'original_file':
-        // TODO if media exists and if modified !?
-        if (!$media->isNew()) {
-          $media->get('field_media_image')->entity;
-        }
-        if (empty($this->assetData)) {
-          return NULL;
-        }
-        try {
-          $assetId = $this->assetData['id'];
-          $assetName = $this->assetData['name'];
-          $assetModified = $this->assetData['modified'];
-          // Create subfolders by month.
-          $current_timestamp = \Drupal::time()->getCurrentTime();
-          $date_output = \Drupal::service('date.formatter')->format($current_timestamp, 'custom', 'd/M/Y');
-          $date = str_replace('/', '-', substr($date_output, 3, 8));
+//        if (!$media->isNew()) {
+//          return $media->get($this->configuration['source_field'])->entity;
+//        }
 
-          // Asset name contains id and last updated date.
-          $asset_name = $assetId . '_' . strtotime($assetModified) . substr($assetName, strrpos($assetName, "."));
-          // Create month folder.
-          /** @var \Drupal\Core\File\FileSystemInterface $file_service */
-          $file_service = \Drupal::service('file_system');
-
-          $directory = 'public://gredidam/original/' . $date;
-
-          $file_service->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
-
-          $location = $directory . '/' . $asset_name;
-          /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $service */
-          $client = \Drupal::service('helfi_gredi_image.dam_client');
-          $fileContent = $client->getFileContent($assetId, $this->assetData['apiContentLink']);
-
-          /** @var \Drupal\file\FileRepositoryInterface $file_repository */
-          $file_repository = \Drupal::service('file.repository');
-          $file = $file_repository->writeData($fileContent, $location, FileSystemInterface::EXISTS_REPLACE);
-
-          return $file;
-        }
-        catch (\Exception $e) {
-          return NULL;
-        }
+        return $this->getOriginalFile();
     }
+
+    // TODO add more cases for metadata !?
+    //        case 'keywords':
+    //      case 'alt_text':
+    //      case 'created':
+    //      case 'modified':
 
 
     // TODO - refactor this !?
@@ -348,6 +296,43 @@ class GredidamAsset extends MediaSourceBase {
 
   public function getAssetData() {
     return $this->assetData;
+  }
+
+
+  public function getOriginalFile() {
+    if (empty($this->assetData)) {
+      return NULL;
+    }
+    try {
+      $assetId = $this->assetData['id'];
+      $assetName = $this->assetData['name'];
+      $assetModified = $this->assetData['modified'];
+      /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $service */
+      $client = \Drupal::service('helfi_gredi_image.dam_client');
+      $fileContent = $client->getFileContent($assetId, $this->assetData['apiContentLink']);
+
+      // Create subfolders by month.
+      $current_timestamp = \Drupal::time()->getCurrentTime();
+      $date_output = \Drupal::service('date.formatter')->format($current_timestamp, 'custom', 'd/M/Y');
+      $date = str_replace('/', '-', substr($date_output, 3, 8));
+
+      // Create month folder.
+      $directory = 'public://gredidam/original/' . $date;
+
+      $this->fileSystem->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
+
+      $location = $directory . '/' . $assetName;
+
+
+      /** @var \Drupal\file\FileRepositoryInterface $file_repository */
+      $file_repository = \Drupal::service('file.repository');
+      $file = $file_repository->writeData($fileContent, $location);
+
+      return $file;
+    }
+    catch (\Exception $e) {
+      return NULL;
+    }
   }
 
 }

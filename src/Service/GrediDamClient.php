@@ -14,6 +14,7 @@ use Drupal\helfi_gredi_image\Entity\Category;
 use Drupal\helfi_gredi_image\DamClientInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -34,9 +35,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * A fully-configured Guzzle client to pass to the dam client.
    *
-   * @var \GuzzleHttp\ClientInterface
+   * @var \GuzzleHttp\Client
    */
-  protected $guzzleClient;
+  protected $httpClient;
 
   /**
    * Datastore for the specific metadata fields.
@@ -126,7 +127,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     GrediDamAuthService $grediDamAuthService,
     LoggerChannelFactoryInterface $loggerChannelFactory
   ) {
-    $this->guzzleClient = $guzzleClient;
+    $this->httpClient = $guzzleClient;
     $this->config = $config;
     $this->authService = $grediDamAuthService;
     $this->loggerChannel = $loggerChannelFactory->get('helfi_gredi_image');
@@ -168,7 +169,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         if ($queryParams) {
           $url = sprintf("%s?%s", $url, http_build_query($queryParams));
         }
-        $response = $this->guzzleClient->get($url, $options);
+        $response = $this->httpClient->get($url, $options);
         $retry = FALSE;
       }
       catch (ClientException $e) {
@@ -177,9 +178,21 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
           $login_retry = TRUE;
         }
         else {
+          $this->loggerChannel->error(t('Error on calling @url : @error', [
+            '@error' => $e->getMessage(),
+            '@url' => $url,
+          ]));
           throw new \Exception($e->getMessage());
         }
       }
+      catch (GuzzleException $e) {
+        $this->loggerChannel->error(t('Error on calling @url : @error', [
+          '@error' => $e->getMessage(),
+          '@url' => $url,
+        ]));
+        throw new \Exception($e->getMessage());
+      }
+
     }
 
     return $response;
@@ -580,7 +593,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $requestBody .= "--" . $boundary . "--\r\n";
       $requestBody .= "\r\n";
       try {
-        $response = $this->guzzleClient->request('POST', $urlUpload, [
+        $response = $this->httpClient->request('POST', $urlUpload, [
           'cookies' => $this->authService->getCookieJar(),
           'headers' => [
             'Content-Type' => 'multipart/form-data;boundary=' . $boundary,
@@ -626,7 +639,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       if (!$this->authService->isAuthenticated()) {
         $this->authService->authenticate();
       }
-      $response = $this->guzzleClient->request('POST', $url, [
+      $response = $this->httpClient->request('POST', $url, [
         'cookies' => $this->authService->getCookieJar(),
         'headers' => [
           'Content-Type' => 'application/json',

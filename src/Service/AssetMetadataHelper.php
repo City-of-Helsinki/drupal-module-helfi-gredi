@@ -126,11 +126,13 @@ class AssetMetadataHelper implements ContainerInjectionInterface {
    *   An array of possible metadata attributes keyed by their ID.
    */
   public function getMetadataAttributeLabels() {
+    // TODO reasses this list?
     $fields = [
       'external_id' => $this->t('External ID'),
       'keywords' => $this->t('Keywords'),
       'alt_text' => $this->t('Alt text'),
       'created' => $this->t('Created'),
+      'modified' => $this->t('Modified'),
       'media_image' => $this->t('Image'),
     ];
 

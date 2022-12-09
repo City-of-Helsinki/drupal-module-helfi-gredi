@@ -79,18 +79,8 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
    *   A command to send the selection to the current field widget.
    */
   public static function updateWidget(array &$form, FormStateInterface $form_state, Request $request) {
-    $field_id = $form_state->getTriggeringElement()['#field_id'];
-
     $selected_ids = $form_state->getValue('media_library_select_form');
-
     $selected_ids = $selected_ids ? array_filter($selected_ids) : [];
-
-    // Fetch selected asset by id.
-    /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $gredi_client */
-    $gredi_client = \Drupal::service('helfi_gredi_image.dam_client');
-    $asset = $gredi_client->getAsset(current($selected_ids));
-
-    $location = 'public://gredidam';
 
     $assetsData = $form_state->get('assetsData');
 
@@ -151,7 +141,6 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         else {
           $entity->set('field_media_image', ['target_id' => $file->id()]);
 
-
         // TODO what changed/modified should we store?
 //          'created' => strtotime($asset->created),
 //          'changed' => strtotime($asset->created),
@@ -204,65 +193,16 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
    *   The current state of the form.
    */
   public function viewsForm(array &$form, FormStateInterface $form_state) {
-    $form['#attributes']['class'] = ['js-media-library-views-form'];
-
-    // Add an attribute that identifies the media type displayed in the form.
-    if (isset($this->view->args[0])) {
-      $form['#attributes']['data-drupal-media-type'] = $this->view->args[0];
-    }
-
-    // Render checkboxes for all rows.
-    $form[$this->options['id']]['#tree'] = TRUE;
+    parent::viewsForm($form, $form_state);
     foreach ($this->view->result as $row_index => $row) {
-      /** @var \Drupal\media\MediaInterface $entity */
       $entity = $this->getEntity($row);
       $externalId = $entity->get('gredi_asset_id')->value;
-      $form[$this->options['id']][$row_index] = [
-        '#type' => 'checkbox',
-        '#title' => $this->t('Select @label', [
-          '@label' => $entity->label(),
-        ]),
-        '#title_display' => 'invisible',
-        '#return_value' => $externalId,
-      ];
+      $form[$this->options['id']][$row_index]['#return_value'] = $externalId;
       /** @var \Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset $source */
       $source = $entity->getSource();
       $assetsData[$externalId] = $source->getAssetData();
     }
     $form_state->set('assetsData', $assetsData);
-
-    // The selection is persistent across different pages in the media library
-    // and populated via JavaScript.
-    $selection_field_id = $this->options['id'] . '_selection';
-    $form[$selection_field_id] = [
-      '#type' => 'hidden',
-      '#attributes' => [
-        // This is used to identify the hidden field in the form via JavaScript.
-        'id' => 'media-library-modal-selection',
-      ],
-    ];
-
-    // @todo Remove in https://www.drupal.org/project/drupal/issues/2504115
-    // Currently the default URL for all AJAX form elements is the current URL,
-    // not the form action. This causes bugs when this form is rendered from an
-    // AJAX path like /views/ajax, which cannot process AJAX form submits.
-    $query = $this->view->getRequest()->query->all();
-    $query[FormBuilderInterface::AJAX_FORM_REQUEST] = TRUE;
-    $query['views_display_id'] = $this->view->getDisplay()->display['id'];
-    $form['actions']['submit']['#ajax'] = [
-      'url' => Url::fromRoute('media_library.ui'),
-      'options' => [
-        'query' => $query,
-      ],
-      'callback' => [static::class, 'updateWidget'],
-      // The AJAX system automatically moves focus to the first tabbable
-      // element of the modal, so we need to disable refocus on the button.
-      'disable-refocus' => TRUE,
-    ];
-
-    $form['actions']['submit']['#value'] = $this->t('Select Assets');
-    $form['actions']['submit']['#button_type'] = 'primary';
-    $form['actions']['submit']['#field_id'] = $selection_field_id;
   }
 
   /**

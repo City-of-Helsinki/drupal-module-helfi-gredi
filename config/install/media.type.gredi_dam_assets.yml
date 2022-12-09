@@ -13,7 +13,7 @@ source: gredidam_asset
 queue_thumbnail_downloads: false
 new_revision: false
 source_configuration:
-  source_field: field_external_id
+  source_field: field_media_image
 field_map:
   external_id: field_external_id
   keywords: field_keywords
