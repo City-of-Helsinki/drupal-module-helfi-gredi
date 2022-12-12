@@ -4,52 +4,6 @@ use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 
 /**
- * Implements hook_schema().
- */
-function helfi_gredi_image_schema() {
-  $schema = [];
-  $schema['gredidam_assets_data'] = [
-    'description' => 'Gredi DAM asset information.',
-    'fields' => [
-      'asset_id' => [
-        'description' => 'The asset ID.',
-        'default' => '',
-        'type' => 'varchar_ascii',
-        'not null' => TRUE,
-        'length' => 128,
-      ],
-      'name' => [
-        'description' => 'The identifier of the data.',
-        'type' => 'varchar_ascii',
-        'length' => 128,
-        'not null' => TRUE,
-        'default' => '',
-      ],
-      'value' => [
-        'description' => 'The value.',
-        'type' => 'blob',
-        'not null' => FALSE,
-        'size' => 'big',
-      ],
-      'serialized' => [
-        'description' => 'Whether value is serialized.',
-        'type' => 'int',
-        'size' => 'tiny',
-        'unsigned' => TRUE,
-        'default' => 0,
-      ],
-    ],
-    'primary key' => ['asset_id', 'name'],
-    'indexes' => [
-      'asset_id' => ['asset_id'],
-      'name' => ['name'],
-    ],
-  ];
-
-  return $schema;
-}
-
-/**
  * Implements hook_uninstall().
  */
 function helfi_gredi_image_uninstall() {
