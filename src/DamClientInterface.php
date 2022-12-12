@@ -121,12 +121,4 @@ interface DamClientInterface {
    */
   public function getMetaFields(): array;
 
-  /**
-   * Mapping of metafields by API id's.
-   *
-   * @return array
-   *   Return array of mapped fields by id.
-   */
-  public function mapMetaData(): array;
-
 }
