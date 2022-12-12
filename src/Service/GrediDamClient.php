@@ -102,6 +102,8 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    */
   protected $uploadFolderId;
 
+  public $includes = 'object,meta,attachments';
+
   /**
    * Metafields array.
    *
@@ -327,10 +329,26 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     }
     $url = sprintf("files/%s", $id);
     $queryParams = [
-      'include' => implode(',', $expands),
+      'include' => 'object,meta,attachments',
     ];
     $response = $this->apiCallGet($url, $queryParams);
     return Asset::fromJson($response->getBody()->getContents());
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public function getAssetData(string $id): array {
+    if (!$this->authService->isAuthenticated()) {
+      $this->authService->authenticate();
+    }
+    $url = sprintf("files/%s", $id);
+    $queryParams = [
+      'include' => $this->includes,
+    ];
+    $response = $this->apiCallGet($url, $queryParams);
+
+    return Json::decode($response->getBody()->getContents());
   }
 
   /**
@@ -532,7 +550,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     $customerId = $this->authService->getCustomerId();
     $url = sprintf("customers/%d/contents", $customerId);
     $queryParams = [
-      'include' => 'object',
+      'include' => $this->includes,
       'mimeGroups' => 'picture',
       'search' => $search,
       'sort' => $sortOrder . $sortBy,
@@ -687,25 +705,17 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $this->authService->authenticate();
     }
     $response = $this->apiCallGet($url)->getBody()->getContents();
-    $this->metafields = Json::decode($response);
-
+    $result = Json::decode($response);
+    foreach ($result as $item) {
+      if (!isset($item['id'])) {
+        continue;
+      }
+      $this->metafields[$item['id']] = $item;
+    }
     $cache_tags = $this->authService->getConfig()->getCacheTags();
     \Drupal::cache()->set('helfi_gredi_image_metafields', $this->metafields, Cache::PERMANENT, $cache_tags);
 
     return $this->metafields;
-  }
-
-  /**
-   * Mapping metadata fields.
-   *
-   * @return string[]
-   *   Return mapped fields by id.
-   */
-  public function mapMetaData(): array {
-    return [
-      '257' => 'keywords',
-      '1410' => 'alt_text',
-    ];
   }
 
 }

@@ -36,12 +36,21 @@ function helfi_gredi_image_entity_field_storage_info(EntityTypeInterface $entity
   if ($entity_type->id() === 'media') {
     $definitions['gredi_asset_id'] = BundleFieldDefinition::create('string')
       ->setName('gredi_asset_id')
-      ->setLabel('gredi_asset_id')
+      ->setLabel('Gredi Asset ID')
       ->setTranslatable(FALSE)
       ->setRevisionable(FALSE)
       ->setTargetEntityTypeId('media')
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayConfigurable('form', TRUE);
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayConfigurable('form', FALSE);
+
+    $definitions['gredi_modified'] = BundleFieldDefinition::create('timestamp')
+      ->setName('gredi_modified')
+      ->setLabel(new TranslatableMarkup('Gredi Asset Modified'))
+      ->setTranslatable(FALSE)
+      ->setRevisionable(FALSE)
+      ->setTargetEntityTypeId('media')
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayConfigurable('form', FALSE);
   }
   return $definitions;
 }
@@ -60,7 +69,13 @@ function helfi_gredi_image_entity_bundle_field_info(EntityTypeInterface $entity_
     if ($media_type->getSource() instanceof GredidamAsset) {
       $definitions['gredi_asset_id'] = BundleFieldDefinition::create('string')
         ->setName('gredi_asset_id')
-        ->setLabel(new TranslatableMarkup('Asset reference'))
+        ->setLabel(new TranslatableMarkup('Gredi Asset ID'))
+        ->setTranslatable(FALSE)
+        ->setRevisionable(FALSE);
+
+      $definitions['gredi_modified'] = BundleFieldDefinition::create('timestamp')
+        ->setName('gredi_modified')
+        ->setLabel(new TranslatableMarkup('Gredi Asset Modified'))
         ->setTranslatable(FALSE)
         ->setRevisionable(FALSE);
     }
@@ -115,7 +130,13 @@ function helfi_gredi_image_form_user_form_alter(&$form, FormStateInterface $form
  */
 function helfi_gredi_image_media_delete(EntityInterface $entity) {
   // Delete media from public folder when a media is deleted from interface.
-  $target_id = $entity->field_media_image->target_id;
-  $file = File::load($target_id);
-  $file->delete();
+  /** @var \Drupal\media\MediaInterface $entity */
+  $source = $entity->getSource();
+  if ($source instanceof GredidamAsset) {
+    $field_name = $source->getConfiguration()['source_field'];
+    if ($entity->hasField($field_name)
+      && $file = $entity->get($field_name)->entity) {
+      $file->delete();
+    }
+  }
 }

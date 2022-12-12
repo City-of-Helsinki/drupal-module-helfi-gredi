@@ -7,10 +7,9 @@ use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldTypePluginManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Image\ImageFactory;
+use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\media\MediaInterface;
-use Drupal\media\MediaSourceBase;
 use Drupal\helfi_gredi_image\Service\AssetImageHelper;
 use Drupal\helfi_gredi_image\Service\AssetMediaFactory;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
@@ -44,20 +43,6 @@ class GredidamAsset extends Image {
    */
   protected $assetImageHelper;
 
-  /**
-   * Gredi DAM asset metadata helper service.
-   *
-   * @var \Drupal\helfi_gredi_image\Service\AssetMetadataHelper
-   */
-  protected $assetMetadataHelper;
-
-  /**
-   * Gredi DAM Asset Media Factory service.
-   *
-   * @var \Drupal\helfi_gredi_image\Service\AssetMediaFactory
-   */
-  protected $assetMediaFactory;
-
   protected $assetData = [];
 
   /** @var ImageFactory */
@@ -65,6 +50,9 @@ class GredidamAsset extends Image {
 
   /** @var FileSystemInterface */
   protected $fileSystem;
+
+  /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient */
+  protected $damClient;
 
   /**
    * GredidamAsset constructor.
@@ -79,9 +67,7 @@ class GredidamAsset extends Image {
     EntityFieldManagerInterface $entity_field_manager,
     FieldTypePluginManagerInterface $field_type_manager,
     ConfigFactoryInterface $config_factory,
-    AssetImageHelper $assetImageHelper,
-    AssetMetadataHelper $assetMetadataHelper,
-    AssetMediaFactory $assetMediaFactory,
+    GrediDamClient $damClient,
     ImageFactory $imageFactory,
     FileSystemInterface $fileSystem) {
     parent::__construct(
@@ -96,18 +82,7 @@ class GredidamAsset extends Image {
       $fileSystem
     );
 
-    $this->assetImageHelper = $assetImageHelper;
-    $this->assetMetadataHelper = $assetMetadataHelper;
-    $this->assetMediaFactory = $assetMediaFactory;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
-    // Fieldset with configuration options not needed.
-    hide($form);
-    return $form;
+    $this->damClient = $damClient;
   }
 
   /**
@@ -122,9 +97,7 @@ class GredidamAsset extends Image {
       $container->get('entity_field.manager'),
       $container->get('plugin.manager.field.field_type'),
       $container->get('config.factory'),
-      $container->get('helfi_gredi_image.asset_image.helper'),
-      $container->get('helfi_gredi_image.asset_metadata.helper'),
-      $container->get('helfi_gredi_image.asset_media.factory'),
+      $container->get('helfi_gredi_image.dam_client'),
       $container->get('image.factory'),
       $container->get('file_system')
     );
@@ -142,56 +115,31 @@ class GredidamAsset extends Image {
   /**
    * {@inheritdoc}
    */
-  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
-    $submitted_config = array_intersect_key(
-      $form_state->getValues(),
-      $this->configuration
-    );
-
-    foreach ($submitted_config as $config_key => $config_value) {
-      $this->configuration[$config_key] = $config_value;
-    }
-
-    // For consistency, always use the default source_field field name.
-    $default_field_name = $this->defaultConfiguration()['source_field'];
-    // Check if it already exists so it can be used as a shared field.
-    $storage = $this->entityTypeManager->getStorage('field_storage_config');
-    $existing_source_field = $storage->load('media.' . $default_field_name);
-
-    // Set or create the source field.
-    if ($existing_source_field) {
-      // If the default field already exists, return the default field name.
-      $this->configuration['source_field'] = $default_field_name;
-    }
-    else {
-      // Default source field name does not exist, so create a new one.
-      $field_storage = $this->createSourceFieldStorage();
-      $field_storage->save();
-      $this->configuration['source_field'] = $field_storage->getName();
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function createSourceFieldStorage() {
-    $default_field_name = $this->defaultConfiguration()['source_field'];
-
-    // Create the field.
-    return $this->entityTypeManager->getStorage('field_storage_config')->create(
-      [
-        'entity_type' => 'media',
-        'field_name' => $default_field_name,
-        'type' => reset($this->pluginDefinition['allowed_field_types']),
-      ]
-    );
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getMetadataAttributes() {
-    return $this->assetMetadataHelper->getMetadataAttributeLabels();
+    $fields = [];
+    // TODO Dep Injection.
+    $lang_code = \Drupal::languageManager()->getCurrentLanguage()->getId();
+    try {
+      $damMetadataFields = $this->damClient->getMetaFields();
+      foreach ($damMetadataFields as $damField) {
+        if (isset($damField['namesByLang'][$lang_code])) {
+          $label = $damField['namesByLang'][$lang_code];
+        }
+        else {
+          $label = current($damField['namesByLang']);
+        }
+        $fields[$damField['id']] = $label;
+      }
+    }
+    catch (\Exception $e) {
+
+    }
+
+    $fields['created'] = $this->t('Created timestamp');
+    $fields['modified'] = $this->t('Modified timestamp');
+    $fields['original_file'] = $this->t('Original image');
+
+    return $fields;
   }
 
   /**
@@ -206,6 +154,20 @@ class GredidamAsset extends Image {
    *   The metadata value or NULL if unset.
    */
   public function getMetadata(MediaInterface $media, $attribute_name) {
+    // Most of attributes requires data from API.
+    $attr_with_fallback = [
+      'name',
+      'thumbnail_uri',
+    ];
+    if (!in_array($attribute_name, $attr_with_fallback) && empty($this->assetData)) {
+      try {
+        $this->assetData = $this->damClient->getAssetData($media->get('gredi_asset_id')->value);
+      }
+      catch (\Exception $e) {
+        $this->messenger()->addError('Failed to fetch asset data');
+        return NULL;
+      }
+    }
     switch ($attribute_name) {
       case 'name':
         if (!$media->isNew()) {
@@ -220,9 +182,12 @@ class GredidamAsset extends Image {
         if (!$media->isNew()) {
           return parent::getMetadata($media, $attribute_name);
         }
+
+        $default_thumbnail_filename = $this->pluginDefinition['default_thumbnail_filename'];
+        $fallback = $this->configFactory->get('media.settings')->get('icon_base_uri') . '/' . $default_thumbnail_filename;
+
         if (empty($this->assetData)) {
-          $default_thumbnail_filename = $this->pluginDefinition['default_thumbnail_filename'];
-          return $this->configFactory->get('media.settings')->get('icon_base_uri') . '/' . $default_thumbnail_filename;
+          return $fallback;
         }
         // Fetching asset thumbnail or from local.
         try {
@@ -251,36 +216,45 @@ class GredidamAsset extends Image {
         }
         catch (\Exception $e) {
           $this->messenger()->addError('Error fetching and saving thumbnail');
-          return '';
+          return $fallback;
         }
 
       case 'original_file':
-//        if (!$media->isNew()) {
-//          return $media->get($this->configuration['source_field'])->entity;
-//        }
-
         return $this->getOriginalFile();
+
+      case 'modified':
+        return strtotime($this->assetData['modified']) ?? NULL;
+
+      case 'created':
+        return strtotime($this->assetData['created']) ?? NULL;
+
+      default:
+        $metaAttributes = $this->getMetadataAttributes();
+        if (!isset($metaAttributes[$attribute_name])) {
+          return NULL;
+        }
+        if (!isset($this->assetData['metaById'])) {
+          return NULL;
+        }
+        $lang_code = $media->language()->getId();
+        // Trying to find the attr id in the metaById, as they come as custom:meta-field-1285_fi.
+        foreach ($this->assetData['metaById'] as $attr_name_key => $value) {
+          if (strpos($attr_name_key, 'custom:meta-field-') !== 0) {
+            continue;
+          }
+          $attr_id_and_lang = str_replace('custom:meta-field-', '', $attr_name_key);
+          list ($attr_id, $attr_lang_code) = explode('_', $attr_id_and_lang);
+          if ($attr_id != $attribute_name) {
+            continue;
+          }
+          if ($attr_lang_code != $lang_code) {
+            continue;
+          }
+          return $value;
+        }
+
+        return NULL;
     }
-
-    // TODO add more cases for metadata !?
-    //        case 'keywords':
-    //      case 'alt_text':
-    //      case 'created':
-    //      case 'modified':
-
-
-    // TODO - refactor this !?
-    if ($this->currentAsset === NULL) {
-      $asset = $this->assetMediaFactory->get($media)->getAsset();
-      $this->currentAsset = $asset;
-    }
-
-    // If we don't have the asset, we can't return additional metadata.
-    if ($this->currentAsset === NULL) {
-      return NULL;
-    }
-
-    return $this->assetMetadataHelper->getMetadataFromAsset($this->currentAsset, $attribute_name);
   }
 
 
@@ -300,13 +274,9 @@ class GredidamAsset extends Image {
 
 
   public function getOriginalFile() {
-    if (empty($this->assetData)) {
-      return NULL;
-    }
     try {
       $assetId = $this->assetData['id'];
       $assetName = $this->assetData['name'];
-      $assetModified = $this->assetData['modified'];
       /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $service */
       $client = \Drupal::service('helfi_gredi_image.dam_client');
       $fileContent = $client->getFileContent($assetId, $this->assetData['apiContentLink']);
