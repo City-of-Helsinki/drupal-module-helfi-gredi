@@ -4,23 +4,13 @@ declare(strict_types=1);
 
 namespace Drupal\helfi_gredi_image\Plugin\views\field;
 
-use Drupal\acquia_dam\Entity\MediaEmbedsField;
-use Drupal\acquia_dam\Entity\MediaExpiryDateField;
-use Drupal\acquia_dam\Entity\MediaSourceField;
-use Drupal\Component\Utility\Html;
-use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\CloseDialogCommand;
-use Drupal\Core\Ajax\MessageCommand;
-use Drupal\Core\Ajax\ReplaceCommand;
-use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
 use Drupal\media\Entity\Media;
 use Drupal\media_library\MediaLibraryState;
 use Drupal\media_library\Plugin\views\field\MediaLibrarySelectForm as MediaEntityMediaLibrarySelectForm;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Drupal\helfi_gredi_image\Entity\Asset;
 
 /**
  * Media selection field for asset media type.
@@ -110,6 +100,8 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         $mediaId = end($existing_ids);
         // TODO should we check if modified since our copy?
         // TODO save so that it fetches the fields and translations.
+        // TODO media load
+        // TODO $entity->save();
         $media_ids[] = $mediaId;
       }
       else {
@@ -123,11 +115,13 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
           ->getSourceFieldDefinition($media_type)
           ->getName();
 
+        $request->getLanguages();
+        $currentLanguage = \Drupal::languageManager()->getCurrentLanguage()->getId();
         $entity = Media::create([
           'bundle' => $media_type->id(),
           'uid' => \Drupal::currentUser()->id(),
+          // TODO get language from request.
           'langcode' => \Drupal::languageManager()->getCurrentLanguage()->getId(),
-          // @todo Find out if we can use status from Gredi DAM.
           'status' => 1,
           'gredi_asset_id' => $id,
         ]);
@@ -149,14 +143,17 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
           $entity->set('field_media_image', ['target_id' => $file->id()]);
         }
 
-        // TODO what changed/modified should we store?
-//          'created' => strtotime($asset->created),
-//          'changed' => strtotime($asset->created),
+        $entity->save();
 
-//        $currentLanguage = $this->languageManager->getCurrentLanguage()->getId();
-//        // Check enabled languages.
-//        $siteLanguages = array_keys($this->languageManager->getLanguages());
-//
+        $siteLanguages = array_keys(\Drupal::languageManager()->getLanguages());
+        // TODO to intersect with API languages.
+        foreach ($siteLanguages as $lang_code) {
+          if ($currentLanguage == $lang_code) {
+            continue;
+          }
+          $translation = $entity->addTranslation($lang_code);
+          $translation->save();
+        }
 //        foreach ($asset->keywords as $key => $lang) {
 //          if (in_array($key, $siteLanguages)) {
 //            // For current language case no translation will be added.
@@ -176,7 +173,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
 //            ]);
 //          }
 //        }
-        $entity->save();
+
         $media_ids[] = $entity->id();
       }
     }

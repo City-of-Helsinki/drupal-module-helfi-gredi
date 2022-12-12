@@ -15,6 +15,7 @@ use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\media\MediaTypeInterface;
 use Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset;
+use Drupal\media_library\MediaLibraryState;
 
 /**
  * Implements hook_theme().
@@ -150,5 +151,149 @@ function helfi_gredi_image_form_alter(array &$form, FormStateInterface $form_sta
   // filters submit button is not moved to the modal dialog's button area.
   if ($form_id === 'views_exposed_form' && strpos($form['#id'], 'views-exposed-form-gredi-dam-asset-library-widget') === 0) {
     $form['#after_build'][] = '_media_library_views_form_media_library_after_build';
+  }
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK().
+ *
+ * Each theme in Drupal core provides a template for the view provided by Media
+ * Library based on its identifier. We need to provide that theme hook
+ * suggestion for our own view so that it is templated correctly.
+ */
+function helfi_gredi_image_theme_suggestions_views_view_unformatted(array $variables) {
+  $suggestions = [];
+  if ($variables['view']->id() === 'gredi_dam_asset_library') {
+    $suggestions[] = 'views_view_unformatted__media_library';
+  }
+  return $suggestions;
+}
+
+
+/**
+ * Implements hook_theme_suggestions_HOOK().
+ */
+function helfi_gredi_image_theme_suggestions_views_view(array $variables) {
+  $suggestions = [];
+  if ($variables['view']->id() === 'gredi_dam_asset_library') {
+    $suggestions[] = 'views_view__media_library';
+  }
+  return $suggestions;
+}
+
+/**
+ * Implements hook_views_post_render().
+ *
+ * Media Library comes with few preprocess that takes care of adding necessary
+ * libraries into the page. Unfortunately it is only applicable for media_library view,
+ * this will take extending to acquia_dam_assest_library as well.
+ */
+function helfi_gredi_image_views_post_render(\Drupal\views\ViewExecutable $view, &$output, \Drupal\views\Plugin\views\cache\CachePluginBase $cache) {
+  if ($view->id() === 'gredi_dam_asset_library') {
+    $output['#attached']['library'][] = 'media_library/view';
+    if (strpos($view->current_display, 'widget') === 0) {
+      try {
+        $query = MediaLibraryState::fromRequest($view->getRequest())->all();
+      }
+      catch (InvalidArgumentException $e) {
+        // MediaLibraryState::fromRequest() will throw an exception if the view
+        // is being previewed, since not all required query parameters will be
+        // present. In a preview, however, this can be omitted since we're
+        // merely previewing.
+        // @todo Use the views API for checking for the preview mode when it
+        //   lands. https://www.drupal.org/project/drupal/issues/3060855
+        if (empty($view->preview) && empty($view->live_preview)) {
+          throw $e;
+        }
+      }
+      // If the current query contains any parameters we use to contextually
+      // filter the view, ensure they persist across AJAX rebuilds.
+      // The ajax_path is shared for all AJAX views on the page, but our query
+      // parameters are prefixed and should not interfere with any other views.
+      // @todo Rework or remove this in https://www.drupal.org/node/2983451
+      if (!empty($query)) {
+        $ajax_path = &$output['#attached']['drupalSettings']['views']['ajax_path'];
+        $parsed_url = \Drupal\Component\Utility\UrlHelper::parse($ajax_path);
+        $query = array_merge($query, $parsed_url['query']);
+        $ajax_path = $parsed_url['path'] . '?' . \Drupal\Component\Utility\UrlHelper::buildQuery($query);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_views_pre_render().
+ *
+ * This will take care of necessary classes which is added by the media_library
+ * to its view is extended to `acquia_dam_asset_library` as well.
+ */
+function helfi_gredi_image_views_pre_render(\Drupal\views\ViewExecutable $view) {
+  $add_classes = function (&$option, array $classes_to_add) {
+    $classes = $option ? preg_split('/\s+/', trim($option)) : [];
+    $classes = array_filter($classes);
+    $classes = array_merge($classes, $classes_to_add);
+    $option = implode(' ', array_unique($classes));
+  };
+
+  if ($view->id() === 'gredi_dam_asset_library') {
+    if (isset($view->display_handler->options['defaults']['css_class']) &&
+      $view->display_handler->options['defaults']['css_class']) {
+      $add_classes($view->displayHandlers->get('default')->options['css_class'], ['media-library-view']);
+    }
+    else {
+      $add_classes($view->display_handler->options['css_class'], ['media-library-view']);
+    }
+
+    if (strpos($view->current_display, 'widget') === 0) {
+      // Logic from claro.theme preprocess all of this will be remove once we can
+      // make the view id configurable.
+      if (array_key_exists('thumbnail', $view->field)) {
+        $add_classes($view->field['thumbnail']->options['element_class'], ['media-library-item__content']);
+      }
+      if (array_key_exists('media_library_select_form', $view->field)) {
+        $add_classes($view->field['media_library_select_form']->options['element_wrapper_class'], ['media-library-item__click-to-select-checkbox']);
+      }
+
+      if ($view->display_handler->options['defaults']['css_class']) {
+        $add_classes($view->displayHandlers->get('default')->options['css_class'], ['media-library-view--widget']);
+      }
+      else {
+        $add_classes($view->display_handler->options['css_class'], ['media-library-view--widget']);
+      }
+
+      if (array_key_exists('media_library_select_form', $view->field)) {
+        $add_classes($view->field['media_library_select_form']->options['element_wrapper_class'], ['js-click-to-select-checkbox']);
+      }
+      $add_classes($view->display_handler->options['css_class'], ['js-media-library-view']);
+    }
+
+    $add_classes($view->style_plugin->options['row_class'], ['js-media-library-item', 'js-click-to-select']);
+    // NOTE: modified from core to bypass undefined offset in our View.
+
+    if (!empty($view->display_handler->options['defaults']['css_class'])) {
+      $add_classes($view->displayHandlers->get('default')->options['css_class'], ['js-media-library-view']);
+    }
+    else {
+      $add_classes($view->display_handler->options['css_class'], ['js-media-library-view']);
+    }
+  }
+}
+
+/**
+ * Implements hook_preprocess_views_view_fields().
+ *
+ * This will take care of necessary classes which is added by the media_library
+ * to its view is extended to `acquia_dam_asset_library` as well.
+ */
+function helfi_gredi_image_preprocess_views_view_fields(&$variables) {
+  // Add classes to media rendered entity field so it can be targeted for
+  // JavaScript mouseover and click events.
+  if ($variables['view']->id() === 'gredi_dam_asset_library' && isset($variables['fields']['rendered_entity'])) {
+    if (isset($variables['fields']['rendered_entity']->wrapper_attributes)) {
+      $variables['fields']['rendered_entity']->wrapper_attributes->addClass('js-click-to-select-trigger');
+      // @see function claro_preprocess_views_view_fields__media_library(array &$variables).
+      $variables['fields']['rendered_entity']->wrapper_attributes->addClass('media-library-item__click-to-select-trigger');
+
+    }
   }
 }

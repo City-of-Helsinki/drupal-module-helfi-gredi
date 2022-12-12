@@ -228,6 +228,10 @@ class GredidamAsset extends Image {
       case 'created':
         return strtotime($this->assetData['created']) ?? NULL;
 
+      case 'available_languages':
+        // TODO decide how to detect what languages this item should be created in !?
+        return [];
+
       default:
         $metaAttributes = $this->getMetadataAttributes();
         if (!isset($metaAttributes[$attribute_name])) {
