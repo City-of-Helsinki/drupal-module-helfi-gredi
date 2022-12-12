@@ -543,7 +543,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * {@inheritDoc}
    */
   public function searchAssets($search = '', $sortBy = '', $sortOrder = '', $limit = 10, $offset = 0): array {
-    // TODO $limit should follow view pager setup.
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
