@@ -5,6 +5,7 @@ dependencies:
     - core.entity_view_mode.media.media_library
   module:
     - helfi_gredi_image
+    - user
     - views_remote_data
 _core:
   default_config_hash: fN7Y1KR4aCn7Rm_sTQzdQ1a2cKzWlx-By2_Ff4EKdKY
@@ -154,8 +155,9 @@ display:
           sort_asc_label: Asc
           sort_desc_label: Desc
       access:
-        type: none
-        options: {  }
+        type: perm
+        options:
+          perm: 'view media'
       cache:
         type: none
         options: {  }
@@ -262,6 +264,7 @@ display:
         - url.query_args
         - 'url.query_args:sort_by'
         - 'url.query_args:sort_order'
+        - user.permissions
       tags:
         - 'config:core.entity_view_display.media.file.default'
         - 'config:core.entity_view_display.media.file.media_library'
@@ -303,6 +306,7 @@ display:
         - url.query_args
         - 'url.query_args:sort_by'
         - 'url.query_args:sort_order'
+        - user.permissions
       tags:
         - 'config:core.entity_view_display.media.file.default'
         - 'config:core.entity_view_display.media.file.media_library'
