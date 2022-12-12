@@ -1,4 +1,3 @@
-uuid: b51efbc1-f8a9-4b73-ad1e-0e7bf99c5cdb
 langcode: en
 status: true
 dependencies:
@@ -6,9 +5,10 @@ dependencies:
     - core.entity_view_mode.media.media_library
   module:
     - helfi_gredi_image
+    - user
     - views_remote_data
 _core:
-  default_config_hash: laaiCVVvNXbT4qn6jtSCO18uc1pjbHTHxKDLQSU1FeM
+  default_config_hash: fN7Y1KR4aCn7Rm_sTQzdQ1a2cKzWlx-By2_Ff4EKdKY
 id: gredi_dam_asset_library
 label: 'Gredi DAM Asset Library'
 module: views
@@ -147,7 +147,7 @@ display:
       exposed_form:
         type: basic
         options:
-          submit_button: Apply
+          submit_button: 'Apply filters'
           reset_button: false
           reset_button_label: Reset
           exposed_sorts_label: 'Sort by'
@@ -155,34 +155,65 @@ display:
           sort_asc_label: Asc
           sort_desc_label: Desc
       access:
-        type: none
-        options: {  }
+        type: perm
+        options:
+          perm: 'view media'
       cache:
         type: none
         options: {  }
       empty: {  }
-      sorts: {  }
-      arguments: {  }
-      filters:
-        search:
-          id: search
+      sorts:
+        property:
+          id: property
           table: gredidam_assets
-          field: search
+          field: property
           relationship: none
           group_type: group
           admin_label: ''
           entity_type: media
-          plugin_id: asset_search_filter
-          operator: contains
+          plugin_id: views_remote_data_property
+          order: DESC
+          expose:
+            label: Modified
+            field_identifier: modified
+          exposed: true
+          property_path: modified
+        property_1:
+          id: property_1
+          table: gredidam_assets
+          field: property
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: media
+          plugin_id: views_remote_data_property
+          order: ASC
+          expose:
+            label: Name
+            field_identifier: name
+          exposed: true
+          property_path: name
+      arguments: {  }
+      filters:
+        property:
+          id: property
+          table: gredidam_assets
+          field: property
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: media
+          plugin_id: views_remote_data_property
+          operator: '='
           value: ''
           group: 1
           exposed: true
           expose:
-            operator_id: search_op
+            operator_id: property_op
             label: Search
-            description: 'Search by name.'
+            description: ''
             use_operator: false
-            operator: search_op
+            operator: property_op
             operator_limit_selection: false
             operator_list: {  }
             identifier: search
@@ -196,7 +227,6 @@ display:
               content_producer: '0'
               editor: '0'
               admin: '0'
-            placeholder: 'Search by name.'
           is_grouped: false
           group_info:
             label: ''
@@ -209,6 +239,11 @@ display:
             default_group: All
             default_group_multiple: {  }
             group_items: {  }
+          property_path: search
+      filter_groups:
+        operator: AND
+        groups:
+          1: AND
       style:
         type: default
       row:
@@ -217,6 +252,7 @@ display:
         type: views_query
         options: {  }
       relationships: {  }
+      use_ajax: true
       header: {  }
       footer: {  }
       display_extenders: {  }
@@ -226,6 +262,9 @@ display:
         - 'languages:language_interface'
         - url
         - url.query_args
+        - 'url.query_args:sort_by'
+        - 'url.query_args:sort_order'
+        - user.permissions
       tags:
         - 'config:core.entity_view_display.media.file.default'
         - 'config:core.entity_view_display.media.file.media_library'
@@ -265,6 +304,9 @@ display:
         - 'languages:language_interface'
         - url
         - url.query_args
+        - 'url.query_args:sort_by'
+        - 'url.query_args:sort_order'
+        - user.permissions
       tags:
         - 'config:core.entity_view_display.media.file.default'
         - 'config:core.entity_view_display.media.file.media_library'

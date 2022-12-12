@@ -42,25 +42,6 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
   }
 
   /**
-   * Converts keys coming from view to accepted meta by API.
-   *
-   * @param $sort
-   *
-   * @return string
-   */
-  public function mapSortMetadata($sort) : string {
-    if (!empty($sort)) {
-      switch($sort) {
-        case 'ASC':
-          return '+';
-        case 'DESC':
-          return '-';
-      }
-    }
-    return '';
-  }
-
-  /**
    * Subscribes to populate the view results.
    *
    * @param \Drupal\views_remote_data\Events\RemoteDataQueryEvent $event
@@ -69,34 +50,35 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
   public function onQuery(RemoteDataQueryEvent $event): void {
     $supported_bases = ['gredidam_assets'];
     $base_tables = array_keys($event->getView()->getBaseTables());
-    $conditions = $event->getConditions();
+    if (count(array_intersect($supported_bases, $base_tables)) === 0) {
+      return;
+    }
+    $condition_groups = $event->getConditions();
     $sorts = $event->getSorts();
 
+    $sortOrder = '';
+    $sortBy = '';
     if (!empty($sorts)) {
-      $sortOrder = $this->mapSortMetadata(current($sorts)['order']);
+      $viewsSortOrder = current($sorts)['order'];
+      $sortOrder = $viewsSortOrder == 'DESC' ? '-' : '+';
       $sortBy = current($sorts)['field'][0];
     }
-    else{
-      $sortOrder = '';
-      $sortBy = '';
-    }
 
-    if (!empty(current($conditions)['conditions'])) {
-      $search_value = current($conditions)['conditions'][0]['value'];
-      $remote_data = $this->client->searchAssets('', $sortBy, $sortOrder, 10, '', $search_value);
-      foreach ($remote_data as $item) {
-        $event->addResult(new ResultRow($item));
-      }
-    }
-    else {
-      if (count(array_intersect($supported_bases, $base_tables)) > 0) {
-        $remote_data = $this->client->searchAssets('', $sortBy, $sortOrder, 10, '', '');
-        foreach ($remote_data as $item) {
-          $event->addResult(new ResultRow($item));
+    // Only condition field supported now is 'search'
+    $search_value = '';
+    foreach ($condition_groups as $condition_group) {
+      foreach ($condition_group['conditions'] as $condition) {
+        if (!isset($condition['field'][0])
+          || $condition['field'][0] != 'search') {
+          continue;
         }
+        $search_value = $condition['value'];
       }
     }
-
+    $remote_data = $this->client->searchAssets($search_value, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
+    foreach ($remote_data as $item) {
+      $event->addResult(new ResultRow($item));
+    }
   }
 
   /**
@@ -124,7 +106,7 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
           $source->setAssetData($result->object);
         }
         else {
-          $source->setAssetData('');
+          $source->setAssetData([]);
         }
       }
     }

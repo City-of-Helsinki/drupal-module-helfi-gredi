@@ -30,23 +30,6 @@ function helfi_gredi_image_views_data(): array {
     ],
   ];
 
-  $data['gredidam_assets']['search'] = [
-    'title' => t('Search'),
-    'help' => t('Search text'),
-    'filter' => [
-      'field' => 'search',
-      'id' => 'asset_search_filter',
-    ],
-  ];
-
-  $data['gredidam_assets']['modified'] = [
-    'title' => t('Modified'),
-    'help' => t('Sort by last modified.'),
-    'sort' => [
-      'id' => 'gredi_modified_sort',
-    ],
-  ];
-
   return $data;
 
 }
