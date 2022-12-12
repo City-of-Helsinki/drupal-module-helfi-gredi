@@ -8,7 +8,7 @@ dependencies:
     - helfi_gredi_image
     - views_remote_data
 _core:
-  default_config_hash: YAOzgQgahWe03rvrf3BVlYu4gamADaeGowLaL2fSVBo
+  default_config_hash: laaiCVVvNXbT4qn6jtSCO18uc1pjbHTHxKDLQSU1FeM
 id: gredi_dam_asset_library
 label: 'Gredi DAM Asset Library'
 module: views
@@ -163,7 +163,52 @@ display:
       empty: {  }
       sorts: {  }
       arguments: {  }
-      filters: {  }
+      filters:
+        search:
+          id: search
+          table: gredidam_assets
+          field: search
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: media
+          plugin_id: asset_search_filter
+          operator: contains
+          value: ''
+          group: 1
+          exposed: true
+          expose:
+            operator_id: search_op
+            label: Search
+            description: 'Search by name.'
+            use_operator: false
+            operator: search_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: search
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+              anonymous: '0'
+              read_only: '0'
+              content_producer: '0'
+              editor: '0'
+              admin: '0'
+            placeholder: 'Search by name.'
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
       style:
         type: default
       row:
@@ -179,6 +224,7 @@ display:
       max-age: -1
       contexts:
         - 'languages:language_interface'
+        - url
         - url.query_args
       tags:
         - 'config:core.entity_view_display.media.file.default'
@@ -217,6 +263,7 @@ display:
       max-age: -1
       contexts:
         - 'languages:language_interface'
+        - url
         - url.query_args
       tags:
         - 'config:core.entity_view_display.media.file.default'

@@ -513,10 +513,19 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     return $file_contents;
   }
 
+//  public function filterSearch($search = '', $sort = '', $limit = 10, $offset = 0) {
+//    if (!$this->authService->isAuthenticated()) {
+//      $this->authService->authenticate();
+//    }
+//    $customerId = $this->authService->getCustomerId();
+//    $url = sprintf("customers/%d/contents", $customerId);
+//  }
+
   /**
    * {@inheritDoc}
    */
-  public function searchAssets($search = '', $sort = '', $limit = 10, $offset = 0): array {
+  public function searchAssets($search = '', $sortBy = '', $sortOrder = '', $limit = 10, $offset = 0, $filterSearch = ''): array {
+    // TODO $limit should follow view pager setup.
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
@@ -526,9 +535,10 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       'include' => 'object',
       'mimeGroups' => 'picture',
       'search' => $search,
-      'sort' => $sort,
+      'sort' => $sortOrder . $sortBy,
       'limit' => $limit,
       'offset' => $offset,
+      'name' => $filterSearch
     ];
     $queryParams = array_filter($queryParams);
     $response = $this->apiCallGet($url, $queryParams);

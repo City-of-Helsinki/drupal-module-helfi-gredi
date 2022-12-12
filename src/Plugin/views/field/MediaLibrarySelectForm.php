@@ -194,6 +194,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
    */
   public function viewsForm(array &$form, FormStateInterface $form_state) {
     parent::viewsForm($form, $form_state);
+
     foreach ($this->view->result as $row_index => $row) {
       $entity = $this->getEntity($row);
       $externalId = $entity->get('gredi_asset_id')->value;

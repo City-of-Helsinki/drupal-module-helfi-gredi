@@ -42,6 +42,25 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
   }
 
   /**
+   * Converts keys coming from view to accepted meta by API.
+   *
+   * @param $sort
+   *
+   * @return string
+   */
+  public function mapSortMetadata($sort) : string {
+    if (!empty($sort)) {
+      switch($sort) {
+        case 'ASC':
+          return '+';
+        case 'DESC':
+          return '-';
+      }
+    }
+    return '';
+  }
+
+  /**
    * Subscribes to populate the view results.
    *
    * @param \Drupal\views_remote_data\Events\RemoteDataQueryEvent $event
@@ -50,12 +69,34 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
   public function onQuery(RemoteDataQueryEvent $event): void {
     $supported_bases = ['gredidam_assets'];
     $base_tables = array_keys($event->getView()->getBaseTables());
-    if (count(array_intersect($supported_bases, $base_tables)) > 0) {
-      $remote_data = $this->client->searchAssets();
+    $conditions = $event->getConditions();
+    $sorts = $event->getSorts();
+
+    if (!empty($sorts)) {
+      $sortOrder = $this->mapSortMetadata(current($sorts)['order']);
+      $sortBy = current($sorts)['field'][0];
+    }
+    else{
+      $sortOrder = '';
+      $sortBy = '';
+    }
+
+    if (!empty(current($conditions)['conditions'])) {
+      $search_value = current($conditions)['conditions'][0]['value'];
+      $remote_data = $this->client->searchAssets('', $sortBy, $sortOrder, 10, '', $search_value);
       foreach ($remote_data as $item) {
         $event->addResult(new ResultRow($item));
       }
     }
+    else {
+      if (count(array_intersect($supported_bases, $base_tables)) > 0) {
+        $remote_data = $this->client->searchAssets('', $sortBy, $sortOrder, 10, '', '');
+        foreach ($remote_data as $item) {
+          $event->addResult(new ResultRow($item));
+        }
+      }
+    }
+
   }
 
   /**
