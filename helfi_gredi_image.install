@@ -54,10 +54,8 @@ function helfi_gredi_image_schema() {
  */
 function helfi_gredi_image_uninstall() {
   // TODO should we do this?
-  FieldStorageConfig::load('media.field_external_id')->delete();
-  FieldStorageConfig::load('media.field_alt_text')->delete();
-  FieldStorageConfig::load('media.field_keywords')->delete();
-  FieldStorageConfig::load('media.field_created')->delete();
+//  FieldStorageConfig::load('media.field_alt_text')->delete();
+//  FieldStorageConfig::load('media.field_keywords')->delete();
 
   //
 //  $table_name = 'gredidam_assets_data';

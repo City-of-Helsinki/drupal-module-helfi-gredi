@@ -11,6 +11,8 @@ dependencies:
   enforced:
     module:
       - helfi_gredi_image
+_core:
+  default_config_hash: 8HNmGWQyhZFYfysX3TeuYaJlGgg4urglE_vdHzk-vGA
 id: media.gredi_dam_assets.default
 targetEntityType: media
 bundle: gredi_dam_assets
@@ -21,30 +23,6 @@ content:
     weight: 10
     region: content
     settings: {  }
-    third_party_settings: {  }
-  field_alt_text:
-    type: string_textfield
-    weight: 101
-    region: content
-    settings:
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-  field_external_id:
-    type: string_textfield
-    weight: 102
-    region: content
-    settings:
-      size: 60
-      placeholder: ''
-    third_party_settings: {  }
-  field_keywords:
-    type: string_textarea
-    weight: 105
-    region: content
-    settings:
-      rows: 5
-      placeholder: ''
     third_party_settings: {  }
   field_media_image:
     type: image_image
@@ -61,6 +39,13 @@ content:
     settings:
       size: 60
       placeholder: ''
+    third_party_settings: {  }
+  langcode:
+    type: language_select
+    weight: 2
+    region: content
+    settings:
+      include_locked: true
     third_party_settings: {  }
   name:
     type: string_textfield
@@ -83,6 +68,11 @@ content:
     settings:
       display_label: true
     third_party_settings: {  }
+  translation:
+    weight: 10
+    region: content
+    settings: {  }
+    third_party_settings: {  }
   uid:
     type: entity_reference_autocomplete
     weight: 5
@@ -93,4 +83,5 @@ content:
       size: 60
       placeholder: ''
     third_party_settings: {  }
-hidden: {  }
+hidden:
+  replace_file: true

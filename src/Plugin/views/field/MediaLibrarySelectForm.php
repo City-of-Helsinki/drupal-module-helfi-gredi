@@ -107,7 +107,10 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
 //      $entities = $this->entityTypeManager->getStorage('media')
 //        ->loadMultiple($existing_ids);
       if ($existing_ids) {
-        $media_ids[] = end($existing_ids);
+        $mediaId = end($existing_ids);
+        // TODO should we check if modified since our copy?
+        // TODO save so that it fetches the fields and translations.
+        $media_ids[] = $mediaId;
       }
       else {
         /** @var \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager */
@@ -131,8 +134,12 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         /** @var \Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset $source */
         $source = $entity->getSource();
         $source->setAssetData($assetsData[$id]);
+
         $assetName = $source->getMetadata($entity, 'name');
         $entity->set('name', $assetName);
+
+        $modified = $source->getMetadata($entity, 'modified');
+        $entity->set('gredi_modified', $modified);
 
         $file = $source->getMetadata($entity, 'original_file');
         if (empty($file)) {
@@ -140,6 +147,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         }
         else {
           $entity->set('field_media_image', ['target_id' => $file->id()]);
+        }
 
         // TODO what changed/modified should we store?
 //          'created' => strtotime($asset->created),
@@ -168,10 +176,8 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
 //            ]);
 //          }
 //        }
-
-          $entity->save();
-          $media_ids[] = $entity->id();
-        }
+        $entity->save();
+        $media_ids[] = $entity->id();
       }
     }
 

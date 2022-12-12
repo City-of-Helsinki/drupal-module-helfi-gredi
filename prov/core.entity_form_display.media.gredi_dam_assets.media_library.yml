@@ -1,17 +1,29 @@
 langcode: en
 status: true
 dependencies:
+  config:
+    - core.entity_form_mode.media.media_library
+    - field.field.media.gredi_dam_assets.field_alt_text
+    - field.field.media.gredi_dam_assets.field_keywords
+    - field.field.media.gredi_dam_assets.field_media_image
+    - media.type.gredi_dam_assets
   enforced:
     module:
       - helfi_gredi_image
-  config:
-    - field.field.media.gredi_dam_assets.field_media_image
-    - media.type.gredi_dam_assets
+_core:
+  default_config_hash: icZZw-AHk38K-iqAqAyFAeqpmBSqG3Exw4treXI_qDQ
 id: media.gredi_dam_assets.media_library
 targetEntityType: media
 bundle: gredi_dam_assets
 mode: media_library
 content:
+  langcode:
+    type: language_select
+    weight: 2
+    region: content
+    settings:
+      include_locked: true
+    third_party_settings: {  }
   name:
     type: string_textfield
     weight: 0
@@ -20,12 +32,17 @@ content:
       size: 60
       placeholder: ''
     third_party_settings: {  }
+  translation:
+    weight: 10
+    region: content
+    settings: {  }
+    third_party_settings: {  }
 hidden:
   created: true
   field_alt_text: true
-  field_external_id: true
   field_keywords: true
   field_media_image: true
   path: true
+  replace_file: true
   status: true
   uid: true

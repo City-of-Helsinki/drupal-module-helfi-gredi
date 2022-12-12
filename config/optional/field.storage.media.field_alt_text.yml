@@ -3,14 +3,13 @@ status: true
 dependencies:
   module:
     - media
-    - text
-id: media.field_created
-field_name: field_created
+id: media.field_alt_text
+field_name: field_alt_text
 entity_type: media
-type: text
+type: string_long
 settings:
-  max_length: 255
-module: text
+  case_sensitive: false
+module: core
 locked: false
 cardinality: 1
 translatable: true

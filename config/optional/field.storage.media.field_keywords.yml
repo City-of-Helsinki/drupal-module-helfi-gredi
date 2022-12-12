@@ -3,14 +3,13 @@ status: true
 dependencies:
   module:
     - media
-    - text
 id: media.field_keywords
 field_name: field_keywords
 entity_type: media
-type: text
+type: string_long
 settings:
-  max_length: 255
-module: text
+  case_sensitive: false
+module: core
 locked: false
 cardinality: 1
 translatable: true
