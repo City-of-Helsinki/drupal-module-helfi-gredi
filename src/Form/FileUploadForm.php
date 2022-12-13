@@ -2,6 +2,7 @@
 
 namespace Drupal\helfi_gredi_image\Form;
 
+use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldStorageDefinitionInterface;
@@ -21,7 +22,7 @@ use Drupal\file\Plugin\Field\FieldType\FileFieldItemList;
 use Drupal\file\Plugin\Field\FieldType\FileItem;
 use Drupal\media\MediaInterface;
 use Drupal\media\MediaTypeInterface;
-use Drupal\helfi_gredi_image\Form\AddFormBase;
+use Drupal\media_library\Form\AddFormBase;
 use Drupal\media_library\MediaLibraryUiBuilder;
 use Drupal\media_library\OpenerResolverInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -146,6 +147,30 @@ class FileUploadForm extends AddFormBase {
   /**
    * {@inheritdoc}
    */
+  protected function validateMediaEntity(MediaInterface $media, array $form, FormStateInterface $form_state, $delta) {
+    $file_id = $media->field_media_image->target_id;
+    /** @var \Drupal\file\Entity\File $file_entity */
+    $file_entity = File::load($file_id);
+
+    /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $damClient */
+    $damClient = \Drupal::service('helfi_gredi_image.dam_client');
+    // Upload image to Gredi API.
+    try {
+      $asset_id = $damClient->uploadImage($file_entity);
+      $media->set('gredi_asset_id', $asset_id);
+      $media->set('gredi_modified', \Drupal::time()->getCurrentTime());
+    }
+    catch(\Exception $exception) {
+      $form_state->setError($form['media'], 'Upload error');
+    }
+    $form_display = EntityFormDisplay::collectRenderDisplay($media, 'media_library');
+    $form_display->extractFormValues($media, $form['media'][$delta]['fields'], $form_state);
+    $form_display->validateFormValues($media, $form['media'][$delta]['fields'], $form_state);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   protected function buildInputElement(array $form, FormStateInterface $form_state) {
     // Create a file item to get the upload validators.
     $media_type = $this->getMediaType($form_state);
@@ -222,19 +247,6 @@ class FileUploadForm extends AddFormBase {
 
     // TODO change NULL with some error message.
     $file_id = current($form_state->getValue('upload'))[0] ? current($form_state->getValue('upload'))[0] : NULL;
-
-
-//    try {
-//      if (!empty(current($form_state->getValue('upload')))) {
-//        /** @var File $file_entity */
-//        $file_entity = File::load($file_id);
-//        $damClient->uploadImage($file_entity);
-//      }
-//    }
-//    catch(\Exception $exception) {
-//      throw new \Exception($exception->getMessage());
-//    }
-//
 
     return $element;
   }

@@ -572,25 +572,15 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * {@inheritDoc}
    */
-  public function uploadImage(File $image): ?string {
-    return NULL;
-    // Call to check if UPLOAD folder exists.
-    $this->getCategoryTree();
+  public function uploadImage(File $image, $folderId = '16293292'): ?string {
+//    return NULL;
 
-    if (!$this->uploadFolderId) {
-      // If upload folder doesn't exist,
-      // it will be created and the folder id
-      // will be assigned to uploadFolderId.
-      $this->createFolder('UPLOAD', 'Upload folder');
-    }
-    // Assign the folder id to uploadFolderId.
-    $urlUpload = sprintf("folders/%d/files/", $this->uploadFolderId);
+    // Assign the folder id to uploadFolderId.)
+    $urlUpload = sprintf("folders/%s/files/", $folderId);
+    $url = sprintf("%s/%s", $this->apiUrl, $urlUpload);
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
-    $apiResponse = $this->apiCallGet($urlUpload)->getStatusCode();
-
-    if ($apiResponse == '200') {
 
       $fieldData = [
         "name" => basename($image->getFileUri()),
@@ -620,24 +610,19 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $requestBody .= $base64EncodedFile . "\r\n";
       $requestBody .= "--" . $boundary . "--\r\n";
       $requestBody .= "\r\n";
-      try {
-        $response = $this->httpClient->request('POST', 'https://api4.materialbank.net/api/v1/folders/16293292/files', [
-          'cookies' => $this->authService->getCookieJar(),
-          'headers' => [
-            'Content-Type' => 'multipart/form-data;boundary=' . $boundary,
-            'Content-Length' => strlen($requestBody),
-          ],
-          'body' => $requestBody,
-        ])->getBody()->getContents();
 
-        // Return file ID from API as string.
-        return json_decode($response, TRUE)['id'];
-      }
-      catch (\Exception $e) {
-        $this->loggerChannel->error($e->getMessage());
-      }
-    }
-    return NULL;
+    $response = $this->httpClient->request('POST', $url, [
+      'cookies' => $this->authService->getCookieJar(),
+      'headers' => [
+        'Content-Type' => 'multipart/form-data;boundary=' . $boundary,
+        'Content-Length' => strlen($requestBody),
+      ],
+      'body' => $requestBody,
+    ])->getBody()->getContents();
+
+    // Return file ID from API as string.
+    return json_decode($response, TRUE)['id'];
+
   }
 
   /**
