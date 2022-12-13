@@ -156,6 +156,7 @@ class GredidamAsset extends Image {
   public function getMetadata(MediaInterface $media, $attribute_name) {
     // Most of attributes requires data from API.
     $attr_with_fallback = [
+      'default_name',
       'name',
       'thumbnail_uri',
     ];
@@ -170,6 +171,7 @@ class GredidamAsset extends Image {
     }
     switch ($attribute_name) {
       case 'name':
+      case 'default_name':
         if (!$media->isNew()) {
           return $media->getName();
         }
@@ -228,12 +230,13 @@ class GredidamAsset extends Image {
       case 'created':
         return strtotime($this->assetData['created']) ?? NULL;
 
-      case 'available_languages':
-        // TODO decide how to detect what languages this item should be created in !?
-        return [];
+      case 'lang_codes':
+        return array_keys($this->assetData['namesByLang']);
 
       default:
         $metaAttributes = $this->getMetadataAttributes();
+        // If field is not found for current entity language, try returning the default lang value.
+        $fallbackValue = NULL;
         if (!isset($metaAttributes[$attribute_name])) {
           return NULL;
         }
@@ -241,6 +244,7 @@ class GredidamAsset extends Image {
           return NULL;
         }
         $lang_code = $media->language()->getId();
+        $fallbackLangCode = \Drupal::languageManager()->getCurrentLanguage()->getId();
         // Trying to find the attr id in the metaById, as they come as custom:meta-field-1285_fi.
         foreach ($this->assetData['metaById'] as $attr_name_key => $value) {
           if (strpos($attr_name_key, 'custom:meta-field-') !== 0) {
@@ -251,13 +255,16 @@ class GredidamAsset extends Image {
           if ($attr_id != $attribute_name) {
             continue;
           }
+          if ($attr_lang_code == $fallbackLangCode) {
+            $fallbackValue = $value;
+          }
           if ($attr_lang_code != $lang_code) {
             continue;
           }
           return $value;
         }
 
-        return NULL;
+        return $fallbackValue;
     }
   }
 

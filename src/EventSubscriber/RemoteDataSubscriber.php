@@ -75,7 +75,15 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
         $search_value = $condition['value'];
       }
     }
-    $remote_data = $this->client->searchAssets($search_value, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
+    try {
+      $remote_data = $this->client->searchAssets($search_value, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
+    }
+    catch (\Exception $e) {
+      \Drupal::logger('helfi_gredi_image')->error(t($e->getMessage()));
+      \Drupal::messenger()->addError(t('Failed to retrieve asset list'));
+      $remote_data = [];
+    }
+
     foreach ($remote_data as $item) {
       $event->addResult(new ResultRow($item));
     }
