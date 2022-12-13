@@ -573,6 +573,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * {@inheritDoc}
    */
   public function uploadImage(File $image): ?string {
+    return NULL;
     // Call to check if UPLOAD folder exists.
     $this->getCategoryTree();
 
@@ -590,6 +591,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     $apiResponse = $this->apiCallGet($urlUpload)->getStatusCode();
 
     if ($apiResponse == '200') {
+
       $fieldData = [
         "name" => basename($image->getFileUri()),
         "fileType" => "nt:file",
@@ -619,7 +621,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       $requestBody .= "--" . $boundary . "--\r\n";
       $requestBody .= "\r\n";
       try {
-        $response = $this->httpClient->request('POST', $urlUpload, [
+        $response = $this->httpClient->request('POST', 'https://api4.materialbank.net/api/v1/folders/16293292/files', [
           'cookies' => $this->authService->getCookieJar(),
           'headers' => [
             'Content-Type' => 'multipart/form-data;boundary=' . $boundary,

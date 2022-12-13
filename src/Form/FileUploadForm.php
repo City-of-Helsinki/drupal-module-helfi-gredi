@@ -13,6 +13,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\ElementInfoManagerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\Url;
+use Drupal\file\Entity\File;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\file\FileInterface;
 use Drupal\file\FileUsage\FileUsageInterface;
@@ -20,7 +21,7 @@ use Drupal\file\Plugin\Field\FieldType\FileFieldItemList;
 use Drupal\file\Plugin\Field\FieldType\FileItem;
 use Drupal\media\MediaInterface;
 use Drupal\media\MediaTypeInterface;
-use Drupal\media_library\Form\AddFormBase;
+use Drupal\helfi_gredi_image\Form\AddFormBase;
 use Drupal\media_library\MediaLibraryUiBuilder;
 use Drupal\media_library\OpenerResolverInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -216,6 +217,25 @@ class FileUploadForm extends AddFormBase {
       $form_state->setValue('upload', []);
       $element['#value'] = [];
     }
+    /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $damClient */
+    $damClient = \Drupal::service('helfi_gredi_image.dam_client');
+
+    // TODO change NULL with some error message.
+    $file_id = current($form_state->getValue('upload'))[0] ? current($form_state->getValue('upload'))[0] : NULL;
+
+
+//    try {
+//      if (!empty(current($form_state->getValue('upload')))) {
+//        /** @var File $file_entity */
+//        $file_entity = File::load($file_id);
+//        $damClient->uploadImage($file_entity);
+//      }
+//    }
+//    catch(\Exception $exception) {
+//      throw new \Exception($exception->getMessage());
+//    }
+//
+
     return $element;
   }
 
