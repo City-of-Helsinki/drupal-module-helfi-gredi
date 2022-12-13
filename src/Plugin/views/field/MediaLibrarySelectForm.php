@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Drupal\helfi_gredi_image\Plugin\views\field;
 
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\AlertCommand;
 use Drupal\Core\Ajax\CloseDialogCommand;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Element\Page;
 use Drupal\media\Entity\Media;
 use Drupal\media_library\MediaLibraryState;
 use Drupal\media_library\Plugin\views\field\MediaLibrarySelectForm as MediaEntityMediaLibrarySelectForm;
@@ -28,7 +31,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  private $entityTypeManager;
+  protected $entityTypeManager;
 
   /**
    * The current user account.
@@ -72,19 +75,16 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
     $selected_ids = $form_state->getValue('media_library_select_form');
     $selected_ids = $selected_ids ? array_filter($selected_ids) : [];
 
+    // We rely on details coming from API to be in form_state.
     $assetsData = $form_state->get('assetsData');
 
     $media_ids = [];
     foreach ($selected_ids as $id) {
       if (empty($assetsData[$id])) {
-        // TODO nasol
+        // This should not happen.
         continue;
       }
-      // TODO Entity query by gredi_asset_id = $id - maybe in a service method if not already?
-      // TODO if media exists, than skip the creation part.
-      // TODO maybe check for changes !? modified since !?
 
-      // Query for existing entities.
       /** @var \Drupal\Core\Entity\EntityTypeManager $entityTypeManager */
       $entityTypeManager = \Drupal::service('entity_type.manager');
       $existing_ids = $entityTypeManager
@@ -94,14 +94,10 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         ->condition('gredi_asset_id', $id)
         ->execute();
 
-//      $entities = $this->entityTypeManager->getStorage('media')
-//        ->loadMultiple($existing_ids);
-      if ($existing_ids) {
+      if (!empty($existing_ids)) {
+        // We should not have more than 1 with same gredi id.
         $mediaId = end($existing_ids);
-        // TODO should we check if modified since our copy?
-        // TODO save so that it fetches the fields and translations.
-        // TODO media load
-        // TODO $entity->save();
+        // TODO should we check if modified since our copy and resave it?
         $media_ids[] = $mediaId;
       }
       else {
@@ -111,22 +107,17 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         $media_type = $entityTypeManager->getStorage('media_type')
           ->load('gredi_dam_assets');
 
-        $source_field = $media_type->getSource()
-          ->getSourceFieldDefinition($media_type)
-          ->getName();
-
-        $request->getLanguages();
         $currentLanguage = \Drupal::languageManager()->getCurrentLanguage()->getId();
         $entity = Media::create([
           'bundle' => $media_type->id(),
           'uid' => \Drupal::currentUser()->id(),
-          // TODO get language from request.
           'langcode' => \Drupal::languageManager()->getCurrentLanguage()->getId(),
           'status' => 1,
           'gredi_asset_id' => $id,
         ]);
         /** @var \Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset $source */
         $source = $entity->getSource();
+        $source_field_name = $source->getConfiguration()['source_field'];
         $source->setAssetData($assetsData[$id]);
 
         $assetName = $source->getMetadata($entity, 'name');
@@ -135,44 +126,39 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         $modified = $source->getMetadata($entity, 'modified');
         $entity->set('gredi_modified', $modified);
 
+        /** @var \Drupal\file\FileInterface $file */
         $file = $source->getMetadata($entity, 'original_file');
         if (empty($file)) {
-          \Drupal::messenger()->addError('Unable to fetch or create file');
+          // Allow the opener service to handle the selection.
+          $state = MediaLibraryState::fromRequest($request);
+          return \Drupal::service('media_library.opener_resolver')
+            ->get($state)
+            ->getSelectionResponse($state, $media_ids)
+            ->addCommand(new AlertCommand(t('Unable create or fetch file')));
         }
         else {
-          $entity->set('field_media_image', ['target_id' => $file->id()]);
+          $entity->set($source_field_name, ['target_id' => $file->id()]);
         }
 
         $entity->save();
 
         $siteLanguages = array_keys(\Drupal::languageManager()->getLanguages());
-        // TODO to intersect with API languages.
-        foreach ($siteLanguages as $lang_code) {
-          if ($currentLanguage == $lang_code) {
+        $apiLanguages = $source->getMetadata($entity, 'lang_codes');
+        // TODO the api lang code for Swedish is SE, but in Drupal is SV. How to handle this?
+        foreach ($apiLanguages as $apiLangCode) {
+          if (!in_array($apiLangCode, $siteLanguages)) {
             continue;
           }
-          $translation = $entity->addTranslation($lang_code);
+          if ($currentLanguage == $apiLangCode) {
+            continue;
+          }
+          $translation = $entity->addTranslation($apiLangCode);
+          $translation->set('name', $assetName);
+          if (!empty($file) && $translation->get($source_field_name)->getFieldDefinition()->isTranslatable()) {
+            $translation->set($source_field_name, ['target_id' => $file->id()]);
+          }
           $translation->save();
         }
-//        foreach ($asset->keywords as $key => $lang) {
-//          if (in_array($key, $siteLanguages)) {
-//            // For current language case no translation will be added.
-//            if ($key == $currentLanguage) {
-//              $entity->field_media_image = $file->id();
-//              $entity->field_keywords = $asset->keywords[$key];
-//              $entity->field_alt_text = $asset->alt_text[$key];
-//              continue;
-//            }
-//            $entity->addTranslation($key, [
-//              'name' => $asset->name,
-//              'field_media_image' => [
-//                'target_id' => $file->id(),
-//              ],
-//              'field_keywords' => (!empty($asset->keywords[$key]) ? $asset->keywords[$key] : ''),
-//              'field_alt_text' => (!empty($asset->alt_text[$key]) ? $asset->alt_text[$key] : ''),
-//            ]);
-//          }
-//        }
 
         $media_ids[] = $entity->id();
       }
@@ -207,6 +193,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
       $source = $entity->getSource();
       $assetsData[$externalId] = $source->getAssetData();
     }
+    // Setting the api result so that we don't have to call again API for details in updateWdiget.
     $form_state->set('assetsData', $assetsData);
   }
 
