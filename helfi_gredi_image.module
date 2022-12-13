@@ -8,6 +8,7 @@
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
+use Drupal\helfi_gredi_image\Form\FileUploadForm;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use Drupal\file\Entity\File;
 use Drupal\Core\Entity\EntityInterface;
@@ -15,6 +16,7 @@ use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\media\MediaTypeInterface;
 use Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset;
+use Drupal\media_library\Form\OEmbedForm;
 use Drupal\media_library\MediaLibraryState;
 
 /**
@@ -186,7 +188,7 @@ function helfi_gredi_image_theme_suggestions_views_view(array $variables) {
  *
  * Media Library comes with few preprocess that takes care of adding necessary
  * libraries into the page. Unfortunately it is only applicable for media_library view,
- * this will take extending to acquia_dam_assest_library as well.
+ * this will take extending to gredi_dam_assest_library as well.
  */
 function helfi_gredi_image_views_post_render(\Drupal\views\ViewExecutable $view, &$output, \Drupal\views\Plugin\views\cache\CachePluginBase $cache) {
   if ($view->id() === 'gredi_dam_asset_library') {
@@ -222,10 +224,36 @@ function helfi_gredi_image_views_post_render(\Drupal\views\ViewExecutable $view,
 }
 
 /**
+ * Implements hook_media_source_info_alter().
+ */
+function helfi_gredi_image_media_source_info_alter(array &$sources) {
+
+  if (empty($sources['audio_file']['forms']['media_library_add'])) {
+    $sources['audio_file']['forms']['media_library_add'] = FileUploadForm::class;
+  }
+  if (empty($sources['file']['forms']['media_library_add'])) {
+    $sources['file']['forms']['media_library_add'] = FileUploadForm::class;
+  }
+  if (empty($sources['image']['forms']['media_library_add'])) {
+    $sources['image']['forms']['media_library_add'] = FileUploadForm::class;
+  }
+  if (empty($sources['video_file']['forms']['media_library_add'])) {
+    $sources['video_file']['forms']['media_library_add'] = FileUploadForm::class;
+  }
+  if (empty($sources['oembed:video']['forms']['media_library_add'])) {
+    $sources['oembed:video']['forms']['media_library_add'] = OEmbedForm::class;
+  }
+  if (empty($sources['gredidam_asset']['forms']['media_library_add'])) {
+    $sources['gredidam_asset']['forms']['media_library_add'] = FileUploadForm::class;
+  }
+
+}
+
+/**
  * Implements hook_views_pre_render().
  *
  * This will take care of necessary classes which is added by the media_library
- * to its view is extended to `acquia_dam_asset_library` as well.
+ * to its view is extended to `gredi_dam_asset_library` as well.
  */
 function helfi_gredi_image_views_pre_render(\Drupal\views\ViewExecutable $view) {
   $add_classes = function (&$option, array $classes_to_add) {
@@ -283,7 +311,7 @@ function helfi_gredi_image_views_pre_render(\Drupal\views\ViewExecutable $view) 
  * Implements hook_preprocess_views_view_fields().
  *
  * This will take care of necessary classes which is added by the media_library
- * to its view is extended to `acquia_dam_asset_library` as well.
+ * to its view is extended to `gredi_dam_asset_library` as well.
  */
 function helfi_gredi_image_preprocess_views_view_fields(&$variables) {
   // Add classes to media rendered entity field so it can be targeted for

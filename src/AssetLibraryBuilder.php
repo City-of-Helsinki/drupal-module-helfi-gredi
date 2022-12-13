@@ -4,22 +4,11 @@ declare(strict_types=1);
 
 namespace Drupal\helfi_gredi_image;
 
-use Drupal\acquia_dam\Plugin\media\Source\Asset;
+use Drupal\Core\Form\FormState;
 use Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset;
-use Drupal\Component\Utility\Crypt;
-use Drupal\Core\Access\AccessResult;
-use Drupal\Core\Extension\ModuleExtensionList;
-use Drupal\Core\File\FileUrlGeneratorInterface;
-use Drupal\Core\Logger\LoggerChannelInterface;
-use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\Session\AccountProxyInterface;
-use Drupal\Core\Site\Settings;
-use Drupal\Core\Url;
 use Drupal\media\MediaTypeInterface;
 use Drupal\media_library\MediaLibraryState;
 use Drupal\media_library\MediaLibraryUiBuilder;
-use Drupal\user\UserDataInterface;
 use Drupal\views\ViewEntityInterface;
 
 /**
@@ -100,6 +89,47 @@ final class AssetLibraryBuilder extends MediaLibraryUiBuilder {
    */
   public function buildUi(MediaLibraryState $state = NULL) {
     return parent::buildUi($state);
+
+  }
+
+  /**
+   * Get the add form for the selected media type.
+   *
+   * @param \Drupal\media_library\MediaLibraryState $state
+   *   The current state of the media library, derived from the current request.
+   *
+   * @return array
+   *   The render array for the media type add form.
+   */
+  protected function buildMediaTypeAddForm(MediaLibraryState $state) {
+    $selected_type_id = $state->getSelectedTypeId();
+
+    $access_handler = $this->entityTypeManager->getAccessControlHandler('media');
+    $context = [
+      'media_library_state' => $state,
+    ];
+    if (!$access_handler->createAccess($selected_type_id, NULL, $context)) {
+      return [];
+    }
+
+    $selected_type = $this->entityTypeManager->getStorage('media_type')->load($selected_type_id);
+    $plugin_definition = $selected_type->getSource()->getPluginDefinition();
+
+    if (empty($plugin_definition['forms']['media_library_add'])) {
+      return [];
+    }
+
+    // After the form to add new media is submitted, we need to rebuild the
+    // media library with a new instance of the media add form. The form API
+    // allows us to do that by forcing empty user input.
+    // @see \Drupal\Core\Form\FormBuilder::doBuildForm()
+    $form_state = new FormState();
+    if ($state->get('_media_library_form_rebuild')) {
+      $form_state->setUserInput([]);
+      $state->remove('_media_library_form_rebuild');
+    }
+    $form_state->set('media_library_state', $state);
+    return $this->formBuilder->buildForm($plugin_definition['forms']['media_library_add'], $form_state);
   }
 
 }
