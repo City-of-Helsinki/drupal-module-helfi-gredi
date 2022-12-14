@@ -16,7 +16,7 @@ use Drupal\media\MediaTypeInterface;
 use Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset;
 use Drupal\media_library\Form\OEmbedForm;
 use Drupal\media_library\MediaLibraryState;
-use \Drupal\helfi_gredi_image\Form\GrediFileUploadForm;
+use Drupal\helfi_gredi_image\Form\GrediFileUploadForm;
 
 /**
  * Implements hook_theme().
@@ -307,6 +307,38 @@ function helfi_gredi_image_views_pre_render(\Drupal\views\ViewExecutable $view) 
 }
 
 /**
+ * Implements hook_preprocess_image().
+ */
+function helfi_gredi_image_preprocess_image(&$variables) {
+  if (!empty($variables['attributes']['data-media-alt'])) {
+    $variables['alt'] = $variables['attributes']['data-media-alt'];
+    $variables['attributes']['alt'] = $variables['attributes']['data-media-alt'];
+    unset($variables['attributes']['data-media-alt']);
+  }
+}
+
+/**
+ * Implements hook_preprocess_field().
+ */
+function helfi_gredi_image_preprocess_field(&$variables) {
+  if (isset($variables['element']['#bundle'])
+    && $variables['element']['#bundle'] == 'gredi_dam_assets'
+    && $variables['element']['#field_type'] == 'image') {
+    /** @var \Drupal\media\MediaInterface $media */
+    $media = $variables['element']['#object'];
+    if (!empty($media->get('field_alt_text')->value)) {
+      if ($variables['items'][0]['content']['#theme'] == 'image') {
+        $variables['items'][0]['content']['#attributes']['data-media-alt'] = $media->get('field_alt_text')->value;
+      }
+      if ($variables['items'][0]['content']['#theme'] == 'image_formatter') {
+        $variables['items'][0]['content']['#item_attributes']['data-media-alt'] = $media->get('field_alt_text')->value;
+      }
+      // TODO cover more theme hooks?
+    }
+  }
+}
+
+/**
  * Implements hook_preprocess_views_view_fields().
  *
  * This will take care of necessary classes which is added by the media_library
@@ -320,7 +352,6 @@ function helfi_gredi_image_preprocess_views_view_fields(&$variables) {
       $variables['fields']['rendered_entity']->wrapper_attributes->addClass('js-click-to-select-trigger');
       // @see function claro_preprocess_views_view_fields__media_library(array &$variables).
       $variables['fields']['rendered_entity']->wrapper_attributes->addClass('media-library-item__click-to-select-trigger');
-
     }
   }
 }
