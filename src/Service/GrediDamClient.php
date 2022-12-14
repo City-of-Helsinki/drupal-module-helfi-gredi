@@ -102,6 +102,11 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    */
   protected $uploadFolderId;
 
+  /**
+   * Meta's to include in API call.
+   *
+   * @var string
+   */
   public $includes = 'object,meta,attachments';
 
   /**
@@ -531,14 +536,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     return $file_contents;
   }
 
-//  public function filterSearch($search = '', $sort = '', $limit = 10, $offset = 0) {
-//    if (!$this->authService->isAuthenticated()) {
-//      $this->authService->authenticate();
-//    }
-//    $customerId = $this->authService->getCustomerId();
-//    $url = sprintf("customers/%d/contents", $customerId);
-//  }
-
   /**
    * {@inheritDoc}
    */
@@ -573,7 +570,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    * {@inheritDoc}
    */
   public function uploadImage(File $image, $folderId = '16293292'): ?string {
-//    return NULL;
 
     // Assign the folder id to uploadFolderId.)
     $urlUpload = sprintf("folders/%s/files/", $folderId);

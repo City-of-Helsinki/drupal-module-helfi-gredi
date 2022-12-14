@@ -2,11 +2,9 @@
 
 namespace Drupal\helfi_gredi_image\Plugin\Field\FieldFormatter;
 
-use Drupal\acquia_dam\Plugin\media\Source\Asset;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
-use Drupal\Core\Form\FormStateInterface;
 use Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset;
 
 /**

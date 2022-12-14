@@ -2,12 +2,17 @@
 
 namespace Drupal\helfi_gredi_image\Plugin\media\Source;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Datetime\DateFormatter;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldTypePluginManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Image\ImageFactory;
+use Drupal\Core\Language\LanguageManagerInterface;
+use Drupal\file\FileInterface;
+use Drupal\file\FileRepositoryInterface;
 use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\media\MediaInterface;
 use Drupal\helfi_gredi_image\Service\AssetImageHelper;
@@ -43,16 +48,61 @@ class GredidamAsset extends Image {
    */
   protected $assetImageHelper;
 
+  /**
+   * The API assets array.
+   *
+   * @var array
+   */
   protected $assetData = [];
 
-  /** @var ImageFactory */
+  /**
+   * The image factory service.
+   *
+   * @var ImageFactory
+   */
   protected $imageFactory;
 
-  /** @var FileSystemInterface */
+  /**
+   * The file system service.
+   *
+   * @var FileSystemInterface
+   */
   protected $fileSystem;
 
-  /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient */
+  /**
+   * The gredidam client service.
+   *
+   * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
+   */
   protected $damClient;
+
+  /**
+   * The language manager service.
+   *
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected $languageManager;
+
+  /**
+   * The date time service.
+   *
+   * @var \Drupal\Component\Datetime\TimeInterface
+   */
+  protected $timeManager;
+
+  /**
+   * The date formatter service.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatter
+   */
+  protected $dateFormatter;
+
+  /**
+   * The file repository service.
+   *
+   * @var \Drupal\file\FileRepositoryInterface
+   */
+  protected $fileRepository;
 
   /**
    * GredidamAsset constructor.
@@ -69,7 +119,11 @@ class GredidamAsset extends Image {
     ConfigFactoryInterface $config_factory,
     GrediDamClient $damClient,
     ImageFactory $imageFactory,
-    FileSystemInterface $fileSystem) {
+    FileSystemInterface $fileSystem,
+    LanguageManagerInterface $languageManager,
+    TimeInterface $timeManager,
+    DateFormatter $dateFormatter,
+    FileRepositoryInterface $fileRepository) {
     parent::__construct(
       $configuration,
       $plugin_id,
@@ -83,6 +137,10 @@ class GredidamAsset extends Image {
     );
 
     $this->damClient = $damClient;
+    $this->languageManager = $languageManager;
+    $this->timeManager = $timeManager;
+    $this->dateFormatter = $dateFormatter;
+    $this->fileRepository = $fileRepository;
   }
 
   /**
@@ -99,7 +157,11 @@ class GredidamAsset extends Image {
       $container->get('config.factory'),
       $container->get('helfi_gredi_image.dam_client'),
       $container->get('image.factory'),
-      $container->get('file_system')
+      $container->get('file_system'),
+      $container->get('language_manager'),
+      $container->get('datetime.time'),
+      $container->get('date.formatter'),
+      $container->get('file.repository')
     );
   }
 
@@ -117,8 +179,7 @@ class GredidamAsset extends Image {
    */
   public function getMetadataAttributes() {
     $fields = [];
-    // TODO Dep Injection.
-    $lang_code = \Drupal::languageManager()->getCurrentLanguage()->getId();
+    $lang_code = $this->languageManager->getCurrentLanguage()->getId();
     try {
       $damMetadataFields = $this->damClient->getMetaFields();
       foreach ($damMetadataFields as $damField) {
@@ -197,8 +258,8 @@ class GredidamAsset extends Image {
           $assetName = $this->assetData['name'];
           $assetModified = $this->assetData['modified'];
           // Create subfolders by month.
-          $current_timestamp = \Drupal::time()->getCurrentTime();
-          $date_output = \Drupal::service('date.formatter')->format($current_timestamp, 'custom', 'd/M/Y');
+          $current_timestamp = $this->timeManager->getCurrentTime();
+          $date_output = $this->dateFormatter->format($current_timestamp, 'custom', 'd/M/Y');
           $date = str_replace('/', '-', substr($date_output, 3, 8));
 
           // Asset name contains id and last updated date.
@@ -208,9 +269,7 @@ class GredidamAsset extends Image {
 
           $location = $directory . '/' .$asset_name;
           if (!file_exists($location)) {
-            /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $client */
-            $client = \Drupal::service('helfi_gredi_image.dam_client');
-            $fileContent = $client->getFileContent($assetId, $this->assetData['apiPreviewLink']);
+            $fileContent = $this->damClient->getFileContent($assetId, $this->assetData['apiPreviewLink']);
             $this->fileSystem->saveData($fileContent, $location, FileSystemInterface::EXISTS_REPLACE);
           }
 
@@ -244,14 +303,14 @@ class GredidamAsset extends Image {
           return NULL;
         }
         $lang_code = $media->language()->getId();
-        $fallbackLangCode = \Drupal::languageManager()->getCurrentLanguage()->getId();
+        $fallbackLangCode = $this->languageManager->getCurrentLanguage()->getId();
         // Trying to find the attr id in the metaById, as they come as custom:meta-field-1285_fi.
         foreach ($this->assetData['metaById'] as $attr_name_key => $value) {
           if (strpos($attr_name_key, 'custom:meta-field-') !== 0) {
             continue;
           }
           $attr_id_and_lang = str_replace('custom:meta-field-', '', $attr_name_key);
-          list ($attr_id, $attr_lang_code) = explode('_', $attr_id_and_lang);
+          [$attr_id, $attr_lang_code] = explode('_', $attr_id_and_lang);
           if ($attr_id != $attribute_name) {
             continue;
           }
@@ -279,22 +338,29 @@ class GredidamAsset extends Image {
     $this->assetData = $data;
   }
 
-  public function getAssetData() {
+  /**
+   * Get the asset data.
+   *
+   * @return array
+   */
+  public function getAssetData() : array {
     return $this->assetData;
   }
 
-
-  public function getOriginalFile() {
+  /**
+   * Retrieves the original file from API.
+   *
+   * @return \Drupal\file\FileInterface|null
+   */
+  public function getOriginalFile() : FileInterface|NULL {
     try {
       $assetId = $this->assetData['id'];
       $assetName = $this->assetData['name'];
-      /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $service */
-      $client = \Drupal::service('helfi_gredi_image.dam_client');
-      $fileContent = $client->getFileContent($assetId, $this->assetData['apiContentLink']);
+      $fileContent = $this->damClient->getFileContent($assetId, $this->assetData['apiContentLink']);
 
       // Create subfolders by month.
-      $current_timestamp = \Drupal::time()->getCurrentTime();
-      $date_output = \Drupal::service('date.formatter')->format($current_timestamp, 'custom', 'd/M/Y');
+      $current_timestamp = $this->timeManager->getCurrentTime();
+      $date_output = $this->dateFormatter->format($current_timestamp, 'custom', 'd/M/Y');
       $date = str_replace('/', '-', substr($date_output, 3, 8));
 
       // Create month folder.
@@ -304,12 +370,8 @@ class GredidamAsset extends Image {
 
       $location = $directory . '/' . $assetName;
 
+      return $this->fileRepository->writeData($fileContent, $location);
 
-      /** @var \Drupal\file\FileRepositoryInterface $file_repository */
-      $file_repository = \Drupal::service('file.repository');
-      $file = $file_repository->writeData($fileContent, $location);
-
-      return $file;
     }
     catch (\Exception $e) {
       return NULL;

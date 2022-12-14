@@ -6,6 +6,7 @@ use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
+use Drupal\helfi_gredi_image\Service\GrediDamAuthService;
 use GuzzleHttp\Cookie\CookieJarInterface;
 use GuzzleHttp\Exception\ClientException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -27,6 +28,11 @@ class GrediDamConfigForm extends ConfigFormBase {
   protected $httpClient;
 
   /**
+   * @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService
+   */
+  protected $authService;
+
+  /**
    * GrediDamConfigForm constructor.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
@@ -34,9 +40,10 @@ class GrediDamConfigForm extends ConfigFormBase {
    * @param \GuzzleHttp\ClientInterface $http_client
    *   Http client.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, ClientInterface $http_client) {
+  public function __construct(ConfigFactoryInterface $config_factory, ClientInterface $http_client, GrediDamAuthService $authService) {
     parent::__construct($config_factory);
     $this->httpClient = $http_client;
+    $this->authService = $authService;
   }
 
   /**
@@ -45,7 +52,8 @@ class GrediDamConfigForm extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
-      $container->get('http_client')
+      $container->get('http_client'),
+      $container->get('helfi_gredi_image.auth_service')
     );
   }
 
@@ -154,17 +162,15 @@ class GrediDamConfigForm extends ConfigFormBase {
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void {
     // Validate authentication and fetch customer id.
-    /** @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService $auth_service */
-    $auth_service = \Drupal::service('helfi_gredi_image.auth_service');
-    $auth_service->apiUrl = $form_state->getValue('api_url');
-    $auth_service->username = $form_state->getValue('username');
-    $auth_service->password = $form_state->getValue('password');
-    $auth_service->customer = $form_state->getValue('customer');
+    $this->authService->apiUrl = $form_state->getValue('api_url');
+    $this->authService->username = $form_state->getValue('username');
+    $this->authService->password = $form_state->getValue('password');
+    $this->authService->customer = $form_state->getValue('customer');
     // Clear existing customer id to fetch new one.
-    $auth_service->customerId = '';
+    $this->authService->customerId = '';
 
     try {
-      $auth_service->authenticate();
+      $this->authService->authenticate();
     }
     catch (\Exception $e) {
       $form_state->setErrorByName(
@@ -175,7 +181,7 @@ class GrediDamConfigForm extends ConfigFormBase {
     }
 
     try {
-      $customerId = $auth_service->getCustomerId();
+      $customerId = $this->authService->getCustomerId();
       $form_state->set('customerId', $customerId);
     }
     catch (\Exception $e) {

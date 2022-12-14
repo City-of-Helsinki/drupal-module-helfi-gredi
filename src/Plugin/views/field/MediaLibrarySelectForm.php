@@ -56,8 +56,6 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
     return $instance;
   }
 
-
-
   /**
    * Submit handler for the media library select form.
    *
