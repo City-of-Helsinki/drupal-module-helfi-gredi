@@ -16,7 +16,7 @@ use Drupal\media\MediaTypeInterface;
 use Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset;
 use Drupal\media_library\Form\OEmbedForm;
 use Drupal\media_library\MediaLibraryState;
-use \Drupal\helfi_gredi_image\Form\GrediFileUploadForm;
+use Drupal\helfi_gredi_image\Form\GrediFileUploadForm;
 
 /**
  * Implements hook_theme().
@@ -302,6 +302,32 @@ function helfi_gredi_image_views_pre_render(\Drupal\views\ViewExecutable $view) 
     }
     else {
       $add_classes($view->display_handler->options['css_class'], ['js-media-library-view']);
+    }
+  }
+}
+
+/**
+ * Implements hook_preprocess_image().
+ */
+function helfi_gredi_image_preprocess_image(&$variables) {
+  if (!empty($variables['attributes']['data-media-alt'])) {
+    $variables['alt'] = $variables['attributes']['data-media-alt'];
+    $variables['attributes']['alt'] = $variables['attributes']['data-media-alt'];
+    unset($variables['attributes']['data-media-alt']);
+  }
+}
+
+/**
+ * Implements hook_preprocess_field().
+ */
+function helfi_gredi_image_preprocess_field(&$variables) {
+  if (isset($variables['element']['#bundle'])
+    && $variables['element']['#bundle'] == 'gredi_dam_assets'
+    && $variables['element']['#field_type'] == 'image') {
+    /** @var \Drupal\media\MediaInterface $media */
+    $media = $variables['element']['#object'];
+    if (!empty($media->get('field_alt_text')->value)) {
+      $variables['items'][0]['content']['#attributes']['data-media-alt'] = $media->get('field_alt_text')->value;
     }
   }
 }
