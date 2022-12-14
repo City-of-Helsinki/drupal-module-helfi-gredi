@@ -2,6 +2,7 @@
 
 namespace Drupal\helfi_gredi_image\Form;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
@@ -68,6 +69,13 @@ class GrediFileUploadForm extends FileUploadForm {
   protected $damClient;
 
   /**
+   * The date time service.
+   *
+   * @var \Drupal\Component\Datetime\TimeInterface
+   */
+  protected $timeManager;
+
+  /**
    * GrediFileUploadForm constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -89,10 +97,11 @@ class GrediFileUploadForm extends FileUploadForm {
    * @param \Drupal\helfi_gredi_image\Service\GrediDamClient $damClient
    *   The Gredi DAM client service.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, MediaLibraryUiBuilder $library_ui_builder, ElementInfoManagerInterface $element_info, RendererInterface $renderer, FileSystemInterface $file_system, OpenerResolverInterface $opener_resolver, FileUsageInterface $file_usage, FileRepositoryInterface $file_repository = NULL, GrediDamClient $damClient) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, MediaLibraryUiBuilder $library_ui_builder, ElementInfoManagerInterface $element_info, RendererInterface $renderer, FileSystemInterface $file_system, OpenerResolverInterface $opener_resolver, FileUsageInterface $file_usage, FileRepositoryInterface $file_repository = NULL, GrediDamClient $damClient, TimeInterface $timeManager) {
     parent::__construct($entity_type_manager, $library_ui_builder, $element_info, $renderer, $file_system, $opener_resolver, $file_usage, $file_repository);
 
     $this->damClient = $damClient;
+    $this->timeManager = $timeManager;
   }
 
   /**
@@ -108,7 +117,8 @@ class GrediFileUploadForm extends FileUploadForm {
       $container->get('media_library.opener_resolver'),
       $container->get('file.usage'),
       $container->get('file.repository'),
-      $container->get('helfi_gredi_image.dam_client')
+      $container->get('helfi_gredi_image.dam_client'),
+      $container->get('datetime.time')
     );
   }
 
@@ -123,7 +133,7 @@ class GrediFileUploadForm extends FileUploadForm {
     try {
       $asset_id = $this->damClient->uploadImage($file_entity);
       $media->set('gredi_asset_id', $asset_id);
-      $media->set('gredi_modified', \Drupal::time()->getCurrentTime());
+      $media->set('gredi_modified', $this->timeManager->getCurrentTime());
     }
     catch(\Exception $exception) {
       $form_state->setError($form['media'], 'Upload error');

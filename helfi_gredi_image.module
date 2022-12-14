@@ -8,15 +8,14 @@
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
-use Drupal\media_library\Form\FileUploadForm;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\media\MediaTypeInterface;
 use Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset;
-use Drupal\media_library\Form\OEmbedForm;
 use Drupal\media_library\MediaLibraryState;
 use Drupal\helfi_gredi_image\Form\GrediFileUploadForm;
+use Drupal\file\Entity\File;
 
 /**
  * Implements hook_theme().
@@ -28,6 +27,36 @@ function media_gredidam_theme($existing, $type, $theme, $path) {
       'template' => 'checkboxes--gredidam-assets',
     ],
   ];
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function helfi_gredi_image_form_media_gredi_dam_assets_add_form_alter(&$form, FormStateInterface $form_state) {
+
+  $form['#validate'][] = 'validate_gredi_add';
+}
+
+function validate_gredi_add(&$form, &$form_state) {
+  $media = $form_state->getformObject()->getEntity();
+  // If the validation was successful at selecting file do not retry on submit.
+  if (!empty($media->get('field_asset_id'))){
+    return;
+  }
+  $input = $form_state->getValue('field_media_image')[0]['fids'][0];
+
+  $file_entity = File::load($input);
+  try {
+    /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $damClient */
+    $damClient = \Drupal::service('helfi_gredi_image.dam_client');
+    $asset_id = $damClient->uploadImage($file_entity);
+    $media->set('field_asset_id', $asset_id);
+    $media->set('field_modified', \Drupal::time()->getCurrentTime());
+  }
+  catch(\Exception $exception) {
+    $form_state->setError($form['field_media_image'], 'Upload error');
+  }
+
 }
 
 /**
@@ -84,7 +113,6 @@ function helfi_gredi_image_entity_bundle_field_info(EntityTypeInterface $entity_
   }
   return $definitions;
 }
-
 
 /**
  * Implements hook_cron().
@@ -226,26 +254,9 @@ function helfi_gredi_image_views_post_render(\Drupal\views\ViewExecutable $view,
  * Implements hook_media_source_info_alter().
  */
 function helfi_gredi_image_media_source_info_alter(array &$sources) {
-
-  if (empty($sources['audio_file']['forms']['media_library_add'])) {
-    $sources['audio_file']['forms']['media_library_add'] = FileUploadForm::class;
-  }
-  if (empty($sources['file']['forms']['media_library_add'])) {
-    $sources['file']['forms']['media_library_add'] = FileUploadForm::class;
-  }
-  if (empty($sources['image']['forms']['media_library_add'])) {
-    $sources['image']['forms']['media_library_add'] = FileUploadForm::class;
-  }
-  if (empty($sources['video_file']['forms']['media_library_add'])) {
-    $sources['video_file']['forms']['media_library_add'] = FileUploadForm::class;
-  }
-  if (empty($sources['oembed:video']['forms']['media_library_add'])) {
-    $sources['oembed:video']['forms']['media_library_add'] = OEmbedForm::class;
-  }
   if (empty($sources['gredidam_asset']['forms']['media_library_add'])) {
     $sources['gredidam_asset']['forms']['media_library_add'] = GrediFileUploadForm::class;
   }
-
 }
 
 /**
