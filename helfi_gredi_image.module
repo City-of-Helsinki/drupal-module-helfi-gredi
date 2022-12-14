@@ -8,16 +8,15 @@
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
-use Drupal\helfi_gredi_image\Form\FileUploadForm;
+use Drupal\media_library\Form\FileUploadForm;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
-use Drupal\file\Entity\File;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\media\MediaTypeInterface;
 use Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset;
 use Drupal\media_library\Form\OEmbedForm;
 use Drupal\media_library\MediaLibraryState;
+use \Drupal\helfi_gredi_image\Form\GrediFileUploadForm;
 
 /**
  * Implements hook_theme().
@@ -244,7 +243,7 @@ function helfi_gredi_image_media_source_info_alter(array &$sources) {
     $sources['oembed:video']['forms']['media_library_add'] = OEmbedForm::class;
   }
   if (empty($sources['gredidam_asset']['forms']['media_library_add'])) {
-    $sources['gredidam_asset']['forms']['media_library_add'] = FileUploadForm::class;
+    $sources['gredidam_asset']['forms']['media_library_add'] = GrediFileUploadForm::class;
   }
 
 }
