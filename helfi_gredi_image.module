@@ -48,7 +48,7 @@ function helfi_gredi_image_form_media_gredi_dam_assets_add_form_alter(&$form, Fo
 function validate_gredi_add(&$form, &$form_state) : void {
   $media = $form_state->getformObject()->getEntity();
   // If the validation was successful at selecting file do not retry on submit.
-  if (!empty($media->get('gredi_asset_id'))){
+  if (!empty($media->get('gredi_asset_id')->value)){
     return;
   }
   $input = $form_state->getValue('field_media_image')[0]['fids'][0];
