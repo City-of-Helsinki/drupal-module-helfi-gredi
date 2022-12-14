@@ -132,6 +132,7 @@ function helfi_gredi_image_cron()
     /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $gradi_dam_client */
     $gradi_dam_client = \Drupal::service('helfi_gredi_image.dam_client');
     /** @var \Drupal\helfi_gredi_image\Service\AssetMetadataHelper $metadata_helper */
+    // TODO refactor this.
     $metadata_helper = new AssetMetadataHelper($config_factory, $date_formatter, $gradi_dam_client);
     $metadata_helper->populateMetadataUpdateQueue();
     \Drupal::state()->set('helfi_gredi_image.last_run', $request_time);
