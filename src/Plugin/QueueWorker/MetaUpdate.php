@@ -55,6 +55,10 @@ class MetaUpdate extends QueueWorkerBase {
     $external_gredi_asset = $this->damClient->getAsset($data->external_id);
     /** @var \Drupal\media\Entity\Media $internal_gredi_asset */
     $internal_gredi_asset = Media::load($data->media_id);
+    // TODO refactor this to check for modified timestamp, not to save and invalidate cache every cron run.
+    // TODO We might want to use source method to force the update
+    // TODO check Media::prepareSave and how it fills the values for fields.
+    // TODO We might want to clear the values so that Media::prepareSave kicks in.
     $this->metadataHelper->performMetadataUpdate($internal_gredi_asset, $external_gredi_asset);
     \Drupal::logger('GrediMetaData')->notice('Metadata for Gredi asset with id ' . $data->media_id);
   }
