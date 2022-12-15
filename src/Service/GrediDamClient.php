@@ -623,48 +623,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
 
   }
 
-//  /**
-//   * Function that creates a folder in the API root.
-//   *
-//   * @param string $folderName
-//   *   Folder name.
-//   * @param string $folderDescription
-//   *   Folder description.
-//   *
-//   * @throws \GuzzleHttp\Exception\GuzzleException
-//   */
-//  public function createFolder($folderName, $folderDescription) {
-//    $url = sprintf("%s/folders/%d/files", $this->baseUrl, $this->getRootFolderId());
-//
-//    $fieldData = [
-//      "name" => $folderName,
-//      "fileType" => "nt:folder",
-//      "propertiesById" => [
-//        'nibo:description_fi' => $folderDescription,
-//        'nibo:description_en' => $folderDescription,
-//      ],
-//    ];
-//    $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
-//
-//    try {
-//      if (!$this->authService->isAuthenticated()) {
-//        $this->authService->authenticate();
-//      }
-//      $response = $this->httpClient->request('POST', $url, [
-//        'cookies' => $this->authService->getCookieJar(),
-//        'headers' => [
-//          'Content-Type' => 'application/json',
-//        ],
-//        'body' => $fieldString,
-//      ])->getBody()->getContents();
-//
-//      $this->uploadFolderId = Json::decode($response)['id'];
-//    }
-//    catch (\Exception $e) {
-//      $this->loggerChannel->error($e->getMessage());
-//    }
-//  }
-
   /**
    * Get metafields.
    *

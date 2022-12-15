@@ -10,26 +10,12 @@ use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
  * A worker that updates metadata for every image.
  *
  * @QueueWorker(
- *   id = "meta_update",
- *   title = @Translation("Meta Update"),
+ *   id = "gredi_asset_update",
+ *   title = @Translation("Updates Gredi image asset"),
  *   cron = {"time" = 90}
  * )
  */
 class MetaUpdate extends QueueWorkerBase {
-
-  /**
-   * DAM client.
-   *
-   * @var \Drupal\helfi_gredi_image\DamClientInterface
-   */
-  private $damClient;
-
-  /**
-   * Metadata helper.
-   *
-   * @var \Drupal\helfi_gredi_image\Service\AssetMetadataHelper
-   */
-  private AssetMetadataHelper $metadataHelper;
 
   /**
    * Constructor.
@@ -43,24 +29,19 @@ class MetaUpdate extends QueueWorkerBase {
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->damClient = \Drupal::service('helfi_gredi_image.dam_client');
-    $this->metadataHelper = \Drupal::service('helfi_gredi_image.asset_metadata.helper');
   }
 
   /**
    * {@inheritdoc}
    */
-  public function processItem($data) {
-    /** @var \Drupal\helfi_gredi_image\Entity\Asset $external_gredi_asset */
-    $external_gredi_asset = $this->damClient->getAsset($data->external_id);
-    /** @var \Drupal\media\Entity\Media $internal_gredi_asset */
-    $internal_gredi_asset = Media::load($data->media_id);
+  public function processItem($media_id) {
+    $media = Media::load($media_id);
     // TODO refactor this to check for modified timestamp, not to save and invalidate cache every cron run.
     // TODO We might want to use source method to force the update
     // TODO check Media::prepareSave and how it fills the values for fields.
     // TODO We might want to clear the values so that Media::prepareSave kicks in.
-    $this->metadataHelper->performMetadataUpdate($internal_gredi_asset, $external_gredi_asset);
-    \Drupal::logger('GrediMetaData')->notice('Metadata for Gredi asset with id ' . $data->media_id);
+//    $this->metadataHelper->performMetadataUpdate($internal_gredi_asset, $external_gredi_asset);
+    \Drupal::logger('helfi_gredi_image')->notice('Metadata for Gredi asset with id ' . $data->media_id);
   }
 
 }
