@@ -29,12 +29,18 @@ function media_gredidam_theme($existing, $type, $theme, $path) {
   ];
 }
 
+function helfi_gredi_image_field_widget_form_alter(&$element, &$form_state, $context) {
+//  dump($form_state);
+//  dump($context);
+//  dump($element);
+}
+
 /**
  * Implements hook_form_FORM_ID_alter().
  */
 function helfi_gredi_image_form_media_gredi_dam_assets_add_form_alter(&$form, FormStateInterface $form_state) {
 
-  $form['#validate'][] = 'validate_gredi_add';
+  $form['actions']['submit']['#validate'][] = 'validate_gredi_add';
 }
 
 /**
