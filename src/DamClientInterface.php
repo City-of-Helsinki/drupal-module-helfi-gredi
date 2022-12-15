@@ -101,19 +101,6 @@ interface DamClientInterface {
   public function uploadImage(File $image): ?string;
 
   /**
-   * Create folder.
-   *
-   * @param string $folderName
-   *   Image to upload.
-   * @param string $folderDescription
-   *   Image to upload.
-   *
-   * @return string|null
-   *   ID of the newly created DAM asset.
-   */
-  public function createFolder($folderName, $folderDescription);
-
-  /**
    * Retrieves metadata fields.
    *
    * @return array

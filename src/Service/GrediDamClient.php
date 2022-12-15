@@ -6,6 +6,7 @@ use Drupal\Component\Serialization\Json;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\file\Entity\File;
@@ -132,7 +133,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     ClientInterface $guzzleClient,
     ConfigFactoryInterface $config,
     GrediDamAuthService $grediDamAuthService,
-    LoggerChannelFactoryInterface $loggerChannelFactory
+    LoggerChannelFactoryInterface $loggerChannelFactory,
   ) {
     $this->httpClient = $guzzleClient;
     $this->config = $config;
@@ -569,43 +570,44 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   /**
    * {@inheritDoc}
    */
-  public function uploadImage(File $image, $folderId = '16293292'): ?string {
+  public function uploadImage(File $image): ?string {
 
-    // Assign the folder id to uploadFolderId.)
-    $urlUpload = sprintf("folders/%s/files/", $folderId);
-    $url = sprintf("%s/%s", $this->apiUrl, $urlUpload);
+    $mime = $image->getMimeType();
+
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
+    // Create the upload URL.
+    $urlUpload = sprintf("folders/%s/files/", $this->authService->uploadFolder);
+    $url = sprintf("%s/%s", $this->apiUrl, $urlUpload);
 
-      $fieldData = [
-        "name" => basename($image->getFileUri()),
-        "fileType" => "nt:file",
-        "propertiesById" => [],
-        "metaById" => [],
-      ];
-      $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
-      $base64EncodedFile = base64_encode(file_get_contents($image->getFileUri()));
-      // TODO check this instead of this hardcoded string.
-      // https://docs.guzzlephp.org/en/stable/quickstart.html#sending-form-fields
-      $boundary = "helfiboundary";
-      $requestBody = "";
-      $requestBody .= "\r\n";
-      $requestBody .= "\r\n";
-      $requestBody .= "--" . $boundary . "\r\n";
-      $requestBody .= "Content-Disposition: form-data; name=\"json\"\r\n";
-      $requestBody .= "Content-Type: application/json\r\n";
-      $requestBody .= "\r\n";
-      $requestBody .= $fieldString . "\r\n";
-      $requestBody .= "--" . $boundary . "\r\n";
-      $requestBody .= "Content-Disposition: form-data; name=\"file\"\r\n";
-      // TODO this content type should not be hardcoded.
-      $requestBody .= "Content-Type: image/jpeg\r\n";
-      $requestBody .= "Content-Transfer-Encoding: base64\r\n";
-      $requestBody .= "\r\n";
-      $requestBody .= $base64EncodedFile . "\r\n";
-      $requestBody .= "--" . $boundary . "--\r\n";
-      $requestBody .= "\r\n";
+    $fieldData = [
+      "name" => basename($image->getFileUri()),
+      "fileType" => "nt:file",
+      "propertiesById" => [],
+      "metaById" => [],
+    ];
+    $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
+    $base64EncodedFile = base64_encode(file_get_contents($image->getFileUri()));
+    // TODO check this instead of this hardcoded string.
+    // https://docs.guzzlephp.org/en/stable/quickstart.html#sending-form-fields
+    $boundary = "helfiboundary";
+    $requestBody = "";
+    $requestBody .= "\r\n";
+    $requestBody .= "\r\n";
+    $requestBody .= "--" . $boundary . "\r\n";
+    $requestBody .= "Content-Disposition: form-data; name=\"json\"\r\n";
+    $requestBody .= "Content-Type: application/json\r\n";
+    $requestBody .= "\r\n";
+    $requestBody .= $fieldString . "\r\n";
+    $requestBody .= "--" . $boundary . "\r\n";
+    $requestBody .= "Content-Disposition: form-data; name=\"file\"\r\n";
+    $requestBody .= "Content-Type: " . $mime . "\r\n";
+    $requestBody .= "Content-Transfer-Encoding: base64\r\n";
+    $requestBody .= "\r\n";
+    $requestBody .= $base64EncodedFile . "\r\n";
+    $requestBody .= "--" . $boundary . "--\r\n";
+    $requestBody .= "\r\n";
 
     $response = $this->httpClient->request('POST', $url, [
       'cookies' => $this->authService->getCookieJar(),
@@ -621,47 +623,47 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
 
   }
 
-  /**
-   * Function that creates a folder in the API root.
-   *
-   * @param string $folderName
-   *   Folder name.
-   * @param string $folderDescription
-   *   Folder description.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
-   */
-  public function createFolder($folderName, $folderDescription) {
-    $url = sprintf("%s/folders/%d/files", $this->baseUrl, $this->getRootFolderId());
-
-    $fieldData = [
-      "name" => $folderName,
-      "fileType" => "nt:folder",
-      "propertiesById" => [
-        'nibo:description_fi' => $folderDescription,
-        'nibo:description_en' => $folderDescription,
-      ],
-    ];
-    $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
-
-    try {
-      if (!$this->authService->isAuthenticated()) {
-        $this->authService->authenticate();
-      }
-      $response = $this->httpClient->request('POST', $url, [
-        'cookies' => $this->authService->getCookieJar(),
-        'headers' => [
-          'Content-Type' => 'application/json',
-        ],
-        'body' => $fieldString,
-      ])->getBody()->getContents();
-
-      $this->uploadFolderId = Json::decode($response)['id'];
-    }
-    catch (\Exception $e) {
-      $this->loggerChannel->error($e->getMessage());
-    }
-  }
+//  /**
+//   * Function that creates a folder in the API root.
+//   *
+//   * @param string $folderName
+//   *   Folder name.
+//   * @param string $folderDescription
+//   *   Folder description.
+//   *
+//   * @throws \GuzzleHttp\Exception\GuzzleException
+//   */
+//  public function createFolder($folderName, $folderDescription) {
+//    $url = sprintf("%s/folders/%d/files", $this->baseUrl, $this->getRootFolderId());
+//
+//    $fieldData = [
+//      "name" => $folderName,
+//      "fileType" => "nt:folder",
+//      "propertiesById" => [
+//        'nibo:description_fi' => $folderDescription,
+//        'nibo:description_en' => $folderDescription,
+//      ],
+//    ];
+//    $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
+//
+//    try {
+//      if (!$this->authService->isAuthenticated()) {
+//        $this->authService->authenticate();
+//      }
+//      $response = $this->httpClient->request('POST', $url, [
+//        'cookies' => $this->authService->getCookieJar(),
+//        'headers' => [
+//          'Content-Type' => 'application/json',
+//        ],
+//        'body' => $fieldString,
+//      ])->getBody()->getContents();
+//
+//      $this->uploadFolderId = Json::decode($response)['id'];
+//    }
+//    catch (\Exception $e) {
+//      $this->loggerChannel->error($e->getMessage());
+//    }
+//  }
 
   /**
    * Get metafields.

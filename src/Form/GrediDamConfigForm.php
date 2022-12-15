@@ -122,6 +122,14 @@ class GrediDamConfigForm extends ConfigFormBase {
       '#disabled' => TRUE,
     ];
 
+    $form['auth']['upload_folder_id'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Upload folder ID'),
+      '#default_value' => $config->get('upload_folder_id'),
+      '#description' => $this->t('The Gredi folder ID on which files will be uploaded.'),
+      '#required' => TRUE,
+    ];
+
     $form['entity_browser'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Gredi DAM entity browser settings'),
@@ -166,6 +174,7 @@ class GrediDamConfigForm extends ConfigFormBase {
     $this->authService->username = $form_state->getValue('username');
     $this->authService->password = $form_state->getValue('password');
     $this->authService->customer = $form_state->getValue('customer');
+    $this->authService->uploadFolder = $form_state->getValue('upload_folder_id');
     // Clear existing customer id to fetch new one.
     $this->authService->customerId = '';
 
@@ -202,6 +211,7 @@ class GrediDamConfigForm extends ConfigFormBase {
         'username' => $form_state->getValue('username'),
         'password' => $form_state->getValue('password'),
         'customer' => $form_state->getValue('customer'),
+        'upload_folder_id' => $form_state->getValue('upload_folder_id'),
         'customer_id' => $customerId,
         'num_assets_per_page' => $form_state->getValue('num_assets_per_page'),
       ]

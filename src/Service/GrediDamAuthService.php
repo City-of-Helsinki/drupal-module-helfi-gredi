@@ -27,6 +27,8 @@ class GrediDamAuthService implements DamAuthServiceInterface {
 
   public string $customer;
 
+  public string $uploadFolder;
+
   protected string $sessionId;
 
   const SESSION_ID_STATE_NAME = 'helfi_gredi_image_session';
@@ -71,6 +73,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
     $this->password = $config->get('password') ?? '';
     $this->customer = $config->get('customer') ?? '';
     $this->customerId = $config->get('customer_id') ?? '';
+    $this->uploadFolder = $config->get('upload_folder_id') ?? '';
     $this->sessionId = $this->getStoredSessionId() ?? '';
   }
 
