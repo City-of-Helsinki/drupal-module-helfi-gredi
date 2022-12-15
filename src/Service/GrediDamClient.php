@@ -586,8 +586,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       ];
       $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
       $base64EncodedFile = base64_encode(file_get_contents($image->getFileUri()));
-      // TODO check this instead of this hardcoded string.
-      // https://docs.guzzlephp.org/en/stable/quickstart.html#sending-form-fields
+      // Using Form Data object with Guzzle didn't work, so we do this ugly string concat.
       $boundary = "helfiboundary";
       $requestBody = "";
       $requestBody .= "\r\n";

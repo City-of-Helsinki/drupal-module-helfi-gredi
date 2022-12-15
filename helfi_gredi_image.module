@@ -29,18 +29,11 @@ function media_gredidam_theme($existing, $type, $theme, $path) {
   ];
 }
 
-function helfi_gredi_image_field_widget_form_alter(&$element, &$form_state, $context) {
-//  dump($form_state);
-//  dump($context);
-//  dump($element);
-}
-
 /**
  * Implements hook_form_FORM_ID_alter().
  */
 function helfi_gredi_image_form_media_gredi_dam_assets_add_form_alter(&$form, FormStateInterface $form_state) {
-
-  $form['actions']['submit']['#validate'][] = 'validate_gredi_add';
+  $form['actions']['submit']['#validate'][] = '_helfi_gredi_image_media_save_validate';
 }
 
 /**
@@ -51,10 +44,10 @@ function helfi_gredi_image_form_media_gredi_dam_assets_add_form_alter(&$form, Fo
  *
  * @return void
  */
-function validate_gredi_add(&$form, &$form_state) : void {
+function _helfi_gredi_image_media_save_validate(&$form, &$form_state) : void {
   $media = $form_state->getformObject()->getEntity();
   // If the validation was successful at selecting file do not retry on submit.
-  if (!empty($media->get('gredi_asset_id')->value)){
+  if (!empty($media->get('gredi_asset_id')->value)) {
     return;
   }
 
@@ -138,24 +131,21 @@ function helfi_gredi_image_entity_bundle_field_info(EntityTypeInterface $entity_
 /**
  * Implements hook_cron().
  */
-function helfi_gredi_image_cron()
-{
+function helfi_gredi_image_cron() {
   /** @var int $last_run */
   $last_run = \Drupal::state()->get('helfi_gredi_image.last_run', 0);
   /** @var int $request_time */
   $request_time = \Drupal::time()->getRequestTime();
-  // If 60 minutes passed since last time.
   if (($request_time - $last_run) > 60 * 60 * 24) {
-    /** @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
-    $config_factory = \Drupal::service('config.factory');
-    /** @var \Drupal\Core\Datetime\DateFormatterInterface $date_formatter */
-    $date_formatter = \Drupal::service('date.formatter');
-    /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $gradi_dam_client */
-    $gradi_dam_client = \Drupal::service('helfi_gredi_image.dam_client');
-    /** @var \Drupal\helfi_gredi_image\Service\AssetMetadataHelper $metadata_helper */
-    // TODO refactor this.
-    $metadata_helper = new AssetMetadataHelper($config_factory, $date_formatter, $gradi_dam_client);
-    $metadata_helper->populateMetadataUpdateQueue();
+    /** @var \Drupal\Core\Entity\Query\QueryInterface $query */
+    $query = \Drupal::entityQuery('media')
+      ->condition('bundle', 'gredi_dam_assets');
+    /** @var array $results */
+    $results = $query->execute();
+    $queue = \Drupal::queue('gredi_asset_update');
+    foreach ($results as $value) {
+      $queue->createItem($value);
+    }
     \Drupal::state()->set('helfi_gredi_image.last_run', $request_time);
   }
 }
