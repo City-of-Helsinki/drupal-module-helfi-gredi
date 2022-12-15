@@ -11,6 +11,7 @@ use Drupal\entity\BundleFieldDefinition;
 use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\media\Entity\Media;
 use Drupal\media\MediaTypeInterface;
 use Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset;
 use Drupal\media_library\MediaLibraryState;
@@ -126,6 +127,28 @@ function helfi_gredi_image_entity_bundle_field_info(EntityTypeInterface $entity_
     }
   }
   return $definitions;
+}
+
+function gredi_process($id) {
+  $media = Media::load($id);
+  // Stored asset id.
+  $asset_id = $media->gredi_asset_id->value;
+  /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $damClient */
+  $damClient = \Drupal::service('helfi_gredi_image.dam_client');
+  $asset_data = $damClient->getAssetData($asset_id);
+  // External asset modified timestamp.
+  $external_field_modified = strtotime($asset_data['modified']);
+  // Stored asset modified timestamp.
+  $internal_field_modified = $media->gredi_modified->value;
+
+  // Set fields that needs to be updated NULL to let Media::prepareSave()
+  // fill up the fields with the newest fetched data.
+  if ($external_field_modified > $internal_field_modified) {
+    $media->set('field_alt_text', NULL);
+    $media->set('field_keywords', NULL);
+    $media->save();
+  }
+
 }
 
 /**
