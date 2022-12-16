@@ -129,28 +129,6 @@ function helfi_gredi_image_entity_bundle_field_info(EntityTypeInterface $entity_
   return $definitions;
 }
 
-function gredi_process($id) {
-  $media = Media::load($id);
-  // Stored asset id.
-  $asset_id = $media->gredi_asset_id->value;
-  /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $damClient */
-  $damClient = \Drupal::service('helfi_gredi_image.dam_client');
-  $asset_data = $damClient->getAssetData($asset_id);
-  // External asset modified timestamp.
-  $external_field_modified = strtotime($asset_data['modified']);
-  // Stored asset modified timestamp.
-  $internal_field_modified = $media->gredi_modified->value;
-
-  // Set fields that needs to be updated NULL to let Media::prepareSave()
-  // fill up the fields with the newest fetched data.
-  if ($external_field_modified > $internal_field_modified) {
-    $media->set('field_alt_text', NULL);
-    $media->set('field_keywords', NULL);
-    $media->save();
-  }
-
-}
-
 /**
  * Implements hook_cron().
  */
@@ -159,6 +137,7 @@ function helfi_gredi_image_cron() {
   $last_run = \Drupal::state()->get('helfi_gredi_image.last_run', 0);
   /** @var int $request_time */
   $request_time = \Drupal::time()->getRequestTime();
+
   if (($request_time - $last_run) > 60 * 60 * 24) {
     /** @var \Drupal\Core\Entity\Query\QueryInterface $query */
     $query = \Drupal::entityQuery('media')
@@ -169,6 +148,7 @@ function helfi_gredi_image_cron() {
     foreach ($results as $value) {
       $queue->createItem($value);
     }
+
     \Drupal::state()->set('helfi_gredi_image.last_run', $request_time);
   }
 }
@@ -177,10 +157,9 @@ function helfi_gredi_image_cron() {
  * Implements hook_form_id_alter().
  */
 function helfi_gredi_image_form_media_gredi_dam_assets_edit_form_alter(&$form, FormStateInterface $form_state) {
-  $form['field_external_id']['widget'][0]['#attributes'] = [
-    'readonly' => 'readonly',
-    'disabled' => 'disabled',
-  ];
+  $form['actions']['submit']['#access'] = FALSE;
+  $form['actions']['delete']['#access'] = FALSE;
+  \Drupal::messenger()->addWarning('Gredi Image cannot be edited after it was fetched.');
 }
 
 /**

@@ -4,7 +4,6 @@ namespace Drupal\helfi_gredi_image\Plugin\QueueWorker;
 
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\media\Entity\Media;
-use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 
 /**
  * A worker that updates metadata for every image.
@@ -35,13 +34,28 @@ class MetaUpdate extends QueueWorkerBase {
    * {@inheritdoc}
    */
   public function processItem($media_id) {
-    $media = Media::load($media_id);
-    // TODO refactor this to check for modified timestamp, not to save and invalidate cache every cron run.
-    // TODO We might want to use source method to force the update
-    // TODO check Media::prepareSave and how it fills the values for fields.
-    // TODO We might want to clear the values so that Media::prepareSave kicks in.
-//    $this->metadataHelper->performMetadataUpdate($internal_gredi_asset, $external_gredi_asset);
-    \Drupal::logger('helfi_gredi_image')->notice('Metadata for Gredi asset with id ' . $data->media_id);
+    if ($media_id) {
+      $media = Media::load($media_id);
+      // Stored asset id.
+      $asset_id = $media->gredi_asset_id->value;
+      /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $damClient */
+      $damClient = \Drupal::service('helfi_gredi_image.dam_client');
+      $asset_data = $damClient->getAssetData($asset_id);
+      // External asset modified timestamp.
+      $external_field_modified = strtotime($asset_data['modified']);
+      // Stored asset modified timestamp.
+      $internal_field_modified = $media->gredi_modified->value;
+      // Set fields that needs to be updated NULL to let Media::prepareSave()
+      // fill up the fields with the newest fetched data.
+      if ($external_field_modified > $internal_field_modified) {
+        $media->set('field_alt_text', NULL);
+        $media->set('field_keywords', NULL);
+        $media->save();
+      }
+      //    $this->metadataHelper->performMetadataUpdate($internal_gredi_asset, $external_gredi_asset);
+      \Drupal::logger('helfi_gredi_image')
+        ->notice('Metadata for Gredi asset with id ' . $media_id);
+    }
   }
 
 }
