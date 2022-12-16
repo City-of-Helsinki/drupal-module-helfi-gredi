@@ -8,27 +8,13 @@
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
-use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\media\Entity\Media;
 use Drupal\media\MediaTypeInterface;
 use Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset;
 use Drupal\media_library\MediaLibraryState;
 use Drupal\helfi_gredi_image\Form\GrediFileUploadForm;
 use Drupal\file\Entity\File;
-
-/**
- * Implements hook_theme().
- */
-function media_gredidam_theme($existing, $type, $theme, $path) {
-  return [
-    'checkboxes__gredidam_assets' => [
-      'render element' => 'element',
-      'template' => 'checkboxes--gredidam-assets',
-    ],
-  ];
-}
 
 /**
  * Implements hook_form_FORM_ID_alter().
@@ -61,7 +47,7 @@ function _helfi_gredi_image_media_save_validate(&$form, &$form_state) : void {
 
   $file_entity = File::load($input);
   try {
-    /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $damClient */
+    /** @var \Drupal\helfi_gredi_image\Service\GrediGrediDamClient $damClient */
     $damClient = \Drupal::service('helfi_gredi_image.dam_client');
     $asset_id = $damClient->uploadImage($file_entity);
     $media->set('gredi_asset_id', $asset_id);

@@ -4,17 +4,13 @@ namespace Drupal\helfi_gredi_image\Entity;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\File\FileUrlGeneratorInterface;
-use Drupal\Core\Url;
-use Drupal\file\Entity\File;
-use Drupal\file\FileInterface;
 
 /**
  * The asset entity describing the asset object shared by Gredi DAM.
  *
  * @phpcs:disable Drupal.NamingConventions.ValidVariableName.LowerCamelName
  */
-class Asset implements EntityInterface, \JsonSerializable {
+class Asset implements AssetEntityInterface, \JsonSerializable {
 
   const ATTACHMENT_TYPE_ORIGINAL = 'original';
 
@@ -117,42 +113,6 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $apiPreviewLink;
 
   /**
-   * Upload date.
-   *
-   * @var string
-   */
-  public $file_upload_date;
-
-  /**
-   * A list of allowed values for the "expand" query attribute.
-   *
-   * @return string[]
-   *   The exhaustive list of allowed "expand" values.
-   */
-  public static function getAllowedExpands(): array {
-    return [
-      'basic',
-      'image',
-      'meta',
-      'attachments',
-    ];
-  }
-
-  /**
-   * The default expand query attribute.
-   *
-   * These attributes are mandatory for some later process.
-   *
-   * @return string[]
-   *   The list of expands properties which must be fetched along the asset.
-   */
-  public static function getRequiredExpands(): array {
-    return [
-      'meta',
-    ];
-  }
-
-  /**
    * {@inheritdoc}
    */
   public static function fromJson($json) {
@@ -187,7 +147,6 @@ class Asset implements EntityInterface, \JsonSerializable {
     }
     // Check all the translations from the API.
     if (isset($json['metaById'])) {
-
       foreach ($metaProperties as $key => $languages) {
         // Check if mapping is available for the field.
         if (in_array($key, array_keys($mappingFields))) {
@@ -233,35 +192,6 @@ class Asset implements EntityInterface, \JsonSerializable {
         }
       }
     }
-//
-//    // TODO we should decide how we can clean up the old images (maybe use cache data binary instead of saving as image)
-//    // Create subfolders by month.
-//    $current_timestamp = \Drupal::time()->getCurrentTime();
-//    $date_output = \Drupal::service('date.formatter')->format($current_timestamp, 'custom', 'd/M/Y');
-//    $date = str_replace('/', '-', substr($date_output, 3, 8));
-//
-//    // Asset name contains id and last updated date.
-//    $asset_name = $asset->id . '_' . strtotime($asset->modified) . substr($asset->name, strrpos($asset->name, "."));
-//    // Create month folder.
-//    /** @var \Drupal\Core\File\FileSystemInterface $file_service */
-//    $file_service = \Drupal::service('file_system');
-//
-//    $directory = sprintf('public://gredidam/thumbs/' . $date);
-//
-//    $file_service->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
-//
-//    $location = sprintf('public://gredidam/thumbs/%s/%s', $date, $asset_name);
-//    $fileContent = \Drupal::service('helfi_gredi_image.dam_client')->fetchRemoteAssetData($asset, $asset->name, FALSE);
-//
-//    /** @var \Drupal\Core\File\FileUrlGeneratorInterface $url_generator */
-//    $url_generator = \Drupal::service('file_url_generator');
-//
-//    $url = $url_generator->generate($location)->toString();
-//
-//    if (!file_exists($location)) {
-//      $file_service->saveData($fileContent, $location, FileSystemInterface::EXISTS_REPLACE);
-//    }
-//    $asset->apiPreviewLink = $url;
 
     return $asset;
   }

@@ -5,8 +5,6 @@
  * Provide views data for helfi_gredi_image.
  */
 
-//use Drupal\helfi_gredi_image\BundleFieldViewsData;
-
 /**
  * Implements hook_views_data().
  */

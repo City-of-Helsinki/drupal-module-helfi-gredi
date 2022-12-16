@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Drupal\helfi_gredi_image\Plugin\views\field;
 
-use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\AlertCommand;
 use Drupal\Core\Ajax\CloseDialogCommand;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Render\Element\Page;
 use Drupal\media\Entity\Media;
 use Drupal\media_library\MediaLibraryState;
 use Drupal\media_library\Plugin\views\field\MediaLibrarySelectForm as MediaEntityMediaLibrarySelectForm;
@@ -143,6 +141,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         $siteLanguages = array_keys(\Drupal::languageManager()->getLanguages());
         $apiLanguages = $source->getMetadata($entity, 'lang_codes');
         // TODO the api lang code for Swedish is SE, but in Drupal is SV. How to handle this?
+        // TODO langcode SE in Drupal stands for Northern Sami. Is this the dialect we want?
         foreach ($apiLanguages as $apiLangCode) {
           if (!in_array($apiLangCode, $siteLanguages)) {
             continue;

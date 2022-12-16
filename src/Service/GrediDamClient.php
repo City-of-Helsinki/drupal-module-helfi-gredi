@@ -6,32 +6,23 @@ use Drupal\Component\Serialization\Json;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
-use Drupal\Core\File\MimeType\MimeTypeGuesser;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\file\Entity\File;
-use Drupal\helfi_gredi_image\Entity\Asset;
-use Drupal\helfi_gredi_image\Entity\Category;
-use Drupal\helfi_gredi_image\DamClientInterface;
+use Drupal\helfi_gredi_image\GrediDamClientInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
+use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class ClientFactory.
+ * Class GrediDamClient.
  *
  * Factory class for Client.
  */
-class GrediDamClient implements ContainerInjectionInterface, DamClientInterface {
-
-  /**
-   * The version of this client. Used in User-Agent string for API requests.
-   *
-   * @var string
-   */
-  const CLIENTVERSION = "2.x";
+class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInterface {
 
   /**
    * A fully-configured Guzzle client to pass to the dam client.
@@ -41,25 +32,11 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   protected $httpClient;
 
   /**
-   * Datastore for the specific metadata fields.
-   *
-   * @var array
-   */
-  protected $specificMetadataFields;
-
-  /**
    * Config Factory var.
    *
    * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected ConfigFactoryInterface $config;
-
-  /**
-   * Root folder ID.
-   *
-   * @var mixed
-   */
-  protected $rootFolderId;
 
   /**
    * Gredi dam auth service.
@@ -80,28 +57,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
    *
    * @var string
    */
-  private $baseApiUrl;
-
-  /**
-   * The base URL of the Gredi DAM API.
-   *
-   * @var string
-   */
   private $apiUrl;
-
-  /**
-   * The tree of Gredi DAM categories.
-   *
-   * @var array
-   */
-  private $categoryTree;
-
-  /**
-   * Upload folder id.
-   *
-   * @var string
-   */
-  protected $uploadFolderId;
 
   /**
    * Meta's to include in API call.
@@ -118,7 +74,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   private $metafields;
 
   /**
-   * ClientFactory constructor.
+   * GrediDamClient constructor.
    *
    * @param \GuzzleHttp\ClientInterface $guzzleClient
    *   A fully configured Guzzle client to pass to the dam client.
@@ -139,7 +95,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     $this->config = $config;
     $this->authService = $grediDamAuthService;
     $this->loggerChannel = $loggerChannelFactory->get('helfi_gredi_image');
-    $this->baseApiUrl = $this->authService->baseApiUrl;
     $this->apiUrl = $this->authService->apiUrl;
   }
 
@@ -155,7 +110,10 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
     );
   }
 
-  public function apiCallGet($apiUri, $queryParams = []) {
+  /**
+   * {@inheritdoc}
+   */
+  public function apiCallGet($apiUri, $queryParams = []) : ResponseInterface {
     $retry = TRUE;
     $login_retry = FALSE;
     if (!$this->authService->isAuthenticated()) {
@@ -181,7 +139,6 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         $retry = FALSE;
       }
       catch (ClientException $e) {
-        // TODO if Unauthorized try a new login
         if (!$login_retry && $e->getCode() == 401) {
           $login_retry = TRUE;
         }
@@ -200,149 +157,12 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
         ]));
         throw new \Exception($e->getMessage());
       }
-
     }
-
     return $response;
   }
 
   /**
-   * {@inheritDoc}
-   */
-  public function getCategoryTree(): array {
-    if ($this->categoryTree) {
-      return $this->categoryTree;
-    }
-
-    if (!$this->authService->isAuthenticated()) {
-      $this->authService->authenticate();
-    }
-    $customerId = $this->authService->getCustomerId();
-    $uri = sprintf("customers/%d/contents", $customerId);
-    $queryParams = [
-      'materialType' => 'folder',
-    ];
-    $userContent = $this->apiCallGet($uri, $queryParams);
-    $posts = $userContent->getBody()->getContents();
-    $this->categoryTree = [];
-    foreach (Json::decode($posts) as $post) {
-      // Set upload folder id.
-      if ($post['name'] == 'UPLOAD' && $post['parentId'] == $this->getRootFolderId()) {
-        $this->uploadFolderId = $post['id'];
-      }
-
-      $category = Category::fromJson($post);
-      $this->categoryTree[$category->id] = $category;
-    }
-
-    return $this->categoryTree;
-  }
-
-  /**
-   * Get root folder id.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
-   */
-  public function getRootFolderId() {
-    if ($this->rootFolderId) {
-      return $this->rootFolderId;
-    }
-
-    if (!$this->authService->isAuthenticated()) {
-      $this->authService->authenticate();
-    }
-
-    $apiSettings = $this->apiCallGet('settings')->getBody()->getContents();
-
-    $this->rootFolderId = Json::decode($apiSettings)['contentFolderId'];
-
-    return $this->rootFolderId;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function getRootContent(int $limit, int $offset): array {
-    return $this->getFolderContent($this->getRootFolderId(), $limit, $offset);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function getFolderContent(int $folder_id, int $limit, int $offset): ?array {
-    if (empty($folder_id)) {
-      return NULL;
-    }
-
-    if (!$this->authService->isAuthenticated()) {
-      $this->authService->authenticate();
-    }
-    $url = sprintf("folders/%d/files", $folder_id);
-    $queryParams = [
-      'include' => 'attachments,meta',
-    ];
-    $userContent = $this->apiCallGet($url, $queryParams);
-    $posts = Json::decode($userContent->getBody()->getContents());
-    $pageContent = array_slice($posts, $offset, $limit);
-    $content = [
-      'folders' => [],
-      'assets' => [],
-    ];
-    foreach ($pageContent as $post) {
-      if (!$post['folder']) {
-        $content['assets'][] = Asset::fromJson($post);
-      }
-      else {
-        $content['folders'][] = Category::fromJson($post);
-      }
-    }
-
-    return [
-      'content' => $content,
-      'total' => count($posts),
-    ];
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function getMultipleAsset(array $ids, array $expand = []): array {
-    if (empty($ids)) {
-      return [];
-    }
-
-    $assets = [];
-    foreach ($ids as $id) {
-      if ($id == NULL) {
-        continue;
-      }
-      $assets[] = $this->getAsset($id, $expand);
-    }
-
-    return $assets;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public function getAsset(string $id, array $expands = [], string $folder_id = NULL): Asset {
-    $required_expands = Asset::getRequiredExpands();
-    $allowed_expands = Asset::getAllowedExpands();
-    $expands = array_intersect(array_unique($expands + $required_expands), $allowed_expands);
-
-    if (!$this->authService->isAuthenticated()) {
-      $this->authService->authenticate();
-    }
-    $url = sprintf("files/%s", $id);
-    $queryParams = [
-      'include' => 'object,meta,attachments',
-    ];
-    $response = $this->apiCallGet($url, $queryParams);
-    return Asset::fromJson($response->getBody()->getContents());
-  }
-
-  /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
   public function getAssetData(string $id): array {
     if (!$this->authService->isAuthenticated()) {
@@ -358,124 +178,9 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
-  public function getSpecificMetadataFields(): array {
-    $fields = [
-      'external_id' => [
-        'label' => 'External ID',
-        'type' => 'string',
-      ],
-      'keywords' => [
-        'label' => 'Keywords',
-        'type' => 'text_long',
-      ],
-      'alt_text' => [
-        'label' => 'Alt text',
-        'type' => 'string',
-      ],
-      'created' => [
-        'label' => 'Created',
-        'type' => 'string',
-      ],
-    ];
-
-    $this->specificMetadataFields = [];
-    foreach ($fields as $key => $field) {
-      $this->specificMetadataFields[$key] = $field;
-    }
-    return $this->specificMetadataFields;
-  }
-
-  /**
-   * Fetches binary asset data from a remote source.
-   *
-   * @param \Drupal\helfi_gredi_image\Entity\Asset $asset
-   *   The asset to fetch data for.
-   * @param string $filename
-   *   The filename as a reference, so it can be overridden.
-   * @param bool $original
-   *   If true download the original data else the preview.
-   *
-   * @return false|string[]
-   *   The remote asset contents or FALSE on failure.
-   */
-  public function fetchRemoteAssetData(Asset $asset, &$filename, $original = TRUE) {
-    // If the module was configured to enforce an image size limit then we
-    // need to grab the nearest matching pre-created size.
-    $downloadUrl = $original ? $asset->apiContentLink : $asset->apiPreviewLink;
-
-    if (empty($downloadUrl)) {
-      $this->loggerChannel->warning(
-        'Unable to save file for asset ID @asset_id.
-         Thumbnail has not been found.', [
-           '@asset_id' => $asset->external_id,
-         ],
-      );
-      return FALSE;
-    }
-
-    try {
-      if (!$this->authService->isAuthenticated()) {
-        $this->authService->authenticate();
-      }
-      $response = $this->apiCallGet($downloadUrl);
-
-      $size = $response->getBody()->getSize();
-
-      if ($size === NULL || $size === 0) {
-        $this->loggerChannel->error('Unable to download contents for asset ID @asset_id.
-        Received zero-byte response for download URL @url',
-          [
-            '@asset_id' => $asset->external_id,
-            '@url' => $downloadUrl,
-          ]);
-        return FALSE;
-      }
-      $file_contents = (string) $response->getBody();
-
-      if ($response->hasHeader('Content-Disposition')) {
-        $disposition = $response->getHeader('Content-Disposition')[0];
-        preg_match('/filename="(.*)"/', $disposition, $matches);
-        if (count($matches) > 1) {
-          $filename = $matches[1];
-        }
-      }
-    }
-    catch (RequestException $exception) {
-      $message = 'Unable to download contents for asset ID @asset_id: %message.
-      Attempted download URL @url with redirects to @history';
-      $context = [
-        '@asset_id' => $asset->external_id,
-        '%message' => $exception->getMessage(),
-        '@url' => $downloadUrl,
-        '@history' => '[empty request, cannot determine redirects]',
-      ];
-      $response = $exception->getResponse();
-      if ($response) {
-        $context['@history'] = $response->getHeaderLine('X-Guzzle-Redirect-History');
-      }
-      $this->loggerChannel->error($message, $context);
-      return FALSE;
-    }
-
-    return $file_contents;
-  }
-
-  /**
-   * Fetches binary asset data from a remote source.
-   *
-   * @param \Drupal\helfi_gredi_image\Entity\Asset $asset
-   *   The asset to fetch data for.
-   * @param string $filename
-   *   The filename as a reference, so it can be overridden.
-   * @param bool $original
-   *   If true download the original data else the preview.
-   *
-   * @return false|string[]
-   *   The remote asset contents or FALSE on failure.
-   */
-  public function getFileContent($assetId, $downloadUrl) {
+  public function getFileContent($assetId, $downloadUrl) : false|string {
     // If the module was configured to enforce an image size limit then we
     // need to grab the nearest matching pre-created size.
 
@@ -538,7 +243,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
   public function searchAssets($search = '', $sortBy = '', $sortOrder = '', $limit = 10, $offset = 0): array {
     if (!$this->authService->isAuthenticated()) {
@@ -568,7 +273,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
   }
 
   /**
-   * {@inheritDoc}
+   * {@inheritdoc}
    */
   public function uploadImage(File $image): ?string {
 
@@ -620,16 +325,10 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
 
     // Return file ID from API as string.
     return json_decode($response, TRUE)['id'];
-
   }
 
   /**
-   * Get metafields.
-   *
-   * @return array
-   *   Return metafields array.
-   *
-   * @throws \GuzzleHttp\Exception\GuzzleException
+   * {@inheritdoc}
    */
   public function getMetaFields(): array {
     if ($this->metafields) {
@@ -653,7 +352,7 @@ class GrediDamClient implements ContainerInjectionInterface, DamClientInterface 
       }
       $this->metafields[$item['id']] = $item;
     }
-    $cache_tags = $this->authService->getConfig()->getCacheTags();
+    $cache_tags = $this->config->get('helfi_gredi_image.settings')->getCacheTags();
     \Drupal::cache()->set('helfi_gredi_image_metafields', $this->metafields, Cache::PERMANENT, $cache_tags);
 
     return $this->metafields;

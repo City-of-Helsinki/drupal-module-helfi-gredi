@@ -2,26 +2,9 @@ services:
   helfi_gredi_image.dam_client:
     class: Drupal\helfi_gredi_image\Service\GrediDamClient
     arguments: [ '@http_client', '@config.factory', '@helfi_gredi_image.auth_service', '@logger.factory' ]
-  helfi_gredi_image.asset_media.factory:
-    class: Drupal\helfi_gredi_image\Service\AssetMediaFactory
-    arguments: [ '@entity_type.manager' ]
-  helfi_gredi_image.asset_image.helper:
-    class: Drupal\helfi_gredi_image\Service\AssetImageHelper
-    arguments: [ '@config.factory', '@file_system', '@file.mime_type.guesser', '@image.factory', '@entity_type.manager', '@extension.path.resolver']
-  helfi_gredi_image.asset_metadata.helper:
-    class: Drupal\helfi_gredi_image\Service\AssetMetadataHelper
-    arguments: [ '@config.factory', '@date.formatter', '@helfi_gredi_image.dam_client' ]
-  helfi_gredi_image.asset_file.helper:
-    class: Drupal\helfi_gredi_image\Service\AssetFileEntityHelper
-    arguments: [ '@entity_field.manager', '@config.factory', '@file_system', '@token', '@helfi_gredi_image.dam_client', '@helfi_gredi_image.asset_media.factory', '@logger.factory' ]
-  helfi_gredi_image.asset_data:
-    class: Drupal\helfi_gredi_image\Service\AssetData
-    arguments: [ '@database','@serialization.phpserialize' ]
-    tags:
-      - { name: backend_overridable }
   helfi_gredi_image.auth_service:
     class: Drupal\helfi_gredi_image\Service\GrediDamAuthService
-    arguments: ['@http_client']
+    arguments: ['@http_client', '@state', '@config.factory']
   helfi_gredi_image_remote.event_subscriber:
     class: Drupal\helfi_gredi_image\EventSubscriber\RemoteDataSubscriber
     arguments: ['@helfi_gredi_image.dam_client']

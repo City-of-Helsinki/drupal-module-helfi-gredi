@@ -5,7 +5,7 @@ namespace Drupal\helfi_gredi_image\Entity;
 /**
  * Provides an interface that all entity classes must implement.
  */
-interface EntityInterface {
+interface AssetEntityInterface {
 
   /**
    * Create new instance of the Entity given a JSON object from Gredi DAM API.

@@ -15,9 +15,6 @@ use Drupal\file\FileInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\media\MediaInterface;
-use Drupal\helfi_gredi_image\Service\AssetImageHelper;
-use Drupal\helfi_gredi_image\Service\AssetMediaFactory;
-use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 use Drupal\media\Plugin\media\Source\Image;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -33,20 +30,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * )
  */
 class GredidamAsset extends Image {
-
-  /**
-   * The asset that we're going to render details for.
-   *
-   * @var \Drupal\helfi_gredi_image\Entity\Asset|null
-   */
-  protected $currentAsset;
-
-  /**
-   * Gredi DAM asset image helper service.
-   *
-   * @var \Drupal\helfi_gredi_image\Service\AssetImageHelper
-   */
-  protected $assetImageHelper;
 
   /**
    * The API assets array.
@@ -110,20 +93,20 @@ class GredidamAsset extends Image {
    * {@inheritdoc}
    */
   public function __construct(
-    array $configuration,
-    $plugin_id,
-    $plugin_definition,
-    EntityTypeManagerInterface $entity_type_manager,
-    EntityFieldManagerInterface $entity_field_manager,
+    array                           $configuration,
+                                    $plugin_id,
+                                    $plugin_definition,
+    EntityTypeManagerInterface      $entity_type_manager,
+    EntityFieldManagerInterface     $entity_field_manager,
     FieldTypePluginManagerInterface $field_type_manager,
-    ConfigFactoryInterface $config_factory,
-    GrediDamClient $damClient,
-    ImageFactory $imageFactory,
-    FileSystemInterface $fileSystem,
-    LanguageManagerInterface $languageManager,
-    TimeInterface $timeManager,
-    DateFormatter $dateFormatter,
-    FileRepositoryInterface $fileRepository) {
+    ConfigFactoryInterface          $config_factory,
+    GrediDamClient                  $damClient,
+    ImageFactory                    $imageFactory,
+    FileSystemInterface             $fileSystem,
+    LanguageManagerInterface        $languageManager,
+    TimeInterface                   $timeManager,
+    DateFormatter                   $dateFormatter,
+    FileRepositoryInterface         $fileRepository) {
     parent::__construct(
       $configuration,
       $plugin_id,

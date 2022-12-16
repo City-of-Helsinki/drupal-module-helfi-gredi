@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\helfi_gredi_image\EventSubscriber;
 
-use Drupal\Component\Serialization\Json;
 use Drupal\helfi_gredi_image\Service\GrediDamClient;
 use Drupal\media\Entity\Media;
 use Drupal\views\ResultRow;
