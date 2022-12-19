@@ -2,13 +2,9 @@
 
 namespace Drupal\helfi_gredi_image\Form;
 
-use Drupal\Component\Serialization\Json;
-use Drupal\Component\Utility\Xss;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\helfi_gredi_image\Service\GrediDamAuthService;
-use GuzzleHttp\Cookie\CookieJarInterface;
-use GuzzleHttp\Exception\ClientException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use GuzzleHttp\ClientInterface;
@@ -28,6 +24,8 @@ class GrediDamConfigForm extends ConfigFormBase {
   protected $httpClient;
 
   /**
+   * Auth service.
+   *
    * @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService
    */
   protected $authService;
@@ -39,6 +37,8 @@ class GrediDamConfigForm extends ConfigFormBase {
    *   Config factory service.
    * @param \GuzzleHttp\ClientInterface $http_client
    *   Http client.
+   * @param \Drupal\helfi_gredi_image\Service\GrediDamAuthService $authService
+   *   Auth service.
    */
   public function __construct(ConfigFactoryInterface $config_factory, ClientInterface $http_client, GrediDamAuthService $authService) {
     parent::__construct($config_factory);
@@ -202,6 +202,14 @@ class GrediDamConfigForm extends ConfigFormBase {
     }
   }
 
+  /**
+   * Submit handler for gredi config form.
+   *
+   * @param array $form
+   *   Form elements.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   Form state.
+   */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $customerId = $form_state->get('customerId');
 
@@ -215,8 +223,7 @@ class GrediDamConfigForm extends ConfigFormBase {
         'customer_id' => $customerId,
         'num_assets_per_page' => $form_state->getValue('num_assets_per_page'),
       ]
-    )
-    ->save();
+    )->save();
     parent::submitForm($form, $form_state);
   }
 

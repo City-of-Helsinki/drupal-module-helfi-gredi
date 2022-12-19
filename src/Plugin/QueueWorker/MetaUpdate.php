@@ -17,20 +17,6 @@ use Drupal\media\Entity\Media;
 class MetaUpdate extends QueueWorkerBase {
 
   /**
-   * Constructor.
-   *
-   * @param array $configuration
-   *   Configuration.
-   * @param string $plugin_id
-   *   Plugin ID.
-   * @param mixed $plugin_definition
-   *   Plugin definition.
-   */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition);
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function processItem($media_id) {
@@ -38,7 +24,7 @@ class MetaUpdate extends QueueWorkerBase {
       $media = Media::load($media_id);
       // Stored asset id.
       $asset_id = $media->gredi_asset_id->value;
-      /** @var \Drupal\helfi_gredi_image\Service\GrediGrediDamClient $damClient */
+      /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $damClient */
       $damClient = \Drupal::service('helfi_gredi_image.dam_client');
       $asset_data = $damClient->getAssetData($asset_id);
       // External asset modified timestamp.
@@ -52,7 +38,7 @@ class MetaUpdate extends QueueWorkerBase {
         $media->set('field_keywords', NULL);
         $media->save();
       }
-      //    $this->metadataHelper->performMetadataUpdate($internal_gredi_asset, $external_gredi_asset);
+
       \Drupal::logger('helfi_gredi_image')
         ->notice('Metadata for Gredi asset with id ' . $media_id);
     }

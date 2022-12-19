@@ -2,8 +2,6 @@
 
 namespace Drupal\helfi_gredi_image;
 
-use Drupal\Core\Config\ImmutableConfig;
-
 /**
  * Gredi DAM authentication service interface.
  */
@@ -29,6 +27,8 @@ interface DamAuthServiceInterface {
    * Method for authentication on Gredi API.
    *
    * @return bool
+   *   Return bool.
+   *
    * @throws \GuzzleHttp\Exception\GuzzleException
    */
   public function authenticate() : bool;
@@ -37,6 +37,7 @@ interface DamAuthServiceInterface {
    * Check if is authenticated.
    *
    * @return bool
+   *   Return bool.
    */
   public function isAuthenticated() : bool;
 
@@ -44,25 +45,24 @@ interface DamAuthServiceInterface {
    * Setter method for the session id.
    *
    * @param string $session
-   *
-   * @return void
+   *   Session parameter.
    */
-  public function setSessionId(string $session) :void;
+  public function setSessionId(string $session);
 
   /**
    * Stores the session id to state.
    *
    * @param string $session
-   *
-   * @return void
+   *   Session parameter.
    */
-   function storeSessionId(string $session) :void;
+  public function storeSessionId(string $session);
 
   /**
    * Getter method for the session id.
    *
    * @return string
+   *   Stored session id.
    */
-  function getStoredSessionId() :string;
+  public function getStoredSessionId() :string;
 
 }

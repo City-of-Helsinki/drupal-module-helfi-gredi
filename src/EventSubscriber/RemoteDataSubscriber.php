@@ -11,6 +11,9 @@ use Drupal\views_remote_data\Events\RemoteDataLoadEntitiesEvent;
 use Drupal\views_remote_data\Events\RemoteDataQueryEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+/**
+ * Subscriber for gredi media library view.
+ */
 final class RemoteDataSubscriber implements EventSubscriberInterface {
 
   /**
@@ -63,7 +66,7 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
       $sortBy = current($sorts)['field'][0];
     }
 
-    // Only condition field supported now is 'search'
+    // Only condition field supported now is 'search'.
     $search_value = '';
     foreach ($condition_groups as $condition_group) {
       foreach ($condition_group['conditions'] as $condition) {
@@ -78,7 +81,7 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
       $remote_data = $this->client->searchAssets($search_value, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
     }
     catch (\Exception $e) {
-      \Drupal::logger('helfi_gredi_image')->error(t($e->getMessage()));
+      \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
       \Drupal::messenger()->addError(t('Failed to retrieve asset list'));
       $remote_data = [];
     }
@@ -118,4 +121,5 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
       }
     }
   }
+
 }

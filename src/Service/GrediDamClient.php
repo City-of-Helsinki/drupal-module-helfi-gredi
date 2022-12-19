@@ -183,19 +183,18 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
   public function getFileContent($assetId, $downloadUrl) : false|string {
     // If the module was configured to enforce an image size limit then we
     // need to grab the nearest matching pre-created size.
-
     if (empty($downloadUrl)) {
       $this->loggerChannel->warning(
         'Unable to save file for asset ID @asset_id.
          Thumbnail has not been found.', [
-        '@asset_id' => $assetId,
-      ],
+           '@asset_id' => $assetId,
+         ],
       );
       return FALSE;
     }
 
     try {
-      $downloadUrl = str_replace('/api/v1/' , '', $downloadUrl);
+      $downloadUrl = str_replace('/api/v1/', '', $downloadUrl);
       if (!$this->authService->isAuthenticated()) {
         $this->authService->authenticate();
       }
@@ -294,7 +293,7 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
     ];
     $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
     $base64EncodedFile = base64_encode(file_get_contents($image->getFileUri()));
-    // TODO check this instead of this hardcoded string.
+    // @todo check this instead of this hardcoded string.
     // https://docs.guzzlephp.org/en/stable/quickstart.html#sending-form-fields
     $boundary = "helfiboundary";
     $requestBody = "";

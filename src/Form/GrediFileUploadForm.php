@@ -92,10 +92,12 @@ class GrediFileUploadForm extends FileUploadForm {
    *   The opener resolver.
    * @param \Drupal\file\FileUsage\FileUsageInterface $file_usage
    *   The file usage service.
-   * @param \Drupal\file\FileRepositoryInterface|NULL $file_repository
+   * @param \Drupal\file\FileRepositoryInterface|null $file_repository
    *   The file repository service.
    * @param \Drupal\helfi_gredi_image\Service\GrediDamClient $damClient
    *   The Gredi DAM client service.
+   * @param \Drupal\Component\Datetime\TimeInterface $timeManager
+   *   The time manager service.
    */
   public function __construct(EntityTypeManagerInterface $entity_type_manager, MediaLibraryUiBuilder $library_ui_builder, ElementInfoManagerInterface $element_info, RendererInterface $renderer, FileSystemInterface $file_system, OpenerResolverInterface $opener_resolver, FileUsageInterface $file_usage, FileRepositoryInterface $file_repository = NULL, GrediDamClient $damClient, TimeInterface $timeManager) {
     parent::__construct($entity_type_manager, $library_ui_builder, $element_info, $renderer, $file_system, $opener_resolver, $file_usage, $file_repository);
@@ -135,11 +137,12 @@ class GrediFileUploadForm extends FileUploadForm {
       $media->set('gredi_asset_id', $asset_id);
       $media->set('gredi_modified', $this->timeManager->getCurrentTime());
     }
-    catch(\Exception $exception) {
+    catch (\Exception $exception) {
       $form_state->setError($form['media'], 'Upload error');
     }
     $form_display = EntityFormDisplay::collectRenderDisplay($media, 'media_library');
     $form_display->extractFormValues($media, $form['media'][$delta]['fields'], $form_state);
     $form_display->validateFormValues($media, $form['media'][$delta]['fields'], $form_state);
   }
+
 }

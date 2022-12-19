@@ -47,19 +47,25 @@ interface GrediDamClientInterface {
   /**
    * Method that handles the get requests for the API.
    *
-   * @param $apiUri
-   * @param $queryParams
+   * @param string $apiUri
+   *   The external api URI.
+   * @param array $queryParams
+   *   Additional parameters for the request.
    *
    * @return \Psr\Http\Message\ResponseInterface
+   *   Return the request response.
    */
-  public function apiCallGet($apiUri, $queryParams = []): ResponseInterface;
+  public function apiCallGet(string $apiUri, array $queryParams = []): ResponseInterface;
 
   /**
    * Retrieves data from the API for a specific asset.
    *
    * @param string $id
+   *   The id for a specific asset.
    *
    * @return array
+   *   Return asset data.
+   *
    * @throws \Exception
    */
   public function getAssetData(string $id): array;
@@ -67,12 +73,16 @@ interface GrediDamClientInterface {
   /**
    * Retrieves content of a file from the API.
    *
-   * @param $assetId
-   * @param $downloadUrl
+   * @param string $assetId
+   *   The id for a specific asset.
+   * @param string $downloadUrl
+   *   The url for the request.
    *
    * @return false|string
+   *   Return the file content or false if an error occurs.
+   *
    * @throws \Exception
    */
-  public function getFileContent($assetId, $downloadUrl) :false|string;
+  public function getFileContent(string $assetId, string $downloadUrl) :false|string;
 
 }

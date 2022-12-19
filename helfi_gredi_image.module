@@ -5,6 +5,7 @@
  * Integrates Drupal with Gredi DAM.
  */
 
+use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\entity\BundleFieldDefinition;
@@ -15,6 +16,8 @@ use Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset;
 use Drupal\media_library\MediaLibraryState;
 use Drupal\helfi_gredi_image\Form\GrediFileUploadForm;
 use Drupal\file\Entity\File;
+use Drupal\views\Plugin\views\cache\CachePluginBase;
+use Drupal\views\ViewExecutable;
 
 /**
  * Implements hook_form_FORM_ID_alter().
@@ -26,12 +29,12 @@ function helfi_gredi_image_form_media_gredi_dam_assets_add_form_alter(&$form, Fo
 /**
  * Validation function for Gredi Image media type add.
  *
- * @param $form
- * @param $form_state
- *
- * @return void
+ * @param array $form
+ *   The form elements.
+ * @param Drupal\Core\Form\FormStateInterface $form_state
+ *   The form state properties.
  */
-function _helfi_gredi_image_media_save_validate(&$form, &$form_state) : void {
+function _helfi_gredi_image_media_save_validate(array &$form, FormStateInterface &$form_state) {
   $media = $form_state->getformObject()->getEntity();
   // If the validation was successful at selecting file do not retry on submit.
   if (!empty($media->get('gredi_asset_id')->value)) {
@@ -47,13 +50,13 @@ function _helfi_gredi_image_media_save_validate(&$form, &$form_state) : void {
 
   $file_entity = File::load($input);
   try {
-    /** @var \Drupal\helfi_gredi_image\Service\GrediGrediDamClient $damClient */
+    /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $damClient */
     $damClient = \Drupal::service('helfi_gredi_image.dam_client');
     $asset_id = $damClient->uploadImage($file_entity);
     $media->set('gredi_asset_id', $asset_id);
     $media->set('gredi_modified', \Drupal::time()->getCurrentTime());
   }
-  catch(\Exception $exception) {
+  catch (\Exception $exception) {
     $form_state->setError($form['field_media_image'], 'Upload error.');
     $form_state->setRebuild();
   }
@@ -171,7 +174,6 @@ function helfi_gredi_image_media_delete(EntityInterface $entity) {
   }
 }
 
-
 /**
  * Implements hook_form_alter().
  */
@@ -198,7 +200,6 @@ function helfi_gredi_image_theme_suggestions_views_view_unformatted(array $varia
   return $suggestions;
 }
 
-
 /**
  * Implements hook_theme_suggestions_HOOK().
  */
@@ -214,10 +215,11 @@ function helfi_gredi_image_theme_suggestions_views_view(array $variables) {
  * Implements hook_views_post_render().
  *
  * Media Library comes with few preprocess that takes care of adding necessary
- * libraries into the page. Unfortunately it is only applicable for media_library view,
- * this will take extending to gredi_dam_assest_library as well.
+ * libraries into the page. Unfortunately it is only applicable
+ * for media_library view, this will take extending
+ * to gredi_dam_assest_library as well.
  */
-function helfi_gredi_image_views_post_render(\Drupal\views\ViewExecutable $view, &$output, \Drupal\views\Plugin\views\cache\CachePluginBase $cache) {
+function helfi_gredi_image_views_post_render(ViewExecutable $view, &$output, CachePluginBase $cache) {
   if ($view->id() === 'gredi_dam_asset_library') {
     $output['#attached']['library'][] = 'media_library/view';
     if (strpos($view->current_display, 'widget') === 0) {
@@ -242,9 +244,9 @@ function helfi_gredi_image_views_post_render(\Drupal\views\ViewExecutable $view,
       // @todo Rework or remove this in https://www.drupal.org/node/2983451
       if (!empty($query)) {
         $ajax_path = &$output['#attached']['drupalSettings']['views']['ajax_path'];
-        $parsed_url = \Drupal\Component\Utility\UrlHelper::parse($ajax_path);
+        $parsed_url = UrlHelper::parse($ajax_path);
         $query = array_merge($query, $parsed_url['query']);
-        $ajax_path = $parsed_url['path'] . '?' . \Drupal\Component\Utility\UrlHelper::buildQuery($query);
+        $ajax_path = $parsed_url['path'] . '?' . UrlHelper::buildQuery($query);
       }
     }
   }
@@ -265,7 +267,7 @@ function helfi_gredi_image_media_source_info_alter(array &$sources) {
  * This will take care of necessary classes which is added by the media_library
  * to its view is extended to `gredi_dam_asset_library` as well.
  */
-function helfi_gredi_image_views_pre_render(\Drupal\views\ViewExecutable $view) {
+function helfi_gredi_image_views_pre_render(ViewExecutable $view) {
   $add_classes = function (&$option, array $classes_to_add) {
     $classes = $option ? preg_split('/\s+/', trim($option)) : [];
     $classes = array_filter($classes);
@@ -279,14 +281,20 @@ function helfi_gredi_image_views_pre_render(\Drupal\views\ViewExecutable $view) 
       $add_classes($view->displayHandlers->get('default')->options['css_class'], ['media-library-view']);
     }
     else {
-      $add_classes($view->display_handler->options['css_class'], ['media-library-view']);
+      $add_classes(
+        $view->display_handler->options['css_class'],
+        ['media-library-view']
+      );
     }
 
     if (strpos($view->current_display, 'widget') === 0) {
-      // Logic from claro.theme preprocess all of this will be remove once we can
-      // make the view id configurable.
+      // Logic from claro.theme preprocess all of this will be remove
+      // once we can make the view id configurable.
       if (array_key_exists('thumbnail', $view->field)) {
-        $add_classes($view->field['thumbnail']->options['element_class'], ['media-library-item__content']);
+        $add_classes(
+          $view->field['thumbnail']->options['element_class'],
+          ['media-library-item__content']
+        );
       }
       if (array_key_exists('media_library_select_form', $view->field)) {
         $add_classes($view->field['media_library_select_form']->options['element_wrapper_class'], ['media-library-item__click-to-select-checkbox']);
@@ -300,14 +308,19 @@ function helfi_gredi_image_views_pre_render(\Drupal\views\ViewExecutable $view) 
       }
 
       if (array_key_exists('media_library_select_form', $view->field)) {
-        $add_classes($view->field['media_library_select_form']->options['element_wrapper_class'], ['js-click-to-select-checkbox']);
+        $add_classes(
+          $view->field['media_library_select_form']->options['element_wrapper_class'],
+          ['js-click-to-select-checkbox']
+        );
       }
       $add_classes($view->display_handler->options['css_class'], ['js-media-library-view']);
     }
 
-    $add_classes($view->style_plugin->options['row_class'], ['js-media-library-item', 'js-click-to-select']);
+    $add_classes(
+      $view->style_plugin->options['row_class'],
+      ['js-media-library-item', 'js-click-to-select']
+    );
     // NOTE: modified from core to bypass undefined offset in our View.
-
     if (!empty($view->display_handler->options['defaults']['css_class'])) {
       $add_classes($view->displayHandlers->get('default')->options['css_class'], ['js-media-library-view']);
     }
@@ -344,7 +357,7 @@ function helfi_gredi_image_preprocess_field(&$variables) {
       if ($variables['items'][0]['content']['#theme'] == 'image_formatter') {
         $variables['items'][0]['content']['#item_attributes']['data-media-alt'] = $media->get('field_alt_text')->value;
       }
-      // TODO cover more theme hooks?
+      // @todo cover more theme hooks?
     }
   }
 }

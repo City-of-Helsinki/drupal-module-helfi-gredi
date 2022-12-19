@@ -93,7 +93,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
       if (!empty($existing_ids)) {
         // We should not have more than 1 with same gredi id.
         $mediaId = end($existing_ids);
-        // TODO should we check if modified since our copy and resave it?
+        // @todo should we check if modified since our copy and resave it?
         $media_ids[] = $mediaId;
       }
       else {
@@ -140,8 +140,10 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
 
         $siteLanguages = array_keys(\Drupal::languageManager()->getLanguages());
         $apiLanguages = $source->getMetadata($entity, 'lang_codes');
-        // TODO the api lang code for Swedish is SE, but in Drupal is SV. How to handle this?
-        // TODO langcode SE in Drupal stands for Northern Sami. Is this the dialect we want?
+        // @todo the api lang code for Swedish is SE, but in Drupal is SV.
+        // @todo How to handle this?
+        // @todo langcode SE in Drupal stands for Northern Sami.
+        // @todo Is this the dialect we want?
         foreach ($apiLanguages as $apiLangCode) {
           if (!in_array($apiLangCode, $siteLanguages)) {
             continue;
@@ -190,7 +192,8 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
       $source = $entity->getSource();
       $assetsData[$externalId] = $source->getAssetData();
     }
-    // Setting the api result so that we don't have to call again API for details in updateWdiget.
+    // Setting the api result so that we don't have to
+    // call again the API for details in updateWdiget.
     $form_state->set('assetsData', $assetsData);
   }
 

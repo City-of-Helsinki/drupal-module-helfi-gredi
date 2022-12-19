@@ -19,16 +19,15 @@ use Drupal\views\ViewEntityInterface;
 final class AssetLibraryBuilder extends MediaLibraryUiBuilder {
 
   /**
-   * * @param \Drupal\media_library\MediaLibraryState $state
-   *   (optional) The current state of the media library, derived from the
-   *   current request.
+   * Build the Gredi media library view.
+   *
+   * @param \Drupal\media_library\MediaLibraryState $state
+   *   (Optional) The current state of the media library.
    *
    * @return array
    *   The render array for the media library.
-   *
-   * {@inheritdoc}
    */
-  protected function buildMediaLibraryView(MediaLibraryState $state): array {
+  protected function buildMediaLibraryView(MediaLibraryState $state) : array {
     // @todo remove after https://www.drupal.org/project/drupal/issues/2971209.
     // Currently, there is no way to influence the View ID used for a specific
     // media type.
@@ -75,21 +74,6 @@ final class AssetLibraryBuilder extends MediaLibraryUiBuilder {
     }
 
     return $view_executable->buildRenderable($display_id, $args, FALSE);
-  }
-
-  /**
-   * Build the media library UI.
-   *
-   * @param \Drupal\media_library\MediaLibraryState $state
-   *   (optional) The current state of the media library, derived from the
-   *   current request.
-   *
-   * @return array
-   *   The render array for the media library.
-   */
-  public function buildUi(MediaLibraryState $state = NULL) {
-    return parent::buildUi($state);
-
   }
 
   /**

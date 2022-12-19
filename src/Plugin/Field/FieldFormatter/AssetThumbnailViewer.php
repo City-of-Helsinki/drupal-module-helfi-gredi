@@ -28,7 +28,7 @@ final class AssetThumbnailViewer extends FormatterBase {
     $parent = $items->getEntity();
     if ($parent->getSource() instanceof GredidamAsset) {
       $thumbnails_list = $parent->getSource()->getMetadata($parent, 'thumbnail_uri');
-      // TODO should we add the image style configured?
+      // @todo should we add the image style configured?
       $elements[0] = [
         '#theme' => 'image',
         '#uri' => $thumbnails_list,

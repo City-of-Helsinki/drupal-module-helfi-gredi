@@ -10,7 +10,6 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;
 
-
 /**
  * Gredi DAM authentication service.
  */
@@ -94,6 +93,8 @@ class GrediDamAuthService implements DamAuthServiceInterface {
   protected $state;
 
   /**
+   * Config factory service.
+   *
    * @var \Drupal\Core\Config\ConfigFactory
    */
   protected $configFactory;
@@ -104,8 +105,11 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    * Class constructor.
    *
    * @param \GuzzleHttp\ClientInterface $guzzleClient
+   *   The guzzle client service.
    * @param \Drupal\Core\State\StateInterface $state
+   *   The state service.
    * @param \Drupal\Core\Config\ConfigFactory $configFactory
+   *   The config factory service.
    */
   public function __construct(ClientInterface $guzzleClient, StateInterface $state, ConfigFactory $configFactory) {
     $this->guzzleClient = $guzzleClient;
@@ -154,14 +158,14 @@ class GrediDamAuthService implements DamAuthServiceInterface {
   /**
    * {@inheritdoc}
    */
-  function storeSessionId(string $session) :void {
+  public function storeSessionId(string $session) :void {
     $this->state->set(self::SESSION_ID_STATE_NAME, $session);
   }
 
   /**
    * {@inheritdoc}
    */
-  function getStoredSessionId() :string {
+  public function getStoredSessionId() :string {
     return $this->state->get(self::SESSION_ID_STATE_NAME, '');
   }
 

@@ -41,14 +41,14 @@ class GredidamAsset extends Image {
   /**
    * The image factory service.
    *
-   * @var ImageFactory
+   * @var \Drupal\Core\Image\ImageFactory
    */
   protected $imageFactory;
 
   /**
    * The file system service.
    *
-   * @var FileSystemInterface
+   * @var \Drupal\Core\File\FileSystemInterface
    */
   protected $fileSystem;
 
@@ -93,20 +93,20 @@ class GredidamAsset extends Image {
    * {@inheritdoc}
    */
   public function __construct(
-    array                           $configuration,
-                                    $plugin_id,
-                                    $plugin_definition,
-    EntityTypeManagerInterface      $entity_type_manager,
-    EntityFieldManagerInterface     $entity_field_manager,
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    EntityTypeManagerInterface $entity_type_manager,
+    EntityFieldManagerInterface $entity_field_manager,
     FieldTypePluginManagerInterface $field_type_manager,
-    ConfigFactoryInterface          $config_factory,
-    GrediDamClient                  $damClient,
-    ImageFactory                    $imageFactory,
-    FileSystemInterface             $fileSystem,
-    LanguageManagerInterface        $languageManager,
-    TimeInterface                   $timeManager,
-    DateFormatter                   $dateFormatter,
-    FileRepositoryInterface         $fileRepository) {
+    ConfigFactoryInterface $config_factory,
+    GrediDamClient $damClient,
+    ImageFactory $imageFactory,
+    FileSystemInterface $fileSystem,
+    LanguageManagerInterface $languageManager,
+    TimeInterface $timeManager,
+    DateFormatter $dateFormatter,
+    FileRepositoryInterface $fileRepository) {
     parent::__construct(
       $configuration,
       $plugin_id,
@@ -250,7 +250,7 @@ class GredidamAsset extends Image {
           $directory = 'public://gredidam/thumbs/' . $date;
           $this->fileSystem->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
 
-          $location = $directory . '/' .$asset_name;
+          $location = $directory . '/' . $asset_name;
           if (!file_exists($location)) {
             $fileContent = $this->damClient->getFileContent($assetId, $this->assetData['apiPreviewLink']);
             $this->fileSystem->saveData($fileContent, $location, FileSystemInterface::EXISTS_REPLACE);
@@ -277,7 +277,8 @@ class GredidamAsset extends Image {
 
       default:
         $metaAttributes = $this->getMetadataAttributes();
-        // If field is not found for current entity language, try returning the default lang value.
+        // If field is not found for current entity language,
+        // try returning the default lang value.
         $fallbackValue = NULL;
         if (!isset($metaAttributes[$attribute_name])) {
           return NULL;
@@ -287,7 +288,8 @@ class GredidamAsset extends Image {
         }
         $lang_code = $media->language()->getId();
         $fallbackLangCode = $this->languageManager->getCurrentLanguage()->getId();
-        // Trying to find the attr id in the metaById, as they come as custom:meta-field-1285_fi.
+        // Trying to find the attr id in the metaById,
+        // as they come as custom:meta-field-1285_fi.
         foreach ($this->assetData['metaById'] as $attr_name_key => $value) {
           if (strpos($attr_name_key, 'custom:meta-field-') !== 0) {
             continue;
@@ -310,7 +312,6 @@ class GredidamAsset extends Image {
     }
   }
 
-
   /**
    * Sets the asset data.
    *
@@ -325,6 +326,7 @@ class GredidamAsset extends Image {
    * Get the asset data.
    *
    * @return array
+   *   Return the asset data.
    */
   public function getAssetData() : array {
     return $this->assetData;
@@ -334,6 +336,7 @@ class GredidamAsset extends Image {
    * Retrieves the original file from API.
    *
    * @return \Drupal\file\FileInterface|null
+   *   Return the file entity or null if it does not exists.
    */
   public function getOriginalFile() : FileInterface|NULL {
     try {
@@ -362,5 +365,3 @@ class GredidamAsset extends Image {
   }
 
 }
-
-
