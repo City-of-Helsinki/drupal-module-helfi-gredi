@@ -24,7 +24,7 @@ class MetaUpdate extends QueueWorkerBase {
       $media = Media::load($media_id);
       // Stored asset id.
       $asset_id = $media->gredi_asset_id->value;
-      /** @var \Drupal\helfi_gredi_image\Service\GrediDamClient $damClient */
+      /** @var \Drupal\helfi_gredi_image\GrediDamClient $damClient */
       $damClient = \Drupal::service('helfi_gredi_image.dam_client');
       $asset_data = $damClient->getAssetData($asset_id);
       // External asset modified timestamp.

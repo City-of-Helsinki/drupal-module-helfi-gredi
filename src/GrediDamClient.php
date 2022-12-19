@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\helfi_gredi_image\Service;
+namespace Drupal\helfi_gredi_image;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Cache\Cache;
@@ -9,7 +9,6 @@ use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\file\Entity\File;
-use Drupal\helfi_gredi_image\GrediDamClientInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
@@ -41,7 +40,7 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
   /**
    * Gredi dam auth service.
    *
-   * @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService
+   * @var \Drupal\helfi_gredi_image\GrediDamAuthService
    */
   protected GrediDamAuthService $authService;
 
@@ -80,7 +79,7 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
    *   A fully configured Guzzle client to pass to the dam client.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config
    *   Config factory var.
-   * @param \Drupal\helfi_gredi_image\Service\GrediDamAuthService $grediDamAuthService
+   * @param \Drupal\helfi_gredi_image\GrediDamAuthService $grediDamAuthService
    *   Gredi dam auth service.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
    *   The Drupal LoggerChannelFactory service.

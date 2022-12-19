@@ -13,7 +13,7 @@ use Drupal\Core\Image\ImageFactory;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\file\FileInterface;
 use Drupal\file\FileRepositoryInterface;
-use Drupal\helfi_gredi_image\Service\GrediDamClient;
+use Drupal\helfi_gredi_image\GrediDamClient;
 use Drupal\media\MediaInterface;
 use Drupal\media\Plugin\media\Source\Image;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -55,7 +55,7 @@ class GredidamAsset extends Image {
   /**
    * The gredidam client service.
    *
-   * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
+   * @var \Drupal\helfi_gredi_image\GrediDamClient
    */
   protected $damClient;
 

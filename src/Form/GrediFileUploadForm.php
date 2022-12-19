@@ -11,7 +11,7 @@ use Drupal\Core\Render\ElementInfoManagerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\file\FileUsage\FileUsageInterface;
-use Drupal\helfi_gredi_image\Service\GrediDamClient;
+use Drupal\helfi_gredi_image\GrediDamClient;
 use Drupal\media\MediaInterface;
 use Drupal\media_library\Form\FileUploadForm;
 use Drupal\media_library\MediaLibraryUiBuilder;
@@ -64,7 +64,7 @@ class GrediFileUploadForm extends FileUploadForm {
   /**
    * Gredidam client.
    *
-   * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
+   * @var \Drupal\helfi_gredi_image\GrediDamClient
    */
   protected $damClient;
 
@@ -94,7 +94,7 @@ class GrediFileUploadForm extends FileUploadForm {
    *   The file usage service.
    * @param \Drupal\file\FileRepositoryInterface|null $file_repository
    *   The file repository service.
-   * @param \Drupal\helfi_gredi_image\Service\GrediDamClient $damClient
+   * @param \Drupal\helfi_gredi_image\GrediDamClient $damClient
    *   The Gredi DAM client service.
    * @param \Drupal\Component\Datetime\TimeInterface $timeManager
    *   The time manager service.

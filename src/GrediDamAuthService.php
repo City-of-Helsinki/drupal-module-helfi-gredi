@@ -1,11 +1,10 @@
 <?php
 
-namespace Drupal\helfi_gredi_image\Service;
+namespace Drupal\helfi_gredi_image;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactory;
 use Drupal\Core\State\StateInterface;
-use Drupal\helfi_gredi_image\DamAuthServiceInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\ClientException;

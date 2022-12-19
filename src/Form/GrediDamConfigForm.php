@@ -4,7 +4,7 @@ namespace Drupal\helfi_gredi_image\Form;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
-use Drupal\helfi_gredi_image\Service\GrediDamAuthService;
+use Drupal\helfi_gredi_image\GrediDamAuthService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use GuzzleHttp\ClientInterface;
@@ -26,7 +26,7 @@ class GrediDamConfigForm extends ConfigFormBase {
   /**
    * Auth service.
    *
-   * @var \Drupal\helfi_gredi_image\Service\GrediDamAuthService
+   * @var \Drupal\helfi_gredi_image\GrediDamAuthService
    */
   protected $authService;
 
@@ -37,7 +37,7 @@ class GrediDamConfigForm extends ConfigFormBase {
    *   Config factory service.
    * @param \GuzzleHttp\ClientInterface $http_client
    *   Http client.
-   * @param \Drupal\helfi_gredi_image\Service\GrediDamAuthService $authService
+   * @param \Drupal\helfi_gredi_image\GrediDamAuthService $authService
    *   Auth service.
    */
   public function __construct(ConfigFactoryInterface $config_factory, ClientInterface $http_client, GrediDamAuthService $authService) {

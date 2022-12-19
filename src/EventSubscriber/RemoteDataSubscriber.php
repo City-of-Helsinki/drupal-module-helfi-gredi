@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\helfi_gredi_image\EventSubscriber;
 
-use Drupal\helfi_gredi_image\Service\GrediDamClient;
+use Drupal\helfi_gredi_image\GrediDamClient;
 use Drupal\media\Entity\Media;
 use Drupal\views\ResultRow;
 use Drupal\views_remote_data\Events\RemoteDataLoadEntitiesEvent;
@@ -19,14 +19,14 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
   /**
    * The client.
    *
-   * @var \Drupal\helfi_gredi_image\Service\GrediDamClient
+   * @var \Drupal\helfi_gredi_image\GrediDamClient
    */
   public GrediDamClient $client;
 
   /**
    * Constructs a new ViewsRemoteDataSubscriber object.
    *
-   * @param \Drupal\helfi_gredi_image\Service\GrediDamClient $client
+   * @param \Drupal\helfi_gredi_image\GrediDamClient $client
    *   The client.
    */
   public function __construct(GrediDamClient $client) {
