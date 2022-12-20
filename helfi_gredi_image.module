@@ -35,6 +35,15 @@ function helfi_gredi_image_form_media_gredi_dam_assets_add_form_alter(&$form, Fo
  *   The form state properties.
  */
 function _helfi_gredi_image_media_save_validate(array &$form, FormStateInterface &$form_state) {
+  /**
+   * Button-level validation handlers are highly discouraged for entity forms,
+   * as they will prevent entity validation from running. If the entity is going
+   * to be saved during the form submission, this method should be manually
+   * invoked from the button-level validation handler, otherwise an exception
+   * will be thrown.
+   */
+  $form_state->getformObject()->validateForm($form, $form_state);
+  
   $media = $form_state->getformObject()->getEntity();
   // If the validation was successful at selecting file do not retry on submit.
   if (!empty($media->get('gredi_asset_id')->value)) {
