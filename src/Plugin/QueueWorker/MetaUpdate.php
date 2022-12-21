@@ -4,59 +4,44 @@ namespace Drupal\helfi_gredi_image\Plugin\QueueWorker;
 
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\media\Entity\Media;
-use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
 
 /**
  * A worker that updates metadata for every image.
  *
  * @QueueWorker(
- *   id = "meta_update",
- *   title = @Translation("Meta Update"),
+ *   id = "gredi_asset_update",
+ *   title = @Translation("Updates Gredi image asset"),
  *   cron = {"time" = 90}
  * )
  */
 class MetaUpdate extends QueueWorkerBase {
 
   /**
-   * DAM client.
-   *
-   * @var \Drupal\helfi_gredi_image\DamClientInterface
-   */
-  private $damClient;
-
-  /**
-   * Metadata helper.
-   *
-   * @var \Drupal\helfi_gredi_image\Service\AssetMetadataHelper
-   */
-  private AssetMetadataHelper $metadataHelper;
-
-  /**
-   * Constructor.
-   *
-   * @param array $configuration
-   *   Configuration.
-   * @param string $plugin_id
-   *   Plugin ID.
-   * @param mixed $plugin_definition
-   *   Plugin definition.
-   */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->damClient = \Drupal::service('helfi_gredi_image.dam_client');
-    $this->metadataHelper = \Drupal::service('helfi_gredi_image.asset_metadata.helper');
-  }
-
-  /**
    * {@inheritdoc}
    */
-  public function processItem($data) {
-    /** @var \Drupal\helfi_gredi_image\Entity\Asset $external_gredi_asset */
-    $external_gredi_asset = $this->damClient->getAsset($data->external_id);
-    /** @var \Drupal\media\Entity\Media $internal_gredi_asset */
-    $internal_gredi_asset = Media::load($data->media_id);
-    $this->metadataHelper->performMetadataUpdate($internal_gredi_asset, $external_gredi_asset);
-    \Drupal::logger('GrediMetaData')->notice('Metadata for Gredi asset with id ' . $data->media_id);
+  public function processItem($media_id) {
+    if ($media_id) {
+      $media = Media::load($media_id);
+      // Stored asset id.
+      $asset_id = $media->gredi_asset_id->value;
+      /** @var \Drupal\helfi_gredi_image\GrediDamClient $damClient */
+      $damClient = \Drupal::service('helfi_gredi_image.dam_client');
+      $asset_data = $damClient->getAssetData($asset_id);
+      // External asset modified timestamp.
+      $external_field_modified = strtotime($asset_data['modified']);
+      // Stored asset modified timestamp.
+      $internal_field_modified = $media->gredi_modified->value;
+      // Set fields that needs to be updated NULL to let Media::prepareSave()
+      // fill up the fields with the newest fetched data.
+      if ($external_field_modified > $internal_field_modified) {
+        $media->set('field_alt_text', NULL);
+        $media->set('field_keywords', NULL);
+        $media->save();
+      }
+
+      \Drupal::logger('helfi_gredi_image')
+        ->notice('Metadata for Gredi asset with id ' . $media_id);
+    }
   }
 
 }

@@ -10,7 +10,7 @@ use Drupal\Core\File\FileSystemInterface;
  *
  * @phpcs:disable Drupal.NamingConventions.ValidVariableName.LowerCamelName
  */
-class Asset implements EntityInterface, \JsonSerializable {
+class Asset implements AssetEntityInterface, \JsonSerializable {
 
   const ATTACHMENT_TYPE_ORIGINAL = 'original';
 
@@ -113,42 +113,6 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $apiPreviewLink;
 
   /**
-   * Upload date.
-   *
-   * @var string
-   */
-  public $file_upload_date;
-
-  /**
-   * A list of allowed values for the "expand" query attribute.
-   *
-   * @return string[]
-   *   The exhaustive list of allowed "expand" values.
-   */
-  public static function getAllowedExpands(): array {
-    return [
-      'basic',
-      'image',
-      'meta',
-      'attachments',
-    ];
-  }
-
-  /**
-   * The default expand query attribute.
-   *
-   * These attributes are mandatory for some later process.
-   *
-   * @return string[]
-   *   The list of expands properties which must be fetched along the asset.
-   */
-  public static function getRequiredExpands(): array {
-    return [
-      'meta',
-    ];
-  }
-
-  /**
    * {@inheritdoc}
    */
   public static function fromJson($json) {
@@ -183,7 +147,6 @@ class Asset implements EntityInterface, \JsonSerializable {
     }
     // Check all the translations from the API.
     if (isset($json['metaById'])) {
-
       foreach ($metaProperties as $key => $languages) {
         // Check if mapping is available for the field.
         if (in_array($key, array_keys($mappingFields))) {
@@ -230,26 +193,7 @@ class Asset implements EntityInterface, \JsonSerializable {
       }
     }
 
-    $location = 'public://gredidam/thumbs/' . $asset->name;
-    $fileContent = \Drupal::service('helfi_gredi_image.dam_client')->fetchRemoteAssetData($asset, $asset->name, FALSE);
-    $asset->apiPreviewLink = \Drupal::service('helfi_gredi_image.asset_file.helper')->drupalFileSaveData($fileContent, $location)->createFileUrl();
-
     return $asset;
-  }
-
-  /**
-   * Function to get remote asset base url.
-   *
-   * @return string
-   *   Remote asset base url.
-   */
-  public static function getAssetRemoteBaseUrl(): string {
-    /** @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
-    $config_factory = \Drupal::service('config.factory');
-    $module_config = $config_factory->get('helfi_gredi_image.settings');
-    $base_url = trim($module_config->get('domain'));
-    $base_url_parts = parse_url($base_url);
-    return sprintf("%s://%s", $base_url_parts['scheme'], $base_url_parts['host']);
   }
 
   /**
