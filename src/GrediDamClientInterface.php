@@ -83,6 +83,6 @@ interface GrediDamClientInterface {
    *
    * @throws \Exception
    */
-  public function getFileContent(string $assetId, string $downloadUrl) :false|string;
+  public function getFileContent(string $assetId, string $downloadUrl) : FALSE|string;
 
 }

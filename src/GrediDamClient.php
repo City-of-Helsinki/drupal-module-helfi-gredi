@@ -179,7 +179,7 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
   /**
    * {@inheritdoc}
    */
-  public function getFileContent($assetId, $downloadUrl) : false|string {
+  public function getFileContent($assetId, $downloadUrl) : FALSE|string {
     // If the module was configured to enforce an image size limit then we
     // need to grab the nearest matching pre-created size.
     if (empty($downloadUrl)) {
