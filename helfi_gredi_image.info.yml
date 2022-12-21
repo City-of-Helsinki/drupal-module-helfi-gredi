@@ -8,3 +8,5 @@ dependencies:
   - drupal:media_library
   - drupal:content_translation
   - views_remote_data:views_remote_data
+  - drupal:user
+  - drupal:image
