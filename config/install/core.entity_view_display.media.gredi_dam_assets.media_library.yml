@@ -1,38 +1,28 @@
-uuid: 2d07d322-158d-4f8e-9b7c-4a2d62db7ad8
+uuid: 164a98a4-cca7-4469-8abf-185d8b9196b7
 langcode: en
 status: true
 dependencies:
-  enforced:
-    module:
-      - helfi_gredi_image
   config:
     - core.entity_view_mode.media.media_library
     - field.field.media.gredi_dam_assets.field_media_image
-    - image.style.medium
     - media.type.gredi_dam_assets
   module:
-    - image
+    - helfi_gredi_image
 id: media.gredi_dam_assets.media_library
 targetEntityType: media
 bundle: gredi_dam_assets
 mode: media_library
 content:
   thumbnail:
-    type: image
+    type: gredi_dam_thumbnail
     label: hidden
-    settings:
-      image_link: ''
-      image_style: medium
-      image_loading:
-        attribute: lazy
+    settings: {  }
     third_party_settings: {  }
     weight: 0
     region: content
 hidden:
   created: true
-  field_alt_text: true
-  field_external_id: true
-  field_keywords: true
   field_media_image: true
+  langcode: true
   name: true
   uid: true
