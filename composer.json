@@ -1,5 +1,5 @@
 {
-    "name": "drupal/helfi_gredi",
+    "name": "drupal/helfi_gredi_image",
     "description": "Gredi Aineistopankki integration",
     "type": "drupal-module",
     "license": "GPL-2.0-or-later",
