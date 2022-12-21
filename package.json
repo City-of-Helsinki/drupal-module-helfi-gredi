@@ -1,9 +1,0 @@
-{
-  "dependencies": {
-    "snyk": "^1.961.0",
-    "snyk-php-plugin": "^1.9.3"
-  },
-  "scripts": {
-    "snyk": "snyk code test" 
-  }
-}
