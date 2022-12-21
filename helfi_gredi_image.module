@@ -8,7 +8,7 @@
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\entity\BundleFieldDefinition;
+use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\media\MediaTypeInterface;
@@ -43,7 +43,7 @@ function _helfi_gredi_image_media_save_validate(array &$form, FormStateInterface
    * will be thrown.
    */
   $form_state->getformObject()->validateForm($form, $form_state);
-  
+
   $media = $form_state->getformObject()->getEntity();
   // If the validation was successful at selecting file do not retry on submit.
   if (!empty($media->get('gredi_asset_id')->value)) {
@@ -78,7 +78,7 @@ function _helfi_gredi_image_media_save_validate(array &$form, FormStateInterface
 function helfi_gredi_image_entity_field_storage_info(EntityTypeInterface $entity_type): array {
   $definitions = [];
   if ($entity_type->id() === 'media') {
-    $definitions['gredi_asset_id'] = BundleFieldDefinition::create('string')
+    $definitions['gredi_asset_id'] = BaseFieldDefinition::create('string')
       ->setName('gredi_asset_id')
       ->setLabel('Gredi Asset ID')
       ->setTranslatable(FALSE)
@@ -87,7 +87,7 @@ function helfi_gredi_image_entity_field_storage_info(EntityTypeInterface $entity
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayConfigurable('form', FALSE);
 
-    $definitions['gredi_modified'] = BundleFieldDefinition::create('timestamp')
+    $definitions['gredi_modified'] = BaseFieldDefinition::create('timestamp')
       ->setName('gredi_modified')
       ->setLabel(new TranslatableMarkup('Gredi Asset Modified'))
       ->setTranslatable(FALSE)
@@ -111,13 +111,13 @@ function helfi_gredi_image_entity_bundle_field_info(EntityTypeInterface $entity_
       return $definitions;
     }
     if ($media_type->getSource() instanceof GredidamAsset) {
-      $definitions['gredi_asset_id'] = BundleFieldDefinition::create('string')
+      $definitions['gredi_asset_id'] = BaseFieldDefinition::create('string')
         ->setName('gredi_asset_id')
         ->setLabel(new TranslatableMarkup('Gredi Asset ID'))
         ->setTranslatable(FALSE)
         ->setRevisionable(FALSE);
 
-      $definitions['gredi_modified'] = BundleFieldDefinition::create('timestamp')
+      $definitions['gredi_modified'] = BaseFieldDefinition::create('timestamp')
         ->setName('gredi_modified')
         ->setLabel(new TranslatableMarkup('Gredi Asset Modified'))
         ->setTranslatable(FALSE)
