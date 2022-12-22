@@ -113,7 +113,7 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
    * {@inheritdoc}
    */
   public function apiCallGet($apiUri, $queryParams = []) : ResponseInterface {
-    $retry = TRUE;
+      $retry = TRUE;
     $login_retry = FALSE;
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
