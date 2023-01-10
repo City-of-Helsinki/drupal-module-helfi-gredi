@@ -174,10 +174,10 @@ display:
           plugin_id: views_remote_data_property
           order: DESC
           expose:
-            label: Modified
-            field_identifier: modified
+            label: 'Last Used'
+            field_identifier: orderByLastUsed
           exposed: true
-          property_path: modified
+          property_path: orderByLastUsed
         property_1:
           id: property_1
           table: gredi_asset
@@ -190,9 +190,9 @@ display:
           order: ASC
           expose:
             label: Name
-            field_identifier: name
+            field_identifier: orderByName
           exposed: true
-          property_path: name
+          property_path: orderByName
       arguments: {  }
       filters:
         property:
