@@ -2,17 +2,20 @@
 
 namespace Drupal\helfi_gredi_image\Plugin\media\Source;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Datetime\DateFormatter;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldTypePluginManagerInterface;
-use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Image\ImageFactory;
+use Drupal\Core\Language\LanguageManagerInterface;
+use Drupal\file\FileInterface;
+use Drupal\file\FileRepositoryInterface;
+use Drupal\helfi_gredi_image\GrediDamClient;
 use Drupal\media\MediaInterface;
-use Drupal\media\MediaSourceBase;
-use Drupal\helfi_gredi_image\Service\AssetImageHelper;
-use Drupal\helfi_gredi_image\Service\AssetMediaFactory;
-use Drupal\helfi_gredi_image\Service\AssetMetadataHelper;
-use GuzzleHttp\Exception\GuzzleException;
+use Drupal\media\Plugin\media\Source\Image;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -26,35 +29,63 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   allowed_field_types = {"string"},
  * )
  */
-class GredidamAsset extends MediaSourceBase {
+class GredidamAsset extends Image {
 
   /**
-   * The asset that we're going to render details for.
+   * The API assets array.
    *
-   * @var \Drupal\helfi_gredi_image\Entity\Asset|null
+   * @var array
    */
-  protected $currentAsset;
+  protected $assetData = [];
 
   /**
-   * Gredi DAM asset image helper service.
+   * The image factory service.
    *
-   * @var \Drupal\helfi_gredi_image\Service\AssetImageHelper
+   * @var \Drupal\Core\Image\ImageFactory
    */
-  protected $assetImageHelper;
+  protected $imageFactory;
 
   /**
-   * Gredi DAM asset metadata helper service.
+   * The file system service.
    *
-   * @var \Drupal\helfi_gredi_image\Service\AssetMetadataHelper
+   * @var \Drupal\Core\File\FileSystemInterface
    */
-  protected $assetMetadataHelper;
+  protected $fileSystem;
 
   /**
-   * Gredi DAM Asset Media Factory service.
+   * The gredidam client service.
    *
-   * @var \Drupal\helfi_gredi_image\Service\AssetMediaFactory
+   * @var \Drupal\helfi_gredi_image\GrediDamClient
    */
-  protected $assetMediaFactory;
+  protected $damClient;
+
+  /**
+   * The language manager service.
+   *
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected $languageManager;
+
+  /**
+   * The date time service.
+   *
+   * @var \Drupal\Component\Datetime\TimeInterface
+   */
+  protected $timeManager;
+
+  /**
+   * The date formatter service.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatter
+   */
+  protected $dateFormatter;
+
+  /**
+   * The file repository service.
+   *
+   * @var \Drupal\file\FileRepositoryInterface
+   */
+  protected $fileRepository;
 
   /**
    * GredidamAsset constructor.
@@ -69,9 +100,13 @@ class GredidamAsset extends MediaSourceBase {
     EntityFieldManagerInterface $entity_field_manager,
     FieldTypePluginManagerInterface $field_type_manager,
     ConfigFactoryInterface $config_factory,
-    AssetImageHelper $assetImageHelper,
-    AssetMetadataHelper $assetMetadataHelper,
-    AssetMediaFactory $assetMediaFactory) {
+    GrediDamClient $damClient,
+    ImageFactory $imageFactory,
+    FileSystemInterface $fileSystem,
+    LanguageManagerInterface $languageManager,
+    TimeInterface $timeManager,
+    DateFormatter $dateFormatter,
+    FileRepositoryInterface $fileRepository) {
     parent::__construct(
       $configuration,
       $plugin_id,
@@ -79,21 +114,16 @@ class GredidamAsset extends MediaSourceBase {
       $entity_type_manager,
       $entity_field_manager,
       $field_type_manager,
-      $config_factory
+      $config_factory,
+      $imageFactory,
+      $fileSystem
     );
 
-    $this->assetImageHelper = $assetImageHelper;
-    $this->assetMetadataHelper = $assetMetadataHelper;
-    $this->assetMediaFactory = $assetMediaFactory;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
-    // Fieldset with configuration options not needed.
-    hide($form);
-    return $form;
+    $this->damClient = $damClient;
+    $this->languageManager = $languageManager;
+    $this->timeManager = $timeManager;
+    $this->dateFormatter = $dateFormatter;
+    $this->fileRepository = $fileRepository;
   }
 
   /**
@@ -108,9 +138,13 @@ class GredidamAsset extends MediaSourceBase {
       $container->get('entity_field.manager'),
       $container->get('plugin.manager.field.field_type'),
       $container->get('config.factory'),
-      $container->get('helfi_gredi_image.asset_image.helper'),
-      $container->get('helfi_gredi_image.asset_metadata.helper'),
-      $container->get('helfi_gredi_image.asset_media.factory')
+      $container->get('helfi_gredi_image.dam_client'),
+      $container->get('image.factory'),
+      $container->get('file_system'),
+      $container->get('language_manager'),
+      $container->get('datetime.time'),
+      $container->get('date.formatter'),
+      $container->get('file.repository')
     );
   }
 
@@ -119,63 +153,37 @@ class GredidamAsset extends MediaSourceBase {
    */
   public function defaultConfiguration() {
     return [
-      'source_field' => 'field_external_id',
+      'source_field' => 'field_media_image',
     ];
   }
 
   /**
    * {@inheritdoc}
    */
-  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
-    $submitted_config = array_intersect_key(
-      $form_state->getValues(),
-      $this->configuration
-    );
-
-    foreach ($submitted_config as $config_key => $config_value) {
-      $this->configuration[$config_key] = $config_value;
-    }
-
-    // For consistency, always use the default source_field field name.
-    $default_field_name = $this->defaultConfiguration()['source_field'];
-    // Check if it already exists so it can be used as a shared field.
-    $storage = $this->entityTypeManager->getStorage('field_storage_config');
-    $existing_source_field = $storage->load('media.' . $default_field_name);
-
-    // Set or create the source field.
-    if ($existing_source_field) {
-      // If the default field already exists, return the default field name.
-      $this->configuration['source_field'] = $default_field_name;
-    }
-    else {
-      // Default source field name does not exist, so create a new one.
-      $field_storage = $this->createSourceFieldStorage();
-      $field_storage->save();
-      $this->configuration['source_field'] = $field_storage->getName();
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function createSourceFieldStorage() {
-    $default_field_name = $this->defaultConfiguration()['source_field'];
-
-    // Create the field.
-    return $this->entityTypeManager->getStorage('field_storage_config')->create(
-      [
-        'entity_type' => 'media',
-        'field_name' => $default_field_name,
-        'type' => reset($this->pluginDefinition['allowed_field_types']),
-      ]
-    );
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getMetadataAttributes() {
-    return $this->assetMetadataHelper->getMetadataAttributeLabels();
+    $fields = [];
+    $lang_code = $this->languageManager->getCurrentLanguage()->getId();
+    try {
+      $damMetadataFields = $this->damClient->getMetaFields();
+      foreach ($damMetadataFields as $damField) {
+        if (isset($damField['namesByLang'][$lang_code])) {
+          $label = $damField['namesByLang'][$lang_code];
+        }
+        else {
+          $label = current($damField['namesByLang']);
+        }
+        $fields[$damField['id']] = $label;
+      }
+    }
+    catch (\Exception $e) {
+
+    }
+
+    $fields['created'] = $this->t('Created timestamp');
+    $fields['modified'] = $this->t('Modified timestamp');
+    $fields['original_file'] = $this->t('Original image');
+
+    return $fields;
   }
 
   /**
@@ -190,32 +198,170 @@ class GredidamAsset extends MediaSourceBase {
    *   The metadata value or NULL if unset.
    */
   public function getMetadata(MediaInterface $media, $attribute_name) {
+    // Most of attributes requires data from API.
+    $attr_with_fallback = [
+      'default_name',
+      'name',
+      'thumbnail_uri',
+    ];
+    if (!in_array($attribute_name, $attr_with_fallback) && empty($this->assetData)) {
+      try {
+        $this->assetData = $this->damClient->getAssetData($media->get('gredi_asset_id')->value);
+      }
+      catch (\Exception $e) {
+        $this->messenger()->addError('Failed to fetch asset data');
+        return NULL;
+      }
+    }
     switch ($attribute_name) {
       case 'name':
+      case 'default_name':
+        if (!$media->isNew()) {
+          return $media->getName();
+        }
+        if (!empty($this->assetData['name'])) {
+          return $this->assetData['name'];
+        }
         return parent::getMetadata($media, 'default_name');
 
       case 'thumbnail_uri':
-        return $this->assetImageHelper->getThumbnail(
-          $this->assetMediaFactory->get($media)->getFile('field_media_image', 'target_id')
-        );
-    }
+        if (!$media->isNew()) {
+          return parent::getMetadata($media, $attribute_name);
+        }
 
-    if ($this->currentAsset === NULL) {
-      try {
-        $asset = $this->assetMediaFactory->get($media)->getAsset();
-        $this->currentAsset = $asset;
-      }
-      catch (GuzzleException $exception) {
-        // Do nothing.
-      }
-    }
+        $default_thumbnail_filename = $this->pluginDefinition['default_thumbnail_filename'];
+        $fallback = $this->configFactory->get('media.settings')->get('icon_base_uri') . '/' . $default_thumbnail_filename;
 
-    // If we don't have the asset, we can't return additional metadata.
-    if ($this->currentAsset === NULL) {
+        if (empty($this->assetData)) {
+          return $fallback;
+        }
+        // Fetching asset thumbnail or from local.
+        try {
+          $assetId = $this->assetData['id'];
+          $assetName = $this->assetData['name'];
+          $assetModified = $this->assetData['modified'];
+          // Create subfolders by month.
+          $current_timestamp = $this->timeManager->getCurrentTime();
+          $date_output = $this->dateFormatter->format($current_timestamp, 'custom', 'd/M/Y');
+          $date = str_replace('/', '-', substr($date_output, 3, 8));
+
+          // Asset name contains id and last updated date.
+          $asset_name = $assetId . '_' . strtotime($assetModified) . substr($assetName, strrpos($assetName, "."));
+          $directory = 'public://gredidam/thumbs/' . $date;
+          $this->fileSystem->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
+
+          $location = $directory . '/' . $asset_name;
+          if (!file_exists($location)) {
+            $fileContent = $this->damClient->getFileContent($assetId, $this->assetData['apiPreviewLink']);
+            $this->fileSystem->saveData($fileContent, $location, FileSystemInterface::EXISTS_REPLACE);
+          }
+
+          return $location;
+        }
+        catch (\Exception $e) {
+          $this->messenger()->addError('Error fetching and saving thumbnail');
+          return $fallback;
+        }
+
+      case 'original_file':
+        return $this->getOriginalFile();
+
+      case 'modified':
+        return strtotime($this->assetData['modified']) ?? NULL;
+
+      case 'created':
+        return strtotime($this->assetData['created']) ?? NULL;
+
+      case 'lang_codes':
+        return array_keys($this->assetData['namesByLang']);
+
+      default:
+        $metaAttributes = $this->getMetadataAttributes();
+        // If field is not found for current entity language,
+        // try returning the default lang value.
+        $fallbackValue = NULL;
+        if (!isset($metaAttributes[$attribute_name])) {
+          return NULL;
+        }
+        if (!isset($this->assetData['metaById'])) {
+          return NULL;
+        }
+        $lang_code = $media->language()->getId();
+        $fallbackLangCode = $this->languageManager->getCurrentLanguage()->getId();
+        // Trying to find the attr id in the metaById,
+        // as they come as custom:meta-field-1285_fi.
+        foreach ($this->assetData['metaById'] as $attr_name_key => $value) {
+          if (strpos($attr_name_key, 'custom:meta-field-') !== 0) {
+            continue;
+          }
+          $attr_id_and_lang = str_replace('custom:meta-field-', '', $attr_name_key);
+          [$attr_id, $attr_lang_code] = explode('_', $attr_id_and_lang);
+          if ($attr_id != $attribute_name) {
+            continue;
+          }
+          if ($attr_lang_code == $fallbackLangCode) {
+            $fallbackValue = $value;
+          }
+          if ($attr_lang_code != $lang_code) {
+            continue;
+          }
+          return $value;
+        }
+
+        return $fallbackValue;
+    }
+  }
+
+  /**
+   * Sets the asset data.
+   *
+   * @param array $data
+   *   The asset data.
+   */
+  public function setAssetData(array $data) {
+    $this->assetData = $data;
+  }
+
+  /**
+   * Get the asset data.
+   *
+   * @return array
+   *   Return the asset data.
+   */
+  public function getAssetData() : array {
+    return $this->assetData;
+  }
+
+  /**
+   * Retrieves the original file from API.
+   *
+   * @return \Drupal\file\FileInterface|null
+   *   Return the file entity or null if it does not exists.
+   */
+  public function getOriginalFile() : FileInterface|NULL {
+    try {
+      $assetId = $this->assetData['id'];
+      $assetName = $this->assetData['name'];
+      $fileContent = $this->damClient->getFileContent($assetId, $this->assetData['apiContentLink']);
+
+      // Create subfolders by month.
+      $current_timestamp = $this->timeManager->getCurrentTime();
+      $date_output = $this->dateFormatter->format($current_timestamp, 'custom', 'd/M/Y');
+      $date = str_replace('/', '-', substr($date_output, 3, 8));
+
+      // Create month folder.
+      $directory = 'public://gredidam/original/' . $date;
+
+      $this->fileSystem->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
+
+      $location = $directory . '/' . $assetName;
+
+      return $this->fileRepository->writeData($fileContent, $location);
+
+    }
+    catch (\Exception $e) {
       return NULL;
     }
-
-    return $this->assetMetadataHelper->getMetadataFromAsset($this->currentAsset, $attribute_name);
   }
 
 }

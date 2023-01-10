@@ -2,9 +2,9 @@
 
 namespace Drupal\helfi_gredi_image\Form;
 
-use Drupal\Component\Utility\Xss;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
+use Drupal\helfi_gredi_image\GrediDamAuthService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use GuzzleHttp\ClientInterface;
@@ -24,16 +24,26 @@ class GrediDamConfigForm extends ConfigFormBase {
   protected $httpClient;
 
   /**
+   * Auth service.
+   *
+   * @var \Drupal\helfi_gredi_image\GrediDamAuthService
+   */
+  protected $authService;
+
+  /**
    * GrediDamConfigForm constructor.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   Config factory service.
    * @param \GuzzleHttp\ClientInterface $http_client
    *   Http client.
+   * @param \Drupal\helfi_gredi_image\GrediDamAuthService $authService
+   *   Auth service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, ClientInterface $http_client) {
+  public function __construct(ConfigFactoryInterface $config_factory, ClientInterface $http_client, GrediDamAuthService $authService) {
     parent::__construct($config_factory);
     $this->httpClient = $http_client;
+    $this->authService = $authService;
   }
 
   /**
@@ -42,7 +52,8 @@ class GrediDamConfigForm extends ConfigFormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('config.factory'),
-      $container->get('http_client')
+      $container->get('http_client'),
+      $container->get('helfi_gredi_image.auth_service')
     );
   }
 
@@ -68,37 +79,54 @@ class GrediDamConfigForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state): array {
     $config = $this->config('helfi_gredi_image.settings');
 
-    $form['domain'] = [
+    $form['auth'] = [
       '#type' => 'fieldset',
-      '#title' => $this->t('Base URL detail'),
+      '#title' => $this->t('API Authentication'),
     ];
 
-    $form['domain']['domain_value'] = [
+    $form['auth']['api_url'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Gredi DAM Base URL'),
-      '#default_value' => $config->get('domain'),
-      '#description' => $this->t('example: demo.gredidam.fi'),
+      '#title' => $this->t('Base URL'),
+      '#default_value' => $config->get('api_url'),
+      '#description' => $this->t('The base URL for the API v1. ex: https://api4.domain.net/api/v1'),
       '#required' => TRUE,
     ];
 
-    $form['drupal_auth'] = [
-      '#type' => 'fieldset',
-      '#title' => $this->t('Gredi DAM Drupal Account'),
-    ];
-
-    $form['drupal_auth']['drupal_gredidam_user'] = [
+    $form['auth']['username'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Drupal Gredi DAM Username'),
-      '#default_value' => $config->get('user'),
-      '#description' => $this->t('drupaluser'),
+      '#title' => $this->t('Username'),
+      '#default_value' => $config->get('username'),
       '#required' => TRUE,
     ];
 
-    $form['drupal_auth']['drupal_gredidam_password'] = [
+    $form['auth']['password'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Drupal Gredi DAM Password'),
-      '#default_value' => $config->get('pass'),
-      '#description' => $this->t('passexample'),
+      '#title' => $this->t('Password'),
+      '#default_value' => $config->get('password'),
+      '#required' => TRUE,
+    ];
+
+    $form['auth']['customer'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Customer path'),
+      '#default_value' => $config->get('customer'),
+      '#description' => $this->t('Customer path based on which customer id is fetched.'),
+      '#required' => TRUE,
+    ];
+
+    $form['auth']['customer_id'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Customer ID'),
+      '#default_value' => $config->get('customer_id'),
+      '#description' => $this->t('This will be fetched upon submission.'),
+      '#disabled' => TRUE,
+    ];
+
+    $form['auth']['upload_folder_id'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Upload folder ID'),
+      '#default_value' => $config->get('upload_folder_id'),
+      '#description' => $this->t('The Gredi folder ID on which files will be uploaded.'),
       '#required' => TRUE,
     ];
 
@@ -125,7 +153,7 @@ class GrediDamConfigForm extends ConfigFormBase {
     $form['actions']['#type'] = 'actions';
     $form['actions']['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Save DAM configuration'),
+      '#value' => $this->t('Save'),
       '#button_type' => 'primary',
     ];
 
@@ -141,44 +169,61 @@ class GrediDamConfigForm extends ConfigFormBase {
    *   Form state instance.
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void {
-    $domain = Xss::filter($form_state->getValue('domain_value'));
-    if (!$domain) {
+    // Validate authentication and fetch customer id.
+    $this->authService->apiUrl = $form_state->getValue('api_url');
+    $this->authService->username = $form_state->getValue('username');
+    $this->authService->password = $form_state->getValue('password');
+    $this->authService->customer = $form_state->getValue('customer');
+    $this->authService->uploadFolder = $form_state->getValue('upload_folder_id');
+    // Clear existing customer id to fetch new one.
+    $this->authService->customerId = '';
+
+    try {
+      $this->authService->authenticate();
+    }
+    catch (\Exception $e) {
       $form_state->setErrorByName(
-        'domain_value',
-        $this->t('Provided domain is not valid.')
+        'username',
+        $this->t('Authentication failed - @error', ['@error' => $e->getMessage()])
       );
       return;
     }
 
-    $user = Xss::filter($form_state->getValue('drupal_gredidam_user'));
-    if (!$user) {
+    try {
+      $customerId = $this->authService->getCustomerId();
+      $form_state->set('customerId', $customerId);
+    }
+    catch (\Exception $e) {
       $form_state->setErrorByName(
-        'drupal_gredidam_user',
-        $this->t('Provided username is not valid.')
+        'username',
+        $this->t('Customer id fetching failed - @error', ['@error' => $e->getMessage()])
       );
       return;
-    }
-
-    $pass = Xss::filter($form_state->getValue('drupal_gredidam_password'));
-    if (!$pass) {
-      $form_state->setErrorByName(
-        'drupal_gredidam_password',
-        $this->t('Provided password is not valid.')
-      );
     }
   }
 
   /**
-   * {@inheritdoc}
+   * Submit handler for gredi config form.
+   *
+   * @param array $form
+   *   Form elements.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   Form state.
    */
-  public function submitForm(array &$form, FormStateInterface $form_state): void {
-    $this->config('helfi_gredi_image.settings')
-      ->set('domain', $form_state->getValue('domain_value'))
-      ->set('user', $form_state->getValue('drupal_gredidam_user'))
-      ->set('pass', $form_state->getValue('drupal_gredidam_password'))
-      ->set('num_assets_per_page', $form_state->getValue('num_assets_per_page'))
-      ->save();
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    $customerId = $form_state->get('customerId');
 
+    $this->config('helfi_gredi_image.settings')->setData(
+      [
+        'api_url' => $form_state->getValue('api_url'),
+        'username' => $form_state->getValue('username'),
+        'password' => $form_state->getValue('password'),
+        'customer' => $form_state->getValue('customer'),
+        'upload_folder_id' => $form_state->getValue('upload_folder_id'),
+        'customer_id' => $customerId,
+        'num_assets_per_page' => $form_state->getValue('num_assets_per_page'),
+      ]
+    )->save();
     parent::submitForm($form, $form_state);
   }
 

@@ -1,15 +1,16 @@
 {
-    "name": "drupal/helfi_gredi",
+    "name": "drupal/helfi_gredi_image",
     "description": "Gredi Aineistopankki integration",
     "type": "drupal-module",
     "license": "GPL-2.0-or-later",
     "minimum-stability": "dev",
     "require": {
         "drupal/helfi_api_base": "^2.2.0",
-        "twistor/stream-util": "dev-master",
-        "drupal/media_entity_browser": "^2.0"
+        "drupal/views_remote_data": "^1.0",
+        "drupal/entity": "^1.4"
     },
     "require-dev": {
+        "drupal/coder": "dev-8.x-3.x"
     },
     "extra": {
         "drupal-scaffold": {

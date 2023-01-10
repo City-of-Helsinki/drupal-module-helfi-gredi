@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - helfi_gredi_image
+  enforced:
+    module:
+      - helfi_gredi_image
+_core:
+  default_config_hash: 1ffRQIaQtjIyx_RhVZgJbutqFx-4Rku4Y75DPmeeKBs
+id: gredi_dam_assets
+label: 'Gredi Image'
+description: ''
+source: gredidam_asset
+queue_thumbnail_downloads: false
+new_revision: false
+source_configuration:
+  source_field: field_media_image
+field_map:
+  257: field_keywords
+  1410: field_alt_text
+  original_file: field_media_image

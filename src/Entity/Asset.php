@@ -3,17 +3,16 @@
 namespace Drupal\helfi_gredi_image\Entity;
 
 use Drupal\Component\Serialization\Json;
+use Drupal\Core\File\FileSystemInterface;
 
 /**
  * The asset entity describing the asset object shared by Gredi DAM.
  *
  * @phpcs:disable Drupal.NamingConventions.ValidVariableName.LowerCamelName
  */
-class Asset implements EntityInterface, \JsonSerializable {
+class Asset implements AssetEntityInterface, \JsonSerializable {
 
   const ATTACHMENT_TYPE_ORIGINAL = 'original';
-  const ATTACHMENT_TYPE_PREVIEW = 'preview';
-  const ATTACHMENT_TYPE_THUMBNAIL = 'thumbnail';
 
   /**
    * The ID of the asset.
@@ -35,13 +34,6 @@ class Asset implements EntityInterface, \JsonSerializable {
    * @var string
    */
   public $parentId;
-
-  /**
-   * The external ID of the asset.
-   *
-   * @var string
-   */
-  public $linkFileId;
 
   /**
    * The filename of the asset.
@@ -79,27 +71,6 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $metadata;
 
   /**
-   * The asset's width.
-   *
-   * @var string
-   */
-  public $width;
-
-  /**
-   * The asset's height.
-   *
-   * @var string
-   */
-  public $height;
-
-  /**
-   * The asset's resoluion.
-   *
-   * @var string
-   */
-  public $resolution;
-
-  /**
    * The asset's keywords.
    *
    * @var string
@@ -135,49 +106,11 @@ class Asset implements EntityInterface, \JsonSerializable {
   public $apiContentLink;
 
   /**
-   * A list of allowed values for the "expand" query attribute.
+   * Preview link.
    *
-   * @return string[]
-   *   The exhaustive list of allowed "expand" values.
+   * @var string
    */
-  public static function getAllowedExpands(): array {
-    return [
-      'basic',
-      'image',
-      'meta',
-      'attachments',
-    ];
-  }
-
-  /**
-   * The default expand query attribute.
-   *
-   * These attributes are mandatory for some later process.
-   *
-   * @return string[]
-   *   The list of expands properties which must be fetched along the asset.
-   */
-  public static function getRequiredExpands(): array {
-    return [
-      'meta',
-    ];
-  }
-
-  /**
-   * Gredi DAM supported file formats.
-   *
-   * @todo Get these values from Config.
-   * @todo Check if the values should be translatable.
-   *
-   * @return string[]
-   *   An array of supported file formats.
-   */
-  public static function getFileFormats(): array {
-    return [
-      0 => 'All',
-      'IMAGE' => 'Image',
-    ];
-  }
+  public $apiPreviewLink;
 
   /**
    * {@inheritdoc}
@@ -186,51 +119,70 @@ class Asset implements EntityInterface, \JsonSerializable {
     if (is_string($json)) {
       $json = Json::decode($json);
     }
+    $locationToCheck = 'public://gredidam/thumbs';
+    \Drupal::service('file_system')->prepareDirectory($locationToCheck, FileSystemInterface::CREATE_DIRECTORY);
 
     $properties = [
       'id',
       'parentId',
-      'linkFileId',
       'name',
       'created',
       'modified',
       'attachments',
       'object',
       'apiContentLink',
+      'apiPreviewLink',
     ];
-    $remote_asset_url = self::getAssetRemoteBaseUrl();
     // Copy all the simple properties.
     $asset = new self();
+
+    // Get metafields.
+    $metaProperties = [];
+    $metaFields = \Drupal::service('helfi_gredi_image.dam_client')->getMetaFields();
+    $mappingFields = \Drupal::service('helfi_gredi_image.dam_client')->mapMetaData();
+
+    // Assign the id for each metafield.
+    foreach ($metaFields as $fields) {
+      $metaProperties[$fields['id']] = array_keys($fields['namesByLang']);
+    }
+    // Check all the translations from the API.
+    if (isset($json['metaById'])) {
+      foreach ($metaProperties as $key => $languages) {
+        // Check if mapping is available for the field.
+        if (in_array($key, array_keys($mappingFields))) {
+          // Go through all field translations.
+          foreach ($languages as $language) {
+            // Build the format from the API field.
+            $buildMetaField = 'custom:meta-field-' . $key . '_' . $language;
+            if (isset($json['metaById'][$buildMetaField])) {
+              $field_name = $mappingFields[$key];
+              $asset->$field_name[$language] = $json['metaById'][$buildMetaField];
+            }
+          }
+        }
+      }
+    }
+
     foreach ($properties as $property) {
       if (isset($json[$property])) {
         if (isset($json['attachments']) && $property === 'attachments') {
           foreach ($json['attachments'] as $attachment) {
             if ($attachment['type'] === self::ATTACHMENT_TYPE_ORIGINAL) {
-              $asset->width = $attachment['propertiesById']['nibo:image-width'];
-              $asset->height = $attachment['propertiesById']['nibo:image-height'];
-              $asset->resolution = $attachment['propertiesById']['nibo:image-resolution'];
-              $asset->keywords = NULL;
-              $asset->alt_text = NULL;
-              $asset->size = $attachment['propertiesById']['nibo:file-size'];
+              $asset->created = \DateTime::createFromFormat('Y-m-d\TH:i:s.u+', $json['created'])->format('Y-m-d H:i:s');
               $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
             }
-            $asset->attachments[$attachment['type']] = $remote_asset_url . $attachment['publicLink'];
           }
         }
-//        elseif ($property == 'object') {
-//          foreach ($json['object'] as $attachment) {
-//            if ($attachment['type'] === self::ATTACHMENT_TYPE_ORIGINAL) {
-//              $asset->width = $attachment['propertiesById']['nibo:image-width'];
-//              $asset->height = $attachment['propertiesById']['nibo:image-height'];
-//              $asset->resolution = $attachment['propertiesById']['nibo:image-resolution'];
-//              $asset->keywords = NULL;
-//              $asset->alt_text = NULL;
-//              $asset->size = $attachment['propertiesById']['nibo:file-size'];
-//              $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
-//            }
-//            $asset->attachments[$attachment['type']] = $remote_asset_url . $attachment['publicLink'];
-//          }
-//        }
+
+        elseif (isset($json['object']) && $property === 'object') {
+          $attachment = $json['object'];
+          $asset->keywords = NULL;
+          $asset->created = \DateTime::createFromFormat('Y-m-d\TH:i:s.u+', $json['created']);
+          $asset->alt_text = NULL;
+          $asset->mimeType = $attachment['propertiesById']['nibo:mime-type'];
+          $asset->apiContentLink = $attachment['apiContentLink'];
+          $asset->apiPreviewLink = $attachment['apiPreviewLink'];
+        }
         elseif ($property == 'id') {
           $asset->id = $json['id'];
           $asset->external_id = $json['id'];
@@ -240,22 +192,8 @@ class Asset implements EntityInterface, \JsonSerializable {
         }
       }
     }
-    return $asset;
-  }
 
-  /**
-   * Function to get remote asset base url.
-   *
-   * @return string
-   *   Remote asset base url.
-   */
-  public static function getAssetRemoteBaseUrl(): string {
-    /** @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
-    $config_factory = \Drupal::service('config.factory');
-    $module_config = $config_factory->get('helfi_gredi_image.settings');
-    $base_url = trim($module_config->get('domain'));
-    $base_url_parts = parse_url($base_url);
-    return sprintf("%s://%s", $base_url_parts['scheme'], $base_url_parts['host']);
+    return $asset;
   }
 
   /**
@@ -265,33 +203,13 @@ class Asset implements EntityInterface, \JsonSerializable {
     return [
       'id' => $this->id,
       'parentId' => $this->parentId,
-      'linkFileId' => $this->linkFileId,
       'name' => $this->name,
       'created' => $this->created,
       'modified' => $this->modified,
       'attachments' => $this->attachments,
+      'apiContentLink' => $this->apiContentLink,
+      'apiPreviewLink' => $this->apiPreviewLink,
     ];
-  }
-
-  /**
-   * Function to retreve thumbnail URL.
-   *
-   * @return string|null
-   *   Thumbnail URL.
-   */
-  public function getThumbnail(): ?string {
-    if (!empty($this->attachments)) {
-      if (array_key_exists(self::ATTACHMENT_TYPE_THUMBNAIL, $this->attachments)) {
-        return $this->attachments[self::ATTACHMENT_TYPE_THUMBNAIL];
-      }
-      if (array_key_exists(self::ATTACHMENT_TYPE_PREVIEW, $this->attachments)) {
-        return $this->attachments[self::ATTACHMENT_TYPE_PREVIEW];
-      }
-      if (array_key_exists(self::ATTACHMENT_TYPE_ORIGINAL, $this->attachments)) {
-        return $this->attachments[self::ATTACHMENT_TYPE_ORIGINAL];
-      }
-    }
-    return NULL;
   }
 
 }

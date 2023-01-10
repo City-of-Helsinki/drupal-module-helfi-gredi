@@ -2,20 +2,10 @@
 
 namespace Drupal\helfi_gredi_image;
 
-use Drupal\Core\Config\ImmutableConfig;
-
 /**
  * Gredi DAM authentication service interface.
  */
 interface DamAuthServiceInterface {
-
-  /**
-   * Return the Gredi DAM configs.
-   *
-   * @return \Drupal\Core\Config\ImmutableConfig
-   *   An immutable configuration object.
-   */
-  public static function getConfig(): ImmutableConfig;
 
   /**
    * Get cookie jar variable.
@@ -34,19 +24,45 @@ interface DamAuthServiceInterface {
   public function getCustomerId();
 
   /**
-   * Get DAM Username from user profile.
+   * Method for authentication on Gredi API.
    *
-   * @return string|null
-   *   Username.
+   * @return bool
+   *   Return bool.
+   *
+   * @throws \GuzzleHttp\Exception\GuzzleException
    */
-  public function getUsername(): ?string;
+  public function authenticate() : bool;
 
   /**
-   * Get DAM Password from user profile.
+   * Check if is authenticated.
    *
-   * @return string|null
-   *   Password.
+   * @return bool
+   *   Return bool.
    */
-  public function getPassword(): ?string;
+  public function isAuthenticated() : bool;
+
+  /**
+   * Setter method for the session id.
+   *
+   * @param string $session
+   *   Session parameter.
+   */
+  public function setSessionId(string $session);
+
+  /**
+   * Stores the session id to state.
+   *
+   * @param string $session
+   *   Session parameter.
+   */
+  public function storeSessionId(string $session);
+
+  /**
+   * Getter method for the session id.
+   *
+   * @return string
+   *   Stored session id.
+   */
+  public function getStoredSessionId() :string;
 
 }

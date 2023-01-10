@@ -3,6 +3,10 @@ Drupal module for Gredi image service.
 
 Specification based on meeting with City of Helsinki 2022.06.21:
 
+IF YOU DONT HAVE FORM DISPLAY `user.user.default` YOU HAVE TO PUT
+`field_gredi_dam_username` and `field_gredi_dam_password`
+MANUALLY IN YOUR USER EDIT FORM DISPLAY.
+
 Target of the project
 ---------------------
 
@@ -35,7 +39,8 @@ or both. Module should be compatible with CoH Drupal Platform.
 
 Module will be used in all 9 instances.
 One module configuration will query images belong to one user group of the CoH.
-Each instance of the module will have username and password (aka. secrets) of their own.
+Each instance of the module will have username and password
+(aka. secrets) of their own.
 Each user has license of their own. 9 groups are based on CoH departments.
 
 Repository

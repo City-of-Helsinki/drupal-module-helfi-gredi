@@ -1,0 +1,28 @@
+uuid: 164a98a4-cca7-4469-8abf-185d8b9196b7
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.media.media_library
+    - field.field.media.gredi_dam_assets.field_media_image
+    - media.type.gredi_dam_assets
+  module:
+    - helfi_gredi_image
+id: media.gredi_dam_assets.media_library
+targetEntityType: media
+bundle: gredi_dam_assets
+mode: media_library
+content:
+  thumbnail:
+    type: gredi_dam_thumbnail
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+    weight: 0
+    region: content
+hidden:
+  created: true
+  field_media_image: true
+  langcode: true
+  name: true
+  uid: true

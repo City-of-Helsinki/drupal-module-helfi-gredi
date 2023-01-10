@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - media.type.gredi_dam_assets
+  module:
+    - content_translation
+  enforced:
+    module:
+      - helfi_gredi_image
+third_party_settings:
+  content_translation:
+    enabled: true
+    bundle_settings:
+      untranslatable_fields_hide: '0'
+_core:
+  default_config_hash: GKG2lyGfBZISLg7KpzLFVLkE83UTP4FjTwMviBn71W8
+id: media.gredi_dam_assets
+target_entity_type_id: media
+target_bundle: gredi_dam_assets
+default_langcode: site_default
+language_alterable: true
