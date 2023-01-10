@@ -1,11 +1,11 @@
 <?php
 
-namespace Drupal\helfi_gredi_image;
+namespace Drupal\helfi_gredi;
 
 /**
  * Gredi DAM authentication service interface.
  */
-interface DamAuthServiceInterface {
+interface GrediAuthServiceInterface {
 
   /**
    * Get cookie jar variable.

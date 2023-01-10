@@ -1,5 +1,0 @@
-helfi_gredi_image.config:
-  route_name : helfi_gredi_image.config
-  title: Gredidam Configurations
-  base_route: helfi_gredi_image.config
-  weight: 0

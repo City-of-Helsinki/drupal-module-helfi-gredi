@@ -12,9 +12,9 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\media\MediaTypeInterface;
-use Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset;
+use Drupal\helfi_gredi\Plugin\media\Source\GrediAsset;
 use Drupal\media_library\MediaLibraryState;
-use Drupal\helfi_gredi_image\Form\GrediFileUploadForm;
+use Drupal\helfi_gredi\Form\GrediFileUploadForm;
 use Drupal\file\Entity\File;
 use Drupal\views\Plugin\views\cache\CachePluginBase;
 use Drupal\views\ViewExecutable;
@@ -22,8 +22,8 @@ use Drupal\views\ViewExecutable;
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function helfi_gredi_image_form_media_gredi_dam_assets_add_form_alter(&$form, FormStateInterface $form_state) {
-  $form['actions']['submit']['#validate'][] = '_helfi_gredi_image_media_save_validate';
+function helfi_gredi_form_media_gredi_asset_add_form_alter(&$form, FormStateInterface $form_state) {
+  $form['actions']['submit']['#validate'][] = '_helfi_gredi_media_save_validate';
 }
 
 /**
@@ -34,7 +34,7 @@ function helfi_gredi_image_form_media_gredi_dam_assets_add_form_alter(&$form, Fo
  * @param Drupal\Core\Form\FormStateInterface $form_state
  *   The form state properties.
  */
-function _helfi_gredi_image_media_save_validate(array &$form, FormStateInterface &$form_state) {
+function _helfi_gredi_media_save_validate(array &$form, FormStateInterface &$form_state) {
   /*
    * Button-level validation handlers are highly discouraged for entity forms,
    * as they will prevent entity validation from running. If the entity is going
@@ -59,9 +59,9 @@ function _helfi_gredi_image_media_save_validate(array &$form, FormStateInterface
 
   $file_entity = File::load($input);
   try {
-    /** @var \Drupal\helfi_gredi_image\GrediDamClient $damClient */
-    $damClient = \Drupal::service('helfi_gredi_image.dam_client');
-    $asset_id = $damClient->uploadImage($file_entity);
+    /** @var \Drupal\helfi_gredi\GrediClient $grediClient */
+    $grediClient = \Drupal::service('helfi_gredi.dam_client');
+    $asset_id = $grediClient->uploadImage($file_entity);
     $media->set('gredi_asset_id', $asset_id);
     $media->set('gredi_modified', \Drupal::time()->getCurrentTime());
   }
@@ -75,7 +75,7 @@ function _helfi_gredi_image_media_save_validate(array &$form, FormStateInterface
 /**
  * Implements hook_entity_field_storage_info().
  */
-function helfi_gredi_image_entity_field_storage_info(EntityTypeInterface $entity_type): array {
+function helfi_gredi_entity_field_storage_info(EntityTypeInterface $entity_type): array {
   $definitions = [];
   if ($entity_type->id() === 'media') {
     $definitions['gredi_asset_id'] = BaseFieldDefinition::create('string')
@@ -102,7 +102,7 @@ function helfi_gredi_image_entity_field_storage_info(EntityTypeInterface $entity
 /**
  * Implements hook_entity_bundle_field_info().
  */
-function helfi_gredi_image_entity_bundle_field_info(EntityTypeInterface $entity_type, $bundle, array $base_field_definitions) {
+function helfi_gredi_entity_bundle_field_info(EntityTypeInterface $entity_type, $bundle, array $base_field_definitions) {
   $definitions = [];
   if ($entity_type->id() === 'media') {
     $media_type_storage = Drupal::entityTypeManager()->getStorage('media_type');
@@ -110,7 +110,7 @@ function helfi_gredi_image_entity_bundle_field_info(EntityTypeInterface $entity_
     if (!$media_type instanceof MediaTypeInterface) {
       return $definitions;
     }
-    if ($media_type->getSource() instanceof GredidamAsset) {
+    if ($media_type->getSource() instanceof GrediAsset) {
       $definitions['gredi_asset_id'] = BaseFieldDefinition::create('string')
         ->setName('gredi_asset_id')
         ->setLabel(new TranslatableMarkup('Gredi Asset ID'))
@@ -130,16 +130,16 @@ function helfi_gredi_image_entity_bundle_field_info(EntityTypeInterface $entity_
 /**
  * Implements hook_cron().
  */
-function helfi_gredi_image_cron() {
+function helfi_gredi_cron() {
   /** @var int $last_run */
-  $last_run = \Drupal::state()->get('helfi_gredi_image.last_run', 0);
+  $last_run = \Drupal::state()->get('helfi_gredi.last_run', 0);
   /** @var int $request_time */
   $request_time = \Drupal::time()->getRequestTime();
 
   if (($request_time - $last_run) > 60 * 60 * 24) {
     /** @var \Drupal\Core\Entity\Query\QueryInterface $query */
     $query = \Drupal::entityQuery('media')
-      ->condition('bundle', 'gredi_dam_assets');
+      ->condition('bundle', 'gredi_asset');
     /** @var array $results */
     $results = $query->execute();
     $queue = \Drupal::queue('gredi_asset_update');
@@ -147,14 +147,14 @@ function helfi_gredi_image_cron() {
       $queue->createItem($value);
     }
 
-    \Drupal::state()->set('helfi_gredi_image.last_run', $request_time);
+    \Drupal::state()->set('helfi_gredi.last_run', $request_time);
   }
 }
 
 /**
  * Implements hook_form_id_alter().
  */
-function helfi_gredi_image_form_media_gredi_dam_assets_edit_form_alter(&$form, FormStateInterface $form_state) {
+function helfi_gredi_form_media_gredi_asset_edit_form_alter(&$form, FormStateInterface $form_state) {
   $form['actions']['submit']['#access'] = FALSE;
   $form['actions']['delete']['#access'] = FALSE;
   \Drupal::messenger()->addWarning('Gredi Image cannot be edited after it was fetched.');
@@ -163,18 +163,18 @@ function helfi_gredi_image_form_media_gredi_dam_assets_edit_form_alter(&$form, F
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function helfi_gredi_image_form_user_form_alter(&$form, FormStateInterface $form_state) {
-  $form['field_gredi_dam_password']['widget'][0]['value']['#type'] = 'password';
+function helfi_gredi_form_user_form_alter(&$form, FormStateInterface $form_state) {
+  $form['field_gredi_password']['widget'][0]['value']['#type'] = 'password';
 }
 
 /**
  * Implements hook_ENTITY_TYPE_delete().
  */
-function helfi_gredi_image_media_delete(EntityInterface $entity) {
+function helfi_gredi_media_delete(EntityInterface $entity) {
   // Delete media from public folder when a media is deleted from interface.
   /** @var \Drupal\media\MediaInterface $entity */
   $source = $entity->getSource();
-  if ($source instanceof GredidamAsset) {
+  if ($source instanceof GrediAsset) {
     $field_name = $source->getConfiguration()['source_field'];
     if ($entity->hasField($field_name)
       && $file = $entity->get($field_name)->entity) {
@@ -186,10 +186,10 @@ function helfi_gredi_image_media_delete(EntityInterface $entity) {
 /**
  * Implements hook_form_alter().
  */
-function helfi_gredi_image_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+function helfi_gredi_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
   // Add a process callback to ensure that the media library view's exposed
   // filters submit button is not moved to the modal dialog's button area.
-  if ($form_id === 'views_exposed_form' && strpos($form['#id'], 'views-exposed-form-gredi-dam-asset-library-widget') === 0) {
+  if ($form_id === 'views_exposed_form' && strpos($form['#id'], 'views-exposed-form-gredi-asset-library-widget') === 0) {
     $form['#after_build'][] = '_media_library_views_form_media_library_after_build';
   }
 }
@@ -201,9 +201,9 @@ function helfi_gredi_image_form_alter(array &$form, FormStateInterface $form_sta
  * Library based on its identifier. We need to provide that theme hook
  * suggestion for our own view so that it is templated correctly.
  */
-function helfi_gredi_image_theme_suggestions_views_view_unformatted(array $variables) {
+function helfi_gredi_theme_suggestions_views_view_unformatted(array $variables) {
   $suggestions = [];
-  if ($variables['view']->id() === 'gredi_dam_asset_library') {
+  if ($variables['view']->id() === 'gredi_asset_library') {
     $suggestions[] = 'views_view_unformatted__media_library';
   }
   return $suggestions;
@@ -212,9 +212,9 @@ function helfi_gredi_image_theme_suggestions_views_view_unformatted(array $varia
 /**
  * Implements hook_theme_suggestions_HOOK().
  */
-function helfi_gredi_image_theme_suggestions_views_view(array $variables) {
+function helfi_gredi_theme_suggestions_views_view(array $variables) {
   $suggestions = [];
-  if ($variables['view']->id() === 'gredi_dam_asset_library') {
+  if ($variables['view']->id() === 'gredi_asset_library') {
     $suggestions[] = 'views_view__media_library';
   }
   return $suggestions;
@@ -226,10 +226,10 @@ function helfi_gredi_image_theme_suggestions_views_view(array $variables) {
  * Media Library comes with few preprocess that takes care of adding necessary
  * libraries into the page. Unfortunately it is only applicable
  * for media_library view, this will take extending
- * to gredi_dam_assest_library as well.
+ * to gredi_asset_library as well.
  */
-function helfi_gredi_image_views_post_render(ViewExecutable $view, &$output, CachePluginBase $cache) {
-  if ($view->id() === 'gredi_dam_asset_library') {
+function helfi_gredi_views_post_render(ViewExecutable $view, &$output, CachePluginBase $cache) {
+  if ($view->id() === 'gredi_asset_library') {
     $output['#attached']['library'][] = 'media_library/view';
     if (strpos($view->current_display, 'widget') === 0) {
       try {
@@ -264,9 +264,9 @@ function helfi_gredi_image_views_post_render(ViewExecutable $view, &$output, Cac
 /**
  * Implements hook_media_source_info_alter().
  */
-function helfi_gredi_image_media_source_info_alter(array &$sources) {
-  if (empty($sources['gredidam_asset']['forms']['media_library_add'])) {
-    $sources['gredidam_asset']['forms']['media_library_add'] = GrediFileUploadForm::class;
+function helfi_gredi_media_source_info_alter(array &$sources) {
+  if (empty($sources['gredi_asset']['forms']['media_library_add'])) {
+    $sources['gredi_asset']['forms']['media_library_add'] = GrediFileUploadForm::class;
   }
 }
 
@@ -274,9 +274,9 @@ function helfi_gredi_image_media_source_info_alter(array &$sources) {
  * Implements hook_views_pre_render().
  *
  * This will take care of necessary classes which is added by the media_library
- * to its view is extended to `gredi_dam_asset_library` as well.
+ * to its view is extended to `gredi_asset_library` as well.
  */
-function helfi_gredi_image_views_pre_render(ViewExecutable $view) {
+function helfi_gredi_views_pre_render(ViewExecutable $view) {
   $add_classes = function (&$option, array $classes_to_add) {
     $classes = $option ? preg_split('/\s+/', trim($option)) : [];
     $classes = array_filter($classes);
@@ -284,7 +284,7 @@ function helfi_gredi_image_views_pre_render(ViewExecutable $view) {
     $option = implode(' ', array_unique($classes));
   };
 
-  if ($view->id() === 'gredi_dam_asset_library') {
+  if ($view->id() === 'gredi_asset_library') {
     if (isset($view->display_handler->options['defaults']['css_class']) &&
       $view->display_handler->options['defaults']['css_class']) {
       $add_classes($view->displayHandlers->get('default')->options['css_class'], ['media-library-view']);
@@ -342,7 +342,7 @@ function helfi_gredi_image_views_pre_render(ViewExecutable $view) {
 /**
  * Implements hook_preprocess_image().
  */
-function helfi_gredi_image_preprocess_image(&$variables) {
+function helfi_gredi_preprocess_image(&$variables) {
   if (!empty($variables['attributes']['data-media-alt'])) {
     $variables['alt'] = $variables['attributes']['data-media-alt'];
     $variables['attributes']['alt'] = $variables['attributes']['data-media-alt'];
@@ -353,9 +353,9 @@ function helfi_gredi_image_preprocess_image(&$variables) {
 /**
  * Implements hook_preprocess_field().
  */
-function helfi_gredi_image_preprocess_field(&$variables) {
+function helfi_gredi_preprocess_field(&$variables) {
   if (isset($variables['element']['#bundle'])
-    && $variables['element']['#bundle'] == 'gredi_dam_assets'
+    && $variables['element']['#bundle'] == 'gredi_asset'
     && $variables['element']['#field_type'] == 'image') {
     /** @var \Drupal\media\MediaInterface $media */
     $media = $variables['element']['#object'];
@@ -375,12 +375,12 @@ function helfi_gredi_image_preprocess_field(&$variables) {
  * Implements hook_preprocess_views_view_fields().
  *
  * This will take care of necessary classes which is added by the media_library
- * to its view is extended to `gredi_dam_asset_library` as well.
+ * to its view is extended to `gredi_asset_library` as well.
  */
-function helfi_gredi_image_preprocess_views_view_fields(&$variables) {
+function helfi_gredi_preprocess_views_view_fields(&$variables) {
   // Add classes to media rendered entity field so it can be targeted for
   // JavaScript mouseover and click events.
-  if ($variables['view']->id() === 'gredi_dam_asset_library' && isset($variables['fields']['rendered_entity'])) {
+  if ($variables['view']->id() === 'gredi_asset_library' && isset($variables['fields']['rendered_entity'])) {
     if (isset($variables['fields']['rendered_entity']->wrapper_attributes)) {
       $variables['fields']['rendered_entity']->wrapper_attributes->addClass('js-click-to-select-trigger');
       // @see function claro_preprocess_views_view_fields__media_library(array &$variables).

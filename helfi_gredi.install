@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains helfi_gredi_image installation procedures.
+ * Contains helfi_gredi installation procedures.
  */
 
 declare(strict_types = 1);
@@ -10,7 +10,7 @@ declare(strict_types = 1);
 /**
  * Implements hook_install().
  */
-function helfi_gredi_image_install($is_syncing) {
+function helfi_gredi_install($is_syncing) {
   if (!$is_syncing) {
     $fieldStorage = \Drupal::entityTypeManager()->getStorage('field_storage_config');
     if (!$fieldStorage->load('media.field_media_image')) {

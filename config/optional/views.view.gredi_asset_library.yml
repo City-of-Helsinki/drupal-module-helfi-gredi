@@ -4,17 +4,17 @@ dependencies:
   config:
     - core.entity_view_mode.media.media_library
   module:
-    - helfi_gredi_image
+    - helfi_gredi
     - user
     - views_remote_data
 _core:
   default_config_hash: fN7Y1KR4aCn7Rm_sTQzdQ1a2cKzWlx-By2_Ff4EKdKY
-id: gredi_dam_asset_library
+id: gredi_asset_library
 label: 'Gredi DAM Asset Library'
 module: views
 description: ''
 tag: ''
-base_table: gredidam_assets
+base_table: gredi_asset
 base_field: ''
 display:
   default:
@@ -27,7 +27,7 @@ display:
       fields:
         rendered_entity:
           id: rendered_entity
-          table: gredidam_assets
+          table: gredi_asset
           field: rendered_entity
           relationship: none
           group_type: group
@@ -78,13 +78,13 @@ display:
           view_mode: media_library
         media_library_select_form:
           id: media_library_select_form
-          table: gredidam_assets
+          table: gredi_asset
           field: media_library_select_form
           relationship: none
           group_type: group
           admin_label: ''
           entity_type: media
-          plugin_id: gredidam_media_library_select_form
+          plugin_id: gredi_media_library_select_form
           label: ''
           exclude: false
           alter:
@@ -165,7 +165,7 @@ display:
       sorts:
         property:
           id: property
-          table: gredidam_assets
+          table: gredi_asset
           field: property
           relationship: none
           group_type: group
@@ -180,7 +180,7 @@ display:
           property_path: modified
         property_1:
           id: property_1
-          table: gredidam_assets
+          table: gredi_asset
           field: property
           relationship: none
           group_type: group
@@ -197,7 +197,7 @@ display:
       filters:
         property:
           id: property
-          table: gredidam_assets
+          table: gredi_asset
           field: property
           relationship: none
           group_type: group
@@ -268,8 +268,8 @@ display:
       tags:
         - 'config:core.entity_view_display.media.file.default'
         - 'config:core.entity_view_display.media.file.media_library'
-        - 'config:core.entity_view_display.media.gredi_dam_assets.default'
-        - 'config:core.entity_view_display.media.gredi_dam_assets.media_library'
+        - 'config:core.entity_view_display.media.gredi_asset.default'
+        - 'config:core.entity_view_display.media.gredi_asset.media_library'
         - 'config:core.entity_view_display.media.hel_map.default'
         - 'config:core.entity_view_display.media.hel_map.media_library'
         - 'config:core.entity_view_display.media.helfi_chart.default'
@@ -297,7 +297,7 @@ display:
         metatag_display_extender:
           metatags: {  }
           tokenize: false
-      path: gredi-dam-asset-library
+      path: gredi-asset-library
     cache_metadata:
       max-age: -1
       contexts:
@@ -310,8 +310,8 @@ display:
       tags:
         - 'config:core.entity_view_display.media.file.default'
         - 'config:core.entity_view_display.media.file.media_library'
-        - 'config:core.entity_view_display.media.gredi_dam_assets.default'
-        - 'config:core.entity_view_display.media.gredi_dam_assets.media_library'
+        - 'config:core.entity_view_display.media.gredi_asset.default'
+        - 'config:core.entity_view_display.media.gredi_asset.media_library'
         - 'config:core.entity_view_display.media.hel_map.default'
         - 'config:core.entity_view_display.media.hel_map.media_library'
         - 'config:core.entity_view_display.media.helfi_chart.default'

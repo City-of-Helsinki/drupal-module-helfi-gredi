@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\helfi_gredi_image;
+namespace Drupal\helfi_gredi;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactory;
@@ -12,7 +12,7 @@ use GuzzleHttp\Exception\ClientException;
 /**
  * Gredi DAM authentication service.
  */
-class GrediDamAuthService implements DamAuthServiceInterface {
+class GrediAuthService implements GrediAuthServiceInterface {
 
   /**
    * The client ID for the Gredi API.
@@ -98,7 +98,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
    */
   protected $configFactory;
 
-  const SESSION_ID_STATE_NAME = 'helfi_gredi_image_session';
+  const SESSION_ID_STATE_NAME = 'helfi_gredi_session';
 
   /**
    * Class constructor.
@@ -114,7 +114,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
     $this->guzzleClient = $guzzleClient;
     $this->state = $state;
     $this->configFactory = $configFactory;
-    $config = $this->configFactory->get('helfi_gredi_image.settings');
+    $config = $this->configFactory->get('helfi_gredi.settings');
     $this->baseApiUrl = trim($config->get('api_url') ?? '', "/");
     $this->apiUrl = $this->baseApiUrl . '/api/v1';
     $this->username = $config->get('username') ?? '';
@@ -243,7 +243,7 @@ class GrediDamAuthService implements DamAuthServiceInterface {
       }
     }
     catch (\Exception $e) {
-      \Drupal::logger('helfi_gredi_image')->error(
+      \Drupal::logger('helfi_gredi')->error(
         'Unable to authenticate. DAM API client returned with the following message: %message',
         [
           '%message' => $e->getMessage(),

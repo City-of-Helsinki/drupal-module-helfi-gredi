@@ -1,0 +1,16 @@
+services:
+  helfi_gredi.dam_client:
+    class: Drupal\helfi_gredi\GrediClient
+    arguments: [ '@http_client', '@config.factory', '@helfi_gredi.auth_service', '@logger.factory' ]
+  helfi_gredi.auth_service:
+    class: Drupal\helfi_gredi\GrediAuthService
+    arguments: ['@http_client', '@state', '@config.factory']
+  helfi_gredi_remote.event_subscriber:
+    class: Drupal\helfi_gredi\EventSubscriber\RemoteDataSubscriber
+    arguments: [ '@helfi_gredi.dam_client' ]
+    tags:
+      - { name: event_subscriber }
+  helfi_gredi.asset_library_builder:
+    class: Drupal\helfi_gredi\AssetLibraryBuilder
+    parent: 'media_library.ui_builder'
+    decorates: 'media_library.ui_builder'

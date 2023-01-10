@@ -3,11 +3,11 @@ status: true
 dependencies:
   config:
     - field.storage.media.field_keywords
-    - media.type.gredi_dam_assets
-id: media.gredi_dam_assets.field_keywords
+    - media.type.gredi_asset
+id: media.gredi_asset.field_keywords
 field_name: field_keywords
 entity_type: media
-bundle: gredi_dam_assets
+bundle: gredi_asset
 label: Keywords
 description: ''
 required: false

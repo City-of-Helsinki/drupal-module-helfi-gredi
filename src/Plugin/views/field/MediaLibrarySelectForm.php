@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Drupal\helfi_gredi_image\Plugin\views\field;
+namespace Drupal\helfi_gredi\Plugin\views\field;
 
 use Drupal\Core\Ajax\AlertCommand;
 use Drupal\Core\Ajax\CloseDialogCommand;
@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Media selection field for asset media type.
  *
- * @ViewsField("gredidam_media_library_select_form")
+ * @ViewsField("gredi_media_library_select_form")
  *
  * @see \Drupal\media_library\Plugin\views\field\MediaLibrarySelectForm
  *
@@ -86,7 +86,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
       $existing_ids = $entityTypeManager
         ->getStorage('media')
         ->getQuery()
-        ->condition('bundle', 'gredi_dam_assets')
+        ->condition('bundle', 'gredi_asset')
         ->condition('gredi_asset_id', $id)
         ->execute();
 
@@ -101,7 +101,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         $entityTypeManager = \Drupal::service('entity_type.manager');
         /** @var \Drupal\media\MediaTypeInterface $media_type */
         $media_type = $entityTypeManager->getStorage('media_type')
-          ->load('gredi_dam_assets');
+          ->load('gredi_asset');
 
         $currentLanguage = \Drupal::languageManager()->getCurrentLanguage()->getId();
         $entity = Media::create([
@@ -111,7 +111,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
           'status' => 1,
           'gredi_asset_id' => $id,
         ]);
-        /** @var \Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset $source */
+        /** @var \Drupal\helfi_gredi\Plugin\media\Source\GrediAsset $source */
         $source = $entity->getSource();
         $source_field_name = $source->getConfiguration()['source_field'];
         $source->setAssetData($assetsData[$id]);
@@ -188,7 +188,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
       $entity = $this->getEntity($row);
       $externalId = $entity->get('gredi_asset_id')->value;
       $form[$this->options['id']][$row_index]['#return_value'] = $externalId;
-      /** @var \Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset $source */
+      /** @var \Drupal\helfi_gredi\Plugin\media\Source\GrediAsset $source */
       $source = $entity->getSource();
       $assetsData[$externalId] = $source->getAssetData();
     }

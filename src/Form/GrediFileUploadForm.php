@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\helfi_gredi_image\Form;
+namespace Drupal\helfi_gredi\Form;
 
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\Entity\EntityFormDisplay;
@@ -11,7 +11,7 @@ use Drupal\Core\Render\ElementInfoManagerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\file\FileUsage\FileUsageInterface;
-use Drupal\helfi_gredi_image\GrediDamClient;
+use Drupal\helfi_gredi\GrediClient;
 use Drupal\media\MediaInterface;
 use Drupal\media_library\Form\FileUploadForm;
 use Drupal\media_library\MediaLibraryUiBuilder;
@@ -62,9 +62,9 @@ class GrediFileUploadForm extends FileUploadForm {
   protected $fileRepository;
 
   /**
-   * Gredidam client.
+   * Gredi client.
    *
-   * @var \Drupal\helfi_gredi_image\GrediDamClient
+   * @var \Drupal\helfi_gredi\GrediClient
    */
   protected $damClient;
 
@@ -94,12 +94,12 @@ class GrediFileUploadForm extends FileUploadForm {
    *   The file usage service.
    * @param \Drupal\file\FileRepositoryInterface|null $file_repository
    *   The file repository service.
-   * @param \Drupal\helfi_gredi_image\GrediDamClient $damClient
-   *   The Gredi DAM client service.
+   * @param \Drupal\helfi_gredi\GrediClient $damClient
+   *   The Gredi client service.
    * @param \Drupal\Component\Datetime\TimeInterface $timeManager
    *   The time manager service.
    */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, MediaLibraryUiBuilder $library_ui_builder, ElementInfoManagerInterface $element_info, RendererInterface $renderer, FileSystemInterface $file_system, OpenerResolverInterface $opener_resolver, FileUsageInterface $file_usage, FileRepositoryInterface $file_repository = NULL, GrediDamClient $damClient, TimeInterface $timeManager) {
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, MediaLibraryUiBuilder $library_ui_builder, ElementInfoManagerInterface $element_info, RendererInterface $renderer, FileSystemInterface $file_system, OpenerResolverInterface $opener_resolver, FileUsageInterface $file_usage, FileRepositoryInterface $file_repository = NULL, GrediClient $damClient, TimeInterface $timeManager) {
     parent::__construct($entity_type_manager, $library_ui_builder, $element_info, $renderer, $file_system, $opener_resolver, $file_usage, $file_repository);
 
     $this->damClient = $damClient;
@@ -119,7 +119,7 @@ class GrediFileUploadForm extends FileUploadForm {
       $container->get('media_library.opener_resolver'),
       $container->get('file.usage'),
       $container->get('file.repository'),
-      $container->get('helfi_gredi_image.dam_client'),
+      $container->get('helfi_gredi.dam_client'),
       $container->get('datetime.time')
     );
   }

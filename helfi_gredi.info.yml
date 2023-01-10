@@ -1,4 +1,4 @@
-name: HELfi Gredi Image
+name: HELfi Gredi
 description: Fetch and display images from Gredi API
 package: Custom
 type: module

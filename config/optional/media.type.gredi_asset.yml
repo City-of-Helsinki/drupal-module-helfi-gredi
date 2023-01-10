@@ -2,16 +2,16 @@ langcode: en
 status: true
 dependencies:
   module:
-    - helfi_gredi_image
+    - helfi_gredi
   enforced:
     module:
-      - helfi_gredi_image
+      - helfi_gredi
 _core:
   default_config_hash: 1ffRQIaQtjIyx_RhVZgJbutqFx-4Rku4Y75DPmeeKBs
-id: gredi_dam_assets
+id: gredi_asset
 label: 'Gredi Image'
 description: ''
-source: gredidam_asset
+source: gredi_asset
 queue_thumbnail_downloads: false
 new_revision: false
 source_configuration:

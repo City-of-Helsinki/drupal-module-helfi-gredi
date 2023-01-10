@@ -3,11 +3,11 @@ status: true
 dependencies:
   config:
     - field.storage.media.field_alt_text
-    - media.type.gredi_dam_assets
-id: media.gredi_dam_assets.field_alt_text
+    - media.type.gredi_asset
+id: media.gredi_asset.field_alt_text
 field_name: field_alt_text
 entity_type: media
-bundle: gredi_dam_assets
+bundle: gredi_asset
 label: 'Alt text'
 description: ''
 required: false

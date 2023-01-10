@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\helfi_gredi_image;
+namespace Drupal\helfi_gredi;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Cache\Cache;
@@ -17,11 +17,11 @@ use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Class GrediDamClient.
+ * Class GrediClient.
  *
  * Factory class for Client.
  */
-class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInterface {
+class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
 
   /**
    * A fully-configured Guzzle client to pass to the dam client.
@@ -40,9 +40,9 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
   /**
    * Gredi dam auth service.
    *
-   * @var \Drupal\helfi_gredi_image\GrediDamAuthService
+   * @var \Drupal\helfi_gredi\GrediAuthService
    */
-  protected GrediDamAuthService $authService;
+  protected GrediAuthService $authService;
 
   /**
    * Gredi DAM logger channel.
@@ -73,13 +73,13 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
   private $metafields;
 
   /**
-   * GrediDamClient constructor.
+   * GrediClient constructor.
    *
    * @param \GuzzleHttp\ClientInterface $guzzleClient
    *   A fully configured Guzzle client to pass to the dam client.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config
    *   Config factory var.
-   * @param \Drupal\helfi_gredi_image\GrediDamAuthService $grediDamAuthService
+   * @param \Drupal\helfi_gredi\GrediAuthService $grediAuthService
    *   Gredi dam auth service.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
    *   The Drupal LoggerChannelFactory service.
@@ -87,13 +87,13 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
   public function __construct(
     ClientInterface $guzzleClient,
     ConfigFactoryInterface $config,
-    GrediDamAuthService $grediDamAuthService,
+    GrediAuthService $grediAuthService,
     LoggerChannelFactoryInterface $loggerChannelFactory,
   ) {
     $this->httpClient = $guzzleClient;
     $this->config = $config;
-    $this->authService = $grediDamAuthService;
-    $this->loggerChannel = $loggerChannelFactory->get('helfi_gredi_image');
+    $this->authService = $grediAuthService;
+    $this->loggerChannel = $loggerChannelFactory->get('helfi_gredi');
     $this->apiUrl = $this->authService->apiUrl;
   }
 
@@ -104,7 +104,7 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
     return new static(
       $container->get('http_client'),
       $container->get('config.factory'),
-      $container->get('helfi_gredi_image.auth_service'),
+      $container->get('helfi_gredi.auth_service'),
       $container->get('logger.factory')
     );
   }
@@ -332,7 +332,7 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
     if ($this->metafields) {
       return $this->metafields;
     }
-    $cache = \Drupal::cache()->get('helfi_gredi_image_metafields');
+    $cache = \Drupal::cache()->get('helfi_gredi_metafields');
     if (!empty($cache->data)) {
       $this->metafields = $cache->data;
       return $this->metafields;
@@ -350,8 +350,8 @@ class GrediDamClient implements ContainerInjectionInterface, GrediDamClientInter
       }
       $this->metafields[$item['id']] = $item;
     }
-    $cache_tags = $this->config->get('helfi_gredi_image.settings')->getCacheTags();
-    \Drupal::cache()->set('helfi_gredi_image_metafields', $this->metafields, Cache::PERMANENT, $cache_tags);
+    $cache_tags = $this->config->get('helfi_gredi.settings')->getCacheTags();
+    \Drupal::cache()->set('helfi_gredi_metafields', $this->metafields, Cache::PERMANENT, $cache_tags);
 
     return $this->metafields;
   }

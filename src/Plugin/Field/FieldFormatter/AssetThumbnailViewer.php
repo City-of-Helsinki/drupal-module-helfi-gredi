@@ -1,17 +1,17 @@
 <?php
 
-namespace Drupal\helfi_gredi_image\Plugin\Field\FieldFormatter;
+namespace Drupal\helfi_gredi\Plugin\Field\FieldFormatter;
 
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
 use Drupal\Core\Field\FormatterBase;
-use Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset;
+use Drupal\helfi_gredi\Plugin\media\Source\GrediAsset;
 
 /**
  * Plugin implementation of the 'Gredi thumbnail for media library' formatter.
  *
  * @FieldFormatter(
- *   id = "gredi_dam_thumbnail",
+ *   id = "gredi_thumbnail",
  *   label = @Translation("Gredi thumbnail for media library"),
  *   field_types = {
  *     "image"
@@ -26,7 +26,7 @@ final class AssetThumbnailViewer extends FormatterBase {
   public function viewElements(FieldItemListInterface $items, $langcode = NULL): array {
     $elements = [];
     $parent = $items->getEntity();
-    if ($parent->getSource() instanceof GredidamAsset) {
+    if ($parent->getSource() instanceof GrediAsset) {
       $thumbnails_list = $parent->getSource()->getMetadata($parent, 'thumbnail_uri');
       // @todo should we add the image style configured?
       $elements[0] = [

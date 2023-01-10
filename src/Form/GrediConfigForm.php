@@ -1,18 +1,18 @@
 <?php
 
-namespace Drupal\helfi_gredi_image\Form;
+namespace Drupal\helfi_gredi\Form;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\ConfigFormBase;
-use Drupal\helfi_gredi_image\GrediDamAuthService;
+use Drupal\helfi_gredi\GrediAuthService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use GuzzleHttp\ClientInterface;
 
 /**
- * Gredi DAM module configuration form.
+ * Gredi module configuration form.
  */
-class GrediDamConfigForm extends ConfigFormBase {
+class GrediConfigForm extends ConfigFormBase {
 
   const NUM_ASSETS_PER_PAGE = 12;
 
@@ -26,21 +26,21 @@ class GrediDamConfigForm extends ConfigFormBase {
   /**
    * Auth service.
    *
-   * @var \Drupal\helfi_gredi_image\GrediDamAuthService
+   * @var \Drupal\helfi_gredi\GrediAuthService
    */
   protected $authService;
 
   /**
-   * GrediDamConfigForm constructor.
+   * GrediConfigForm constructor.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   Config factory service.
    * @param \GuzzleHttp\ClientInterface $http_client
    *   Http client.
-   * @param \Drupal\helfi_gredi_image\GrediDamAuthService $authService
+   * @param \Drupal\helfi_gredi\GrediAuthService $authService
    *   Auth service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, ClientInterface $http_client, GrediDamAuthService $authService) {
+  public function __construct(ConfigFactoryInterface $config_factory, ClientInterface $http_client, GrediAuthService $authService) {
     parent::__construct($config_factory);
     $this->httpClient = $http_client;
     $this->authService = $authService;
@@ -53,7 +53,7 @@ class GrediDamConfigForm extends ConfigFormBase {
     return new static(
       $container->get('config.factory'),
       $container->get('http_client'),
-      $container->get('helfi_gredi_image.auth_service')
+      $container->get('helfi_gredi.auth_service')
     );
   }
 
@@ -61,7 +61,7 @@ class GrediDamConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'gredi_dam_config';
+    return 'gredi_config';
   }
 
   /**
@@ -69,7 +69,7 @@ class GrediDamConfigForm extends ConfigFormBase {
    */
   protected function getEditableConfigNames() {
     return [
-      'helfi_gredi_image.settings',
+      'helfi_gredi.settings',
     ];
   }
 
@@ -77,7 +77,7 @@ class GrediDamConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
-    $config = $this->config('helfi_gredi_image.settings');
+    $config = $this->config('helfi_gredi.settings');
 
     $form['auth'] = [
       '#type' => 'fieldset',
@@ -213,7 +213,7 @@ class GrediDamConfigForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $customerId = $form_state->get('customerId');
 
-    $this->config('helfi_gredi_image.settings')->setData(
+    $this->config('helfi_gredi.settings')->setData(
       [
         'api_url' => $form_state->getValue('api_url'),
         'username' => $form_state->getValue('username'),

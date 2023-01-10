@@ -1,0 +1,6 @@
+helfi_gredi.settings:
+  title: 'Gredi DAM'
+  description: 'Configure Gredi access credentials.'
+  route_name: helfi_gredi.config
+  menu_name: admin
+  parent: system.admin_config_media

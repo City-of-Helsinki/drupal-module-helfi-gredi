@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\helfi_gredi_image;
+namespace Drupal\helfi_gredi;
 
 use Drupal\file\Entity\File;
 use Psr\Http\Message\ResponseInterface;
@@ -8,7 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 /**
  * Gredi DAM client interface.
  */
-interface GrediDamClientInterface {
+interface GrediClientInterface {
 
   /**
    * Search for assets by params.

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\helfi_gredi_image\Plugin\QueueWorker;
+namespace Drupal\helfi_gredi\Plugin\QueueWorker;
 
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\media\Entity\Media;
@@ -24,9 +24,9 @@ class MetaUpdate extends QueueWorkerBase {
       $media = Media::load($media_id);
       // Stored asset id.
       $asset_id = $media->gredi_asset_id->value;
-      /** @var \Drupal\helfi_gredi_image\GrediDamClient $damClient */
-      $damClient = \Drupal::service('helfi_gredi_image.dam_client');
-      $asset_data = $damClient->getAssetData($asset_id);
+      /** @var \Drupal\helfi_gredi\GrediClient $grediClient */
+      $grediClient = \Drupal::service('helfi_gredi.dam_client');
+      $asset_data = $grediClient->getAssetData($asset_id);
       // External asset modified timestamp.
       $external_field_modified = strtotime($asset_data['modified']);
       // Stored asset modified timestamp.
@@ -39,7 +39,7 @@ class MetaUpdate extends QueueWorkerBase {
         $media->save();
       }
 
-      \Drupal::logger('helfi_gredi_image')
+      \Drupal::logger('helfi_gredi')
         ->notice('Metadata for Gredi asset with id ' . $media_id);
     }
   }

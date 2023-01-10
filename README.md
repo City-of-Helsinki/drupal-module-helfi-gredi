@@ -4,7 +4,7 @@ Drupal module for Gredi image service.
 Specification based on meeting with City of Helsinki 2022.06.21:
 
 IF YOU DONT HAVE FORM DISPLAY `user.user.default` YOU HAVE TO PUT
-`field_gredi_dam_username` and `field_gredi_dam_password`
+`field_gredi_username` and `field_gredi_password`
 MANUALLY IN YOUR USER EDIT FORM DISPLAY.
 
 Target of the project
@@ -85,7 +85,7 @@ Code Sniffer can be used to analyze the Drupal code, too.
 - Sniffer is using squizlabs/php_codesniffer and drupal/coder packages.
 - To run tests:
 ```
-vendor/bin/phpcs --standard=Drupal helfi_gredi_image.module
+vendor/bin/phpcs --standard=Drupal helfi_gredi.module
 ```
 
 Future development:

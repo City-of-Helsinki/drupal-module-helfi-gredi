@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\helfi_gredi_image\Plugin\media\Source;
+namespace Drupal\helfi_gredi\Plugin\media\Source;
 
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -13,7 +13,7 @@ use Drupal\Core\Image\ImageFactory;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\file\FileInterface;
 use Drupal\file\FileRepositoryInterface;
-use Drupal\helfi_gredi_image\GrediDamClient;
+use Drupal\helfi_gredi\GrediClient;
 use Drupal\media\MediaInterface;
 use Drupal\media\Plugin\media\Source\Image;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -22,14 +22,14 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Provides media type plugin for Gredi DAM assets.
  *
  * @MediaSource(
- *   id = "gredidam_asset",
- *   label = @Translation("Gredi DAM asset"),
+ *   id = "gredi_asset",
+ *   label = @Translation("Gredi asset"),
  *   description = @Translation("Provides business logic and metadata for
  *   assets stored on Gredi DAM."),
  *   allowed_field_types = {"string"},
  * )
  */
-class GredidamAsset extends Image {
+class GrediAsset extends Image {
 
   /**
    * The API assets array.
@@ -53,11 +53,11 @@ class GredidamAsset extends Image {
   protected $fileSystem;
 
   /**
-   * The gredidam client service.
+   * The gredi client service.
    *
-   * @var \Drupal\helfi_gredi_image\GrediDamClient
+   * @var \Drupal\helfi_gredi\GrediClient
    */
-  protected $damClient;
+  protected $grediClient;
 
   /**
    * The language manager service.
@@ -88,7 +88,7 @@ class GredidamAsset extends Image {
   protected $fileRepository;
 
   /**
-   * GredidamAsset constructor.
+   * GrediAsset constructor.
    *
    * {@inheritdoc}
    */
@@ -100,7 +100,7 @@ class GredidamAsset extends Image {
     EntityFieldManagerInterface $entity_field_manager,
     FieldTypePluginManagerInterface $field_type_manager,
     ConfigFactoryInterface $config_factory,
-    GrediDamClient $damClient,
+    GrediClient $grediClient,
     ImageFactory $imageFactory,
     FileSystemInterface $fileSystem,
     LanguageManagerInterface $languageManager,
@@ -119,7 +119,7 @@ class GredidamAsset extends Image {
       $fileSystem
     );
 
-    $this->damClient = $damClient;
+    $this->grediClient = $grediClient;
     $this->languageManager = $languageManager;
     $this->timeManager = $timeManager;
     $this->dateFormatter = $dateFormatter;
@@ -138,7 +138,7 @@ class GredidamAsset extends Image {
       $container->get('entity_field.manager'),
       $container->get('plugin.manager.field.field_type'),
       $container->get('config.factory'),
-      $container->get('helfi_gredi_image.dam_client'),
+      $container->get('helfi_gredi.dam_client'),
       $container->get('image.factory'),
       $container->get('file_system'),
       $container->get('language_manager'),
@@ -164,7 +164,7 @@ class GredidamAsset extends Image {
     $fields = [];
     $lang_code = $this->languageManager->getCurrentLanguage()->getId();
     try {
-      $damMetadataFields = $this->damClient->getMetaFields();
+      $damMetadataFields = $this->grediClient->getMetaFields();
       foreach ($damMetadataFields as $damField) {
         if (isset($damField['namesByLang'][$lang_code])) {
           $label = $damField['namesByLang'][$lang_code];
@@ -206,7 +206,7 @@ class GredidamAsset extends Image {
     ];
     if (!in_array($attribute_name, $attr_with_fallback) && empty($this->assetData)) {
       try {
-        $this->assetData = $this->damClient->getAssetData($media->get('gredi_asset_id')->value);
+        $this->assetData = $this->grediClient->getAssetData($media->get('gredi_asset_id')->value);
       }
       catch (\Exception $e) {
         $this->messenger()->addError('Failed to fetch asset data');
@@ -247,12 +247,12 @@ class GredidamAsset extends Image {
 
           // Asset name contains id and last updated date.
           $asset_name = $assetId . '_' . strtotime($assetModified) . substr($assetName, strrpos($assetName, "."));
-          $directory = 'public://gredidam/thumbs/' . $date;
+          $directory = 'public://gredi/thumbs/' . $date;
           $this->fileSystem->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
 
           $location = $directory . '/' . $asset_name;
           if (!file_exists($location)) {
-            $fileContent = $this->damClient->getFileContent($assetId, $this->assetData['apiPreviewLink']);
+            $fileContent = $this->grediClient->getFileContent($assetId, $this->assetData['apiPreviewLink']);
             $this->fileSystem->saveData($fileContent, $location, FileSystemInterface::EXISTS_REPLACE);
           }
 
@@ -342,7 +342,7 @@ class GredidamAsset extends Image {
     try {
       $assetId = $this->assetData['id'];
       $assetName = $this->assetData['name'];
-      $fileContent = $this->damClient->getFileContent($assetId, $this->assetData['apiContentLink']);
+      $fileContent = $this->grediClient->getFileContent($assetId, $this->assetData['apiContentLink']);
 
       // Create subfolders by month.
       $current_timestamp = $this->timeManager->getCurrentTime();
@@ -350,7 +350,7 @@ class GredidamAsset extends Image {
       $date = str_replace('/', '-', substr($date_output, 3, 8));
 
       // Create month folder.
-      $directory = 'public://gredidam/original/' . $date;
+      $directory = 'public://gredi/original/' . $date;
 
       $this->fileSystem->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
 

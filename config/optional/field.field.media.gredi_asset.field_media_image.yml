@@ -3,18 +3,18 @@ status: true
 dependencies:
   config:
     - field.storage.media.field_media_image
-    - media.type.gredi_dam_assets
+    - media.type.gredi_asset
   module:
     - image
   enforced:
     module:
-      - helfi_gredi_image
+      - helfi_gredi
 _core:
   default_config_hash: gkjF4Tlax_M6A6zwSRBj0BpHmKwEE3htsUhWEfCGk7A
-id: media.gredi_dam_assets.field_media_image
+id: media.gredi_asset.field_media_image
 field_name: field_media_image
 entity_type: media
-bundle: gredi_dam_assets
+bundle: gredi_asset
 label: Image
 description: ''
 required: false

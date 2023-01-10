@@ -2,13 +2,13 @@ langcode: en
 status: true
 dependencies:
   config:
-    - field.field.media.gredi_dam_assets.field_media_image
-    - media.type.gredi_dam_assets
+    - field.field.media.gredi_asset.field_media_image
+    - media.type.gredi_asset
   module:
     - image
-id: media.gredi_dam_assets.default
+id: media.gredi_asset.default
 targetEntityType: media
-bundle: gredi_dam_assets
+bundle: gredi_asset
 mode: default
 content:
   thumbnail:

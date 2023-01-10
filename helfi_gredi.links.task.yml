@@ -1,0 +1,5 @@
+helfi_gredi.config:
+  route_name : helfi_gredi.config
+  title: Gredi Configurations
+  base_route: helfi_gredi.config
+  weight: 0

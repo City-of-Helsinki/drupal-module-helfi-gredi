@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Drupal\helfi_gredi_image;
+namespace Drupal\helfi_gredi;
 
 use Drupal\Core\Form\FormState;
-use Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset;
+use Drupal\helfi_gredi\Plugin\media\Source\GrediAsset;
 use Drupal\media\MediaTypeInterface;
 use Drupal\media_library\MediaLibraryState;
 use Drupal\media_library\MediaLibraryUiBuilder;
@@ -34,11 +34,11 @@ final class AssetLibraryBuilder extends MediaLibraryUiBuilder {
     $selected_type = $state->getSelectedTypeId();
     $media_type = $this->entityTypeManager->getStorage('media_type')->load($selected_type);
     $source = $media_type->getSource();
-    if ($media_type instanceof MediaTypeInterface && !$media_type->getSource() instanceof GredidamAsset) {
+    if ($media_type instanceof MediaTypeInterface && !$media_type->getSource() instanceof GrediAsset) {
       return parent::buildMediaLibraryView($state);
     }
 
-    $view_id = 'gredi_dam_asset_library';
+    $view_id = 'gredi_asset_library';
     $display_id = 'widget';
 
     // We have to completely copy the code from the parent in order to render

@@ -4,17 +4,17 @@ status: true
 dependencies:
   config:
     - core.entity_view_mode.media.media_library
-    - field.field.media.gredi_dam_assets.field_media_image
-    - media.type.gredi_dam_assets
+    - field.field.media.gredi_asset.field_media_image
+    - media.type.gredi_asset
   module:
-    - helfi_gredi_image
-id: media.gredi_dam_assets.media_library
+    - helfi_gredi
+id: media.gredi_asset.media_library
 targetEntityType: media
-bundle: gredi_dam_assets
+bundle: gredi_asset
 mode: media_library
 content:
   thumbnail:
-    type: gredi_dam_thumbnail
+    type: gredi_thumbnail
     label: hidden
     settings: {  }
     third_party_settings: {  }

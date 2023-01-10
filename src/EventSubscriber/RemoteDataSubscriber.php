@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Drupal\helfi_gredi_image\EventSubscriber;
+namespace Drupal\helfi_gredi\EventSubscriber;
 
-use Drupal\helfi_gredi_image\GrediDamClient;
+use Drupal\helfi_gredi\GrediClient;
 use Drupal\media\Entity\Media;
 use Drupal\views\ResultRow;
 use Drupal\views_remote_data\Events\RemoteDataLoadEntitiesEvent;
@@ -19,17 +19,17 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
   /**
    * The client.
    *
-   * @var \Drupal\helfi_gredi_image\GrediDamClient
+   * @var \Drupal\helfi_gredi\GrediClient
    */
-  public GrediDamClient $client;
+  public GrediClient $client;
 
   /**
    * Constructs a new ViewsRemoteDataSubscriber object.
    *
-   * @param \Drupal\helfi_gredi_image\GrediDamClient $client
+   * @param \Drupal\helfi_gredi\GrediClient $client
    *   The client.
    */
-  public function __construct(GrediDamClient $client) {
+  public function __construct(GrediClient $client) {
     $this->client = $client;
   }
 
@@ -50,7 +50,7 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
    *   The event.
    */
   public function onQuery(RemoteDataQueryEvent $event): void {
-    $supported_bases = ['gredidam_assets'];
+    $supported_bases = ['gredi_asset'];
     $base_tables = array_keys($event->getView()->getBaseTables());
     if (count(array_intersect($supported_bases, $base_tables)) === 0) {
       return;
@@ -81,7 +81,7 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
       $remote_data = $this->client->searchAssets($search_value, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
     }
     catch (\Exception $e) {
-      \Drupal::logger('helfi_gredi_image')->error($e->getMessage());
+      \Drupal::logger('helfi_gredi')->error($e->getMessage());
       \Drupal::messenger()->addError(t('Failed to retrieve asset list'));
       $remote_data = [];
     }
@@ -98,19 +98,19 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
    *   The event.
    */
   public function onLoadEntities(RemoteDataLoadEntitiesEvent $event): void {
-    $supported_bases = ['gredidam_assets'];
+    $supported_bases = ['gredi_asset'];
     $base_tables = array_keys($event->getView()->getBaseTables());
     if (count(array_intersect($supported_bases, $base_tables)) > 0) {
       foreach ($event->getResults() as $key => $result) {
         $result->_entity = Media::create([
           'mid' => $result->id,
-          'bundle' => 'gredi_dam_assets',
+          'bundle' => 'gredi_asset',
           'name' => $result->name,
           'gredi_asset_id' => [
             'value' => $result->id,
           ],
         ]);
-        /** @var \Drupal\helfi_gredi_image\Plugin\media\Source\GredidamAsset $source */
+        /** @var \Drupal\helfi_gredi\Plugin\media\Source\GrediAsset $source */
         $source = $result->_entity->getSource();
         if (!empty($result->object)) {
           $source->setAssetData($result->object);
