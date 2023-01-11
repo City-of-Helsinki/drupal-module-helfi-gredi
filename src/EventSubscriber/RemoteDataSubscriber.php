@@ -61,13 +61,9 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
     $sortOrder = '';
     $sortBy = '';
     if (!empty($sorts)) {
-      $viewsSortOrder = current($sorts)['order'];
-      $sortOrder = $viewsSortOrder == 'DESC' ? '-' : '+';
+      $sortOrder = current($sorts)['order'] == 'DESC' ? '-' : '+';
       if (current($sorts)['field'][0] == 'modified') {
-        $sortBy = 'orderByLastUsed';
-      }
-      else {
-        $sortBy = 'orderByName';
+        $sortBy = current($sorts)['field'][0];
       }
     }
 
