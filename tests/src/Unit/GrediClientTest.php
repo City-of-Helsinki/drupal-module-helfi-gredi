@@ -207,6 +207,8 @@ final class GrediClientTest extends UnitTestCase {
    * With metafields not cached.
    *
    * @covers \Drupal\helfi_gredi\GrediClient::getMetaFields
+   * @covers \Drupal\helfi_gredi\GrediClient::__construct
+   * @covers \Drupal\helfi_gredi\GrediClient::apiCallGet
    */
   public function testGetMetaFieldsNoCache() {
 
