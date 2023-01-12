@@ -104,6 +104,7 @@ final class GrediClientTest extends UnitTestCase {
    * @covers \Drupal\helfi_gredi\GrediClient::apiCallGet
    * @covers \Drupal\helfi_gredi\GrediClient::__construct
    * @covers \Drupal\helfi_gredi\GrediClient::getAssetData
+   * @covers \Drupal\helfi_gredi\GrediClient::getFileContent
    */
   public function testGetFileContent() {
     $id = '14378736';
@@ -163,6 +164,8 @@ final class GrediClientTest extends UnitTestCase {
    * Tests that metadata fields are completely processed.
    *
    * With metafields cached.
+   *
+   * @covers \Drupal\helfi_gredi\GrediClient::getMetaFields
    */
   public function testGetMetaFieldsCache() {
     // Mocking the constructor services.
@@ -202,6 +205,8 @@ final class GrediClientTest extends UnitTestCase {
    * Tests that metadata fields are completely processed.
    *
    * With metafields not cached.
+   *
+   * @covers \Drupal\helfi_gredi\GrediClient::getMetaFields
    */
   public function testGetMetaFieldsNoCache() {
 
