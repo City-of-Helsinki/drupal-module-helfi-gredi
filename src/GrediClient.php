@@ -84,7 +84,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
    *   The Drupal LoggerChannelFactory service.
    */
-  public function   __construct(
+  public function __construct(
     ClientInterface $guzzleClient,
     ConfigFactoryInterface $config,
     GrediAuthService $grediAuthService,

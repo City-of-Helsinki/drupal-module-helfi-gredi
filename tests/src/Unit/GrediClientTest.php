@@ -13,17 +13,18 @@ use Drupal\helfi_gredi\GrediClient;
 use Drupal\Tests\UnitTestCase;
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Psr7\Utils;
-
 
 /**
+ * Test class for GrediClient methods.
+ *
  * @group helfi_gredi
  * @coversDefaultClass \Drupal\helfi_gredi\GrediClient
  */
 final class GrediClientTest extends UnitTestCase {
 
   /**
-   * @return void
+   * Tests the data is fetched completely.
+   *
    * @throws \Exception
    */
   public function testGetAssetData(): void {
@@ -32,7 +33,7 @@ final class GrediClientTest extends UnitTestCase {
     $url = 'https://api4.materialbank.net/api/v1/';
 
     $mock_data = file_get_contents(__DIR__ . '/../../fixtures/responseGredi_14378736.json');
-    $mock = new Response(200, [ 'Content-Type' => 'application/json'], $mock_data);
+    $mock = new Response(200, ['Content-Type' => 'application/json'], $mock_data);
     $expected_response = Json::decode($mock_data);
 
     // Mocking the constructor services.
@@ -45,14 +46,14 @@ final class GrediClientTest extends UnitTestCase {
     $authServiceMock
       ->expects($this->any())
       ->method('isAuthenticated')
-      ->willReturn(true);
+      ->willReturn(TRUE);
 
     $authServiceMock->apiUrl = $url;
 
     $authServiceMock
       ->expects($this->any())
       ->method('authenticate')
-      ->willReturn(true);
+      ->willReturn(TRUE);
 
     // Set the guzzleClient response in order to not make an actual API call.
     $guzzleClientMock->method('__call')->willReturn($mock);
@@ -73,18 +74,18 @@ final class GrediClientTest extends UnitTestCase {
     $authServiceMock
       ->expects($this->any())
       ->method('isAuthenticated')
-      ->willReturn(false);
+      ->willReturn(FALSE);
 
     $authServiceMock
       ->expects($this->any())
       ->method('authenticate')
-      ->willReturn(false);
+      ->willReturn(FALSE);
 
     // Act.
     $remote_data = $grediClient->getAssetData($id);
 
     // Assert when unauthenticated.
     $this->assertEquals(NULL, $remote_data);
-
   }
+
 }
