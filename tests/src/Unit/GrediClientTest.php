@@ -26,6 +26,8 @@ final class GrediClientTest extends UnitTestCase {
    * Tests the data is fetched completely.
    *
    * @throws \Exception
+   *
+   * @covers ::getAssetData
    */
   public function testGetAssetData(): void {
 
