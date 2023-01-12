@@ -4,6 +4,7 @@ namespace Drupal\helfi_gredi;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Cache\Cache;
+use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -22,6 +23,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Factory class for Client.
  */
 class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
+
+  /**
+   * The CacheBackEndInterface service.
+   *
+   * @var \Drupal\Core\Cache\CacheBackendInterface
+   */
+  protected $cacheStatic;
 
   /**
    * A fully-configured Guzzle client to pass to the dam client.
@@ -83,18 +91,22 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
    *   Gredi dam auth service.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
    *   The Drupal LoggerChannelFactory service.
+   * @param \Drupal\Core\Cache\CacheBackendInterface $cacheStatic
+   *   The Drupal CacheBackendInterface service.
    */
   public function __construct(
     ClientInterface $guzzleClient,
     ConfigFactoryInterface $config,
     GrediAuthService $grediAuthService,
     LoggerChannelFactoryInterface $loggerChannelFactory,
+    CacheBackendInterface $cacheStatic
   ) {
     $this->httpClient = $guzzleClient;
     $this->config = $config;
     $this->authService = $grediAuthService;
     $this->loggerChannel = $loggerChannelFactory->get('helfi_gredi');
     $this->apiUrl = $this->authService->apiUrl;
+    $this->cacheStatic = $cacheStatic;
   }
 
   /**
@@ -105,7 +117,8 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
       $container->get('http_client'),
       $container->get('config.factory'),
       $container->get('helfi_gredi.auth_service'),
-      $container->get('logger.factory')
+      $container->get('logger.factory'),
+      $container->get('cache.static')
     );
   }
 
@@ -332,7 +345,8 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
     if ($this->metafields) {
       return $this->metafields;
     }
-    $cache = \Drupal::cache()->get('helfi_gredi_metafields');
+    $cache = $this->cacheStatic->get('helfi_gredi_metafields');
+
     if (!empty($cache->data)) {
       $this->metafields = $cache->data;
       return $this->metafields;
@@ -350,8 +364,11 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
       }
       $this->metafields[$item['id']] = $item;
     }
-    $cache_tags = $this->config->get('helfi_gredi.settings')->getCacheTags();
-    \Drupal::cache()->set('helfi_gredi_metafields', $this->metafields, Cache::PERMANENT, $cache_tags);
+
+    $cache_tags = is_array($this->config->get('helfi_gredi.settings')->getCacheTags()) ?
+      $this->config->get('helfi_gredi.settings')->getCacheTags() : [];
+
+    $this->cacheStatic->set('helfi_gredi_metafields', $this->metafields, Cache::PERMANENT, $cache_tags);
 
     return $this->metafields;
   }

@@ -1,0 +1,81 @@
+[ {
+  "id" : "257",
+  "namesByLang" : {
+    "fi" : "Avainsanat",
+    "en" : "Keywords",
+    "se" : "Nyckelord"
+  },
+  "valuesByLang" : {
+    "fi" : [ "aamu- ja iltapäivätoiminta", "adoptoi monumentti", "aikuinen", "aikuissosiaalityö", "äiti", "alakoulu", "aluevastuumuseo", "ammatillinen", "analogiset pelit", "annantalo", "apotti", "apulaispormestari", "arbis", "arkiliikunta", "asukastalot", "asuminen", "asuminen", "asunnoton", "caisa", "covid-19", "design", "digitaaliset palvelut", "eläin", "eläintarhan huvila", "esinekokoelmat", "esiopetus", "espan lava", "esport", "etsivä nuorisotyö", "etsivä", "fallkullan kotieläintarha", "hakasalmen huvila", "hallinto", "ham helsingin taidemuseo", "hammashoito", "happi", "harakan saari", "havis amanda", "helsingin kaupunginmuseo", "helsingin kaupunginorkesteri", "helsinki podcast", "helsinki-päivä", "henkilökunta", "henkilöstö", "hiilineutraali", "historia", "hoito", "hoiva", "ikääntynyt", "ikäihmiset", "ilmasto", "influenssarokotus", "isä", "itsenäisyyspäivä", "jätteet", "joukkoliikenne", "joulu", "julkinen taide", "kädentaidot", "kalastus", "kanneltalo", "kasko", "kasvatus ja koulutus", "kasvi", "katu", "katutaide", "kaunissaari", "kauppatori", "kaupungintalo", "kaupunkiympäristö", "kesä", "kesäseteli", "kevät", "kierrätys", "konsolipelit", "korona", "koronarokotus", "kotihoito", "kotihoito", "kotipalvelu", "koulu", "koululainen", "kouluterveydenhuolto", "kulttuuri", "kulttuuripalkinto", "kulttuuripolitiikka", "kulttuuritalo", "kulttuuriteko", "kunnossapito", "kuntoutus", "kurssi", "lääkäri", "lähityö", "lapset", "lapsi", "lapsi", "lastensuojelu", "leikkipuisto", "leikkipuistot", "leirintä", "lgbtiq+", "liikenne", "liikunta", "liikuntapaikat", "lukio", "luonnonsuojelu", "luonto", "maahanmuuttaja", "maauimalat", "maisa", "malmitalo", "matkailu", "maunula-talo", "merellinen helsinki", "meri", "metsä", "mielenterveys", "mieppi", "mies", "monikulttuurisuus", "museo", "museokauppa", "musiikki", "nainen", "näyttely", "neuvola", "neuvonta", "nuoret", "nuori", "nuori", "nuorisoneuvosto", "nuorisotalo", "nuorten seikkailutalo", "nuorten ympäristötila", "ohjattu liikunta", "omaishoito", "opiskelija", "opiskelu", "opiskeluterveydenhuolto", "osallistuminen", "osallisuus", "päihde", "päihdetyö", "päiväkodit", "päiväkoti", "päivätoiminta", "päivystys", "palvelu", "palveluasuminen", "palvelukeskus", "palveluneuvonta", "palvelutalo", "perhe", "perheneuvola", "perheoikeus", "peruskoulu", "perusopetus", "pihlajasaari", "poliklinikka", "pormestari", "pride", "psykiatria", "puhelinneuvonta", "puisto", "pysäköinti", "rakentaminen", "ratikkamuseo", "retkeily", "rokotus", "roolipelit", "ruiskumestarin talo", "ruutibudjetti", "saari", "saaristo", "saavutettavuus", "safka", "sairaala", "sairaanhoitaja", "sairaanhoito", "savoy-teatteri", "senaatintori", "seniori-info", "seniori", "seniori", "seniorikeskus", "signe brander", "sijaisvanhemmuus", "silta", "sisällä", "sosiaali- ja terveystoimi", "sosiaalityö", "sote", "stadi", "stadin ao", "stadin juhlaorkesteri", "stoa", "suomenlinna", "syksy", "taide", "taidekasvatus", "taidekokoelmat", "talous", "talvi", "tanssi", "tattarisuon moottorihalli", "tekojäät ja ladut", "terapia", "terveydenhoitaja", "terveydenhoito", "terveysasema", "terveyspalvelut", "tiivistämö", "toimeentulo", "toimintakeskus", "tommi laitio", "tori", "tuki", "tukihenkilö", "työllistyminen", "työväenasuntomuseo", "työväenopisto", "uimarannat", "ulkoilu", "ulkokuntosalit", "ulkona", "vallisaari", "valmennus", "valtuusto", "vammainen", "vapaa-aika", "varhaiskasvatus", "vartiosaari", "vauva", "veneily", "vesi", "vieroitushoito vuotalo", "yläkoulu", "ympäristönsuojelu" ]
+  },
+  "type" : "unspecified",
+  "valueType" : "dropdown-multiple",
+  "placement" : 0,
+  "isLocalized" : false,
+  "isMandatory" : false,
+  "isReadOnly" : false,
+  "isVisible" : false,
+  "isTranslation" : false,
+  "isCopy" : false,
+  "position" : {
+    "searchResult" : 0,
+    "result" : 0,
+    "search" : 0,
+    "card" : 0,
+    "searchField" : 0
+  },
+  "settings" : { },
+  "autocomplete" : false
+}, {
+  "id" : "1391",
+  "namesByLang" : {
+    "fi" : "Ajankohta",
+    "en" : "Created",
+    "se" : "Tidpunkt"
+  },
+  "valuesByLang" : { },
+  "type" : "unspecified",
+  "valueType" : "text",
+  "placement" : 1,
+  "isLocalized" : false,
+  "isMandatory" : false,
+  "isReadOnly" : false,
+  "isVisible" : false,
+  "isTranslation" : false,
+  "isCopy" : false,
+  "position" : {
+    "searchResult" : 0,
+    "result" : 0,
+    "search" : 0,
+    "card" : 0,
+    "searchField" : 0
+  },
+  "settings" : { },
+  "autocomplete" : false
+}, {
+  "id" : "1410",
+  "namesByLang" : {
+    "fi" : "Alt-teksti",
+    "en" : "Alt text",
+    "se" : "Alt-text"
+  },
+  "valuesByLang" : { },
+  "type" : "unspecified",
+  "valueType" : "text",
+  "placement" : 2,
+  "isLocalized" : false,
+  "isMandatory" : false,
+  "isReadOnly" : false,
+  "isVisible" : false,
+  "isTranslation" : false,
+  "isCopy" : false,
+  "position" : {
+    "searchResult" : 0,
+    "result" : 0,
+    "search" : 0,
+    "card" : 0,
+    "searchField" : 0
+  },
+  "settings" : { },
+  "autocomplete" : false
+} ]
