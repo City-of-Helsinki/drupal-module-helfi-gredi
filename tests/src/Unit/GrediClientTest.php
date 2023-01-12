@@ -27,9 +27,9 @@ final class GrediClientTest extends UnitTestCase {
    *
    * @throws \Exception
    *
-   * @covers::apiCallGet
-   * @covers::__construct
-   * @covers ::getAssetData
+   * @covers \Drupal\helfi_gredi\GrediClient::apiCallGet
+   * @covers \Drupal\helfi_gredi\GrediClient::__construct
+   * @covers \Drupal\helfi_gredi\GrediClient::getAssetData
    */
   public function testGetAssetData(): void {
 
