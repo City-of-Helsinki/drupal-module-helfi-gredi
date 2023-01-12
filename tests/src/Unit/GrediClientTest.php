@@ -166,6 +166,7 @@ final class GrediClientTest extends UnitTestCase {
    * With metafields cached.
    *
    * @covers \Drupal\helfi_gredi\GrediClient::getMetaFields
+   * @covers \Drupal\helfi_gredi\GrediClient::__construct
    */
   public function testGetMetaFieldsCache() {
     // Mocking the constructor services.
