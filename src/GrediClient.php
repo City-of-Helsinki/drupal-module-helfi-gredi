@@ -84,7 +84,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
    *   The Drupal LoggerChannelFactory service.
    */
-  public function __construct(
+  public function   __construct(
     ClientInterface $guzzleClient,
     ConfigFactoryInterface $config,
     GrediAuthService $grediAuthService,
@@ -163,7 +163,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
   /**
    * {@inheritdoc}
    */
-  public function getAssetData(string $id): array {
+  public function getAssetData(string $id): array | NULL {
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
