@@ -47,7 +47,7 @@ final class GrediClientTest extends UnitTestCase {
     $guzzleClientMock = $this->createMock(Client::class);
     $configFactoryMock = $this->createMock(ConfigFactory::class);
     $loggerChannelFactoryMock = $this->createMock(LoggerChannelFactory::class);
-    $cacheStatic = $this->createMock(CacheBackendInterface::class);
+    $cacheBin = $this->createMock(CacheBackendInterface::class);
 
     $loggerChannelFactoryMock->method('get')->willReturn(new LoggerChannel('helfi_gredi'));
     $authServiceMock
@@ -70,7 +70,7 @@ final class GrediClientTest extends UnitTestCase {
       $configFactoryMock,
       $authServiceMock,
       $loggerChannelFactoryMock,
-      $cacheStatic
+      $cacheBin
     );
 
     // Act.
@@ -119,7 +119,7 @@ final class GrediClientTest extends UnitTestCase {
     $guzzleClientMock = $this->createMock(Client::class);
     $configFactoryMock = $this->createMock(ConfigFactory::class);
     $loggerChannelFactoryMock = $this->createMock(LoggerChannelFactory::class);
-    $cacheStaticMock = $this->createMock(CacheBackendInterface::class);
+    $cacheBinMock = $this->createMock(CacheBackendInterface::class);
 
     $loggerChannelFactoryMock->method('get')->willReturn(new LoggerChannel('helfi_gredi'));
     $authServiceMock
@@ -142,7 +142,7 @@ final class GrediClientTest extends UnitTestCase {
       $configFactoryMock,
       $authServiceMock,
       $loggerChannelFactoryMock,
-      $cacheStaticMock
+      $cacheBinMock
     );
 
     // Act.
@@ -174,7 +174,7 @@ final class GrediClientTest extends UnitTestCase {
     $guzzleClientMock = $this->createMock(Client::class);
     $configFactoryMock = $this->createMock(ConfigFactory::class);
     $loggerChannelFactoryMock = $this->createMock(LoggerChannelFactory::class);
-    $cacheStaticMock = $this->createMock(CacheBackendInterface::class);
+    $cacheBinMock = $this->createMock(CacheBackendInterface::class);
 
     $loggerChannelFactoryMock->method('get')
       ->willReturn(new LoggerChannel('helfi_gredi'));
@@ -187,13 +187,13 @@ final class GrediClientTest extends UnitTestCase {
       $configFactoryMock,
       $authServiceMock,
       $loggerChannelFactoryMock,
-      $cacheStaticMock
+      $cacheBinMock
     );
 
     // Mock the response in order to not make an actual API call.
     $mock_data = file_get_contents(__DIR__ . '/../../fixtures/responseGredi_metafields.json');
-    $cacheStaticMock->data = Json::decode($mock_data);
-    $cacheStaticMock->method('get')->willReturn($cacheStaticMock);
+    $cacheBinMock->data = Json::decode($mock_data);
+    $cacheBinMock->method('get')->willReturn($cacheBinMock);
 
     // Act.
     $remote_data = $grediClient->getMetaFields();
@@ -218,7 +218,7 @@ final class GrediClientTest extends UnitTestCase {
     $guzzleClientMock = $this->createMock(Client::class);
     $configFactoryMock = $this->createMock(ConfigFactory::class);
     $loggerChannelFactoryMock = $this->createMock(LoggerChannelFactory::class);
-    $cacheStaticMock = $this->createMock(CacheBackendInterface::class);
+    $cacheBinMock = $this->createMock(CacheBackendInterface::class);
 
     $loggerChannelFactoryMock->method('get')
       ->willReturn(new LoggerChannel('helfi_gredi'));
@@ -231,7 +231,7 @@ final class GrediClientTest extends UnitTestCase {
       $configFactoryMock,
       $authServiceMock,
       $loggerChannelFactoryMock,
-      $cacheStaticMock
+      $cacheBinMock
     );
 
     $mock_data = file_get_contents(__DIR__ . '/../../fixtures/responseGredi_metafields.json');
@@ -241,8 +241,8 @@ final class GrediClientTest extends UnitTestCase {
     $guzzleClientMock->method('__call')->willReturn($mock);
 
     // Clear cache.
-    $cacheStaticMock->data = [];
-    $cacheStaticMock->method('get')->willReturn($cacheStaticMock);
+    $cacheBinMock->data = [];
+    $cacheBinMock->method('get')->willReturn($cacheBinMock);
 
     $authServiceMock
       ->expects($this->once())
