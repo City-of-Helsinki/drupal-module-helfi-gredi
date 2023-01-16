@@ -13,7 +13,7 @@ Integrates [Gredi API ](https://helsinki.contenthub.fi/) with Drupal.
 1. Clone from git repository [https://github.com/City-of-Helsinki/drupal-module-helfi-gredi].
 2. Install via drush command `drush en -y helfi_gredi`.
 3. Configure credentials at `/admin/config/gredi-dam` specifying the base API url, username,
-password, customer path (e.g `6`) and the upload folder id from the API. (e.g `16293292`).
+password, customer path and the upload folder id from the API.
 4. Create or edit a media reference field to accept the media type `Gredi Image`.
 
 
