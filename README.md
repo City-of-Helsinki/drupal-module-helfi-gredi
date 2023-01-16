@@ -1,5 +1,6 @@
 # Drupal integration with Gredi API
 
+![CI](https://github.com/City-of-Helsinki/drupal-module-helfi-gredi/workflows/CI/badge.svg)
 Integrates [Gredi API ](https://helsinki.contenthub.fi/) with Drupal.
 
 ## Dependencies
@@ -10,11 +11,10 @@ Integrates [Gredi API ](https://helsinki.contenthub.fi/) with Drupal.
 
 ## Installation
 
-1. Clone from git repository [https://github.com/City-of-Helsinki/drupal-module-helfi-gredi].
-2. Install via drush command `drush en -y helfi_gredi`.
-3. Configure credentials at `/admin/config/gredi-dam` specifying the base API url, username,
+1. Install with composer and enable the module.
+2. Configure credentials at `/admin/config/gredi-dam` specifying the base API url, username,
 password, customer path and the upload folder id from the API.
-4. Create or edit a media reference field to accept the media type `Gredi Image`.
+3. Create or edit a media reference field to accept the media type `Gredi Image`.
 
 
 ## Usage
@@ -24,7 +24,6 @@ The module provides two main features:
 1. Integration with the core module media_library to display a widget for retrieving images from the API.
 2. Upload feature that allows sending images to the API. The feature is based on the media library upload
 file functionality with the mention that the images are also sent to the API.
-The module creates a view that is used by media_library to display the newly created media type Gredi Image.
 
 ## Cron Jobs
 
@@ -35,12 +34,8 @@ The frequency of the sync is set for 24h.
 
 - Slow external API server responses that are not regarded with the implementation of the module.
 
-## Support
+## Contact
 
 Slack: #helfi-drupal (http://helsinkicity.slack.com/)
-
-## Testing
-
-The code was tested with PHPUnit. Version PHPUnit 9.5.26
 
 
