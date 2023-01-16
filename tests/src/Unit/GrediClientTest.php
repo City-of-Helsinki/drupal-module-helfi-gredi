@@ -5,16 +5,10 @@ declare(strict_types=1);
 namespace Drupal\Tests\helfi_gredi\Unit;
 
 use Drupal\Component\Serialization\Json;
-use Drupal\Core\Cache\CacheBackendInterface;
-use Drupal\Core\Config\ConfigFactory;
 use Drupal\Core\Config\ImmutableConfig;
-use Drupal\Core\Logger\LoggerChannel;
-use Drupal\Core\Logger\LoggerChannelFactory;
-use Drupal\helfi_gredi\GrediAuthService;
 use Drupal\helfi_gredi\GrediClient;
+use Drupal\Tests\helfi_gredi\Traits\GrediClientTestTrait;
 use Drupal\Tests\UnitTestCase;
-use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Response;
 
 /**
  * Test class for GrediClient methods.
@@ -23,6 +17,16 @@ use GuzzleHttp\Psr7\Response;
  * @coversDefaultClass \Drupal\helfi_gredi\GrediClient
  */
 final class GrediClientTest extends UnitTestCase {
+
+  use GrediClientTestTrait;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+    $this->createServiceMocks();
+  }
 
   /**
    * Tests the data is fetched completely.
@@ -35,62 +39,38 @@ final class GrediClientTest extends UnitTestCase {
    */
   public function testGetAssetData(): void {
 
-    $id = '14378736';
-    $url = 'https://api4.materialbank.net/api/v1/';
-
-    $mock_data = file_get_contents(__DIR__ . '/../../fixtures/responseGredi_14378736.json');
-    $mock = new Response(200, ['Content-Type' => 'application/json'], $mock_data);
-    $expected_response = Json::decode($mock_data);
-
-    // Mocking the constructor services.
-    $authServiceMock = $this->createMock(GrediAuthService::class);
-    $guzzleClientMock = $this->createMock(Client::class);
-    $configFactoryMock = $this->createMock(ConfigFactory::class);
-    $loggerChannelFactoryMock = $this->createMock(LoggerChannelFactory::class);
-    $cacheBin = $this->createMock(CacheBackendInterface::class);
-
-    $loggerChannelFactoryMock->method('get')->willReturn(new LoggerChannel('helfi_gredi'));
-    $authServiceMock
-      ->expects($this->any())
-      ->method('isAuthenticated')
-      ->willReturn(TRUE);
-
-    $authServiceMock->apiUrl = $url;
-
-    $authServiceMock
-      ->expects($this->any())
-      ->method('authenticate')
-      ->willReturn(TRUE);
+    $expected_response = Json::decode(file_get_contents(__DIR__ . '/../../fixtures/responseGredi_1.json'));
 
     // Set the guzzleClient response in order to not make an actual API call.
-    $guzzleClientMock->method('__call')->willReturn($mock);
+    $this->setApiResponse('/../../fixtures/responseGredi_1.json');
 
     $grediClient = new GrediClient(
-      $guzzleClientMock,
-      $configFactoryMock,
-      $authServiceMock,
-      $loggerChannelFactoryMock,
-      $cacheBin
+      $this->guzzleClientMock,
+      $this->configFactoryMock,
+      $this->authServiceMock,
+      $this->loggerChannelFactoryMock,
+      $this->cacheBin
     );
 
     // Act.
-    $remote_data = $grediClient->getAssetData($id);
+    $remote_data = $grediClient->getAssetData('1');
 
     // Assert when authenticated.
     $this->assertEquals($expected_response, $remote_data);
 
-    $authServiceMock
+    // Mock to simulate unauthenticated case.
+    $this->authServiceMock
       ->expects($this->any())
       ->method('isAuthenticated')
       ->willReturn(FALSE);
 
-    $authServiceMock
+    $this->authServiceMock
       ->expects($this->any())
       ->method('authenticate')
       ->willReturn(FALSE);
 
     // Act.
-    $remote_data = $grediClient->getAssetData($id);
+    $remote_data = $grediClient->getAssetData('1');
 
     // Assert when unauthenticated.
     $this->assertEquals(NULL, $remote_data);
@@ -108,55 +88,28 @@ final class GrediClientTest extends UnitTestCase {
    */
   public function testGetFileContent() {
     $id = '14378736';
-    $url = 'https://api4.materialbank.net/api/v1/';
-    $apiPreviewLink = '/api/v1/files/14378736/contents/preview';
 
-    $mock_data = file_get_contents(__DIR__ . '/../../fixtures/responseGredi_14378736.json');
-    $mock = new Response(200, ['Content-Type' => 'application/json'], $mock_data);
-
-    // Mocking the constructor services.
-    $authServiceMock = $this->createMock(GrediAuthService::class);
-    $guzzleClientMock = $this->createMock(Client::class);
-    $configFactoryMock = $this->createMock(ConfigFactory::class);
-    $loggerChannelFactoryMock = $this->createMock(LoggerChannelFactory::class);
-    $cacheBinMock = $this->createMock(CacheBackendInterface::class);
-
-    $loggerChannelFactoryMock->method('get')->willReturn(new LoggerChannel('helfi_gredi'));
-    $authServiceMock
-      ->expects($this->any())
-      ->method('isAuthenticated')
-      ->willReturn(TRUE);
-
-    $authServiceMock->apiUrl = $url;
-
-    $authServiceMock
-      ->expects($this->any())
-      ->method('authenticate')
-      ->willReturn(TRUE);
+    $mock_data = file_get_contents(__DIR__ . '/../../fixtures/responseGredi_1.json');
 
     // Set the guzzleClient response in order to not make an actual API call.
-    $guzzleClientMock->method('__call')->willReturn($mock);
+    $this->setApiResponse('/../../fixtures/responseGredi_1.json');
 
     $grediClient = new GrediClient(
-      $guzzleClientMock,
-      $configFactoryMock,
-      $authServiceMock,
-      $loggerChannelFactoryMock,
-      $cacheBinMock
+      $this->guzzleClientMock,
+      $this->configFactoryMock,
+      $this->authServiceMock,
+      $this->loggerChannelFactoryMock,
+      $this->cacheBin
     );
 
-    // Act.
-    $remote_data = $grediClient->getFileContent($id, $apiPreviewLink);
-
     // Assert when apiPreviewLink is found.
+    $apiPreviewLink = '/api/v1/files/14378736/contents/preview';
+    $remote_data = $grediClient->getFileContent($id, $apiPreviewLink);
     $this->assertEquals($mock_data, $remote_data);
 
-    $apiPreviewLink = '';
-
-    // Act.
-    $remote_data = $grediClient->getFileContent($id, $apiPreviewLink);
-
     // Assert when apiPreviewLink is missing.
+    $apiPreviewLink = '';
+    $remote_data = $grediClient->getFileContent($id, $apiPreviewLink);
     $this->assertEquals(FALSE, $remote_data);
   }
 
@@ -169,36 +122,22 @@ final class GrediClientTest extends UnitTestCase {
    * @covers \Drupal\helfi_gredi\GrediClient::__construct
    */
   public function testGetMetaFieldsCache() {
-    // Mocking the constructor services.
-    $authServiceMock = $this->createMock(GrediAuthService::class);
-    $guzzleClientMock = $this->createMock(Client::class);
-    $configFactoryMock = $this->createMock(ConfigFactory::class);
-    $loggerChannelFactoryMock = $this->createMock(LoggerChannelFactory::class);
-    $cacheBinMock = $this->createMock(CacheBackendInterface::class);
-
-    $loggerChannelFactoryMock->method('get')
-      ->willReturn(new LoggerChannel('helfi_gredi'));
-
-    $url = 'https://api4.materialbank.net/api/v1/';
-    $authServiceMock->apiUrl = $url;
 
     $grediClient = new GrediClient(
-      $guzzleClientMock,
-      $configFactoryMock,
-      $authServiceMock,
-      $loggerChannelFactoryMock,
-      $cacheBinMock
+      $this->guzzleClientMock,
+      $this->configFactoryMock,
+      $this->authServiceMock,
+      $this->loggerChannelFactoryMock,
+      $this->cacheBin
     );
 
-    // Mock the response in order to not make an actual API call.
+    // Mock cached data.
     $mock_data = file_get_contents(__DIR__ . '/../../fixtures/responseGredi_metafields.json');
-    $cacheBinMock->data = Json::decode($mock_data);
-    $cacheBinMock->method('get')->willReturn($cacheBinMock);
-
-    // Act.
-    $remote_data = $grediClient->getMetaFields();
+    $this->cacheBin->data = Json::decode($mock_data);
+    $this->cacheBin->method('get')->willReturn($this->cacheBin);
 
     // Assert when metafields are already cached.
+    $remote_data = $grediClient->getMetaFields();
     $this->assertEquals(Json::decode($mock_data), $remote_data);
   }
 
@@ -213,58 +152,53 @@ final class GrediClientTest extends UnitTestCase {
    */
   public function testGetMetaFieldsNoCache() {
 
-    // Mocking the constructor services.
-    $authServiceMock = $this->createMock(GrediAuthService::class);
-    $guzzleClientMock = $this->createMock(Client::class);
-    $configFactoryMock = $this->createMock(ConfigFactory::class);
-    $loggerChannelFactoryMock = $this->createMock(LoggerChannelFactory::class);
-    $cacheBinMock = $this->createMock(CacheBackendInterface::class);
-
-    $loggerChannelFactoryMock->method('get')
-      ->willReturn(new LoggerChannel('helfi_gredi'));
-
-    $url = 'https://api4.materialbank.net/api/v1/';
-    $authServiceMock->apiUrl = $url;
-
     $grediClient = new GrediClient(
-      $guzzleClientMock,
-      $configFactoryMock,
-      $authServiceMock,
-      $loggerChannelFactoryMock,
-      $cacheBinMock
+      $this->guzzleClientMock,
+      $this->configFactoryMock,
+      $this->authServiceMock,
+      $this->loggerChannelFactoryMock,
+      $this->cacheBin
     );
 
-    $mock_data = file_get_contents(__DIR__ . '/../../fixtures/responseGredi_metafields.json');
-
     // Set the guzzleClient response in order to not make an actual API call.
-    $mock = new Response(200, ['Content-Type' => 'application/json'], $mock_data);
-    $guzzleClientMock->method('__call')->willReturn($mock);
-
-    // Clear cache.
-    $cacheBinMock->data = [];
-    $cacheBinMock->method('get')->willReturn($cacheBinMock);
-
-    $authServiceMock
-      ->expects($this->once())
-      ->method('getCustomerId')
-      ->willReturn('6');
-
-    $authServiceMock
-      ->expects($this->any())
-      ->method('isAuthenticated')
-      ->willReturn(TRUE);
+    $this->setApiResponse('/../../fixtures/responseGredi_metafields.json');
 
     // Create an immutable config for the get method.
     $immutableConfigMock = $this->createMock(ImmutableConfig::class);
-    $configFactoryMock->method('get')->willReturn($immutableConfigMock);
+    $this->configFactoryMock->method('get')->willReturn($immutableConfigMock);
 
-    // Act.
-    $remote_data = $grediClient->getMetaFields();
-
+    $mock_data = file_get_contents(__DIR__ . '/../../fixtures/responseGredi_metafields.json');
     $expected_result = Json::decode($mock_data);
     // Assert all fields are processed when metafields are not cached.
+    $remote_data = $grediClient->getMetaFields();
     $this->assertEquals(count($expected_result), count($remote_data));
+  }
 
+  /**
+   * Tests that search method returns the data completely.
+   */
+  public function testSearchAssets() {
+
+    $grediClient = new GrediClient(
+      $this->guzzleClientMock,
+      $this->configFactoryMock,
+      $this->authServiceMock,
+      $this->loggerChannelFactoryMock,
+      $this->cacheBin
+    );
+
+    // Set the guzzleClient response in order to not make an actual API call.
+    $this->setApiResponse('/../../fixtures/responseGredi_ThreeAssets.json');
+
+    $remote_data = $grediClient->searchAssets('search text', 'testSortBy', 'testSortOrder');
+    $expected_result = Json::decode(file_get_contents(__DIR__ . '/../../fixtures/responseGredi_ThreeAssets.json'));
+    // Assert that we received the expected assets.
+    $count = 0;
+    foreach ($expected_result as $expected_value) {
+      $value_found = in_array($expected_value['id'], $remote_data[$count]);
+      $count++;
+      $this->assertEquals(TRUE, $value_found);
+    }
   }
 
 }

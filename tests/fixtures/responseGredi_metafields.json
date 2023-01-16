@@ -1,5 +1,5 @@
 [ {
-  "id" : "257",
+  "id" : "1",
   "namesByLang" : {
     "fi" : "Avainsanat",
     "en" : "Keywords",
@@ -27,7 +27,7 @@
   "settings" : { },
   "autocomplete" : false
 }, {
-  "id" : "1391",
+  "id" : "2",
   "namesByLang" : {
     "fi" : "Ajankohta",
     "en" : "Created",
@@ -53,7 +53,7 @@
   "settings" : { },
   "autocomplete" : false
 }, {
-  "id" : "1410",
+  "id" : "3",
   "namesByLang" : {
     "fi" : "Alt-teksti",
     "en" : "Alt text",
