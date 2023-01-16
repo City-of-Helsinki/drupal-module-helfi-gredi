@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\helfi_gredi\Traits;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactory;
 use Drupal\Core\Logger\LoggerChannel;
@@ -83,16 +84,63 @@ trait GrediClientTestTrait {
   /**
    * Creates an API response.
    *
-   * @param string $path
-   *   The fixture path.
+   * @param string|array $response_data
+   *   The response data. Could be a string representing the id of a stored fixture.
+   *   Or an array with data to be set for the response.
    */
-  public function setApiResponse($path) {
-    $mock_data = file_get_contents(__DIR__ . $path);
+  public function setApiResponse($response_data) {
+    if (is_string($response_data)) {
+      $mock_data = $this->getAssetFixture($response_data);
+      $this->guzzleClientMock
+        ->expects($this->any())
+        ->method('__call')
+        ->willReturn(new Response(200, ['Content-Type' => 'application/json'], $mock_data));
+    }
+    else {
+      $mock_data = Json::encode($response_data);
+      $this->guzzleClientMock
+        ->expects($this->any())
+        ->method('__call')
+        ->willReturn(new Response(200, ['Content-Type' => 'application/json'], $mock_data));
+    }
 
-    $this->guzzleClientMock
-      ->expects($this->any())
-      ->method('__call')
-      ->willReturn(new Response(200, ['Content-Type' => 'application/json'], $mock_data));
+  }
+
+  /**
+   * Return a specific asset fixture.
+   *
+   * @param string $id
+   *   The id of the asset data fixture.
+   *
+   * @return false|string
+   */
+  public function getAssetFixture($id) {
+    return file_get_contents(__DIR__ . sprintf('/../../fixtures/assetData_%s.json', $id));
+  }
+
+  /**
+   * Method that searches in fixtures data.
+   *
+   * @param $search
+   *   The search by value.
+   *
+   * @return array
+   *   Returns an array of fixtures.
+   */
+  public function getSearchFixture($search = '') {
+    $fixtures = array_diff(scandir(__DIR__ . '/../../fixtures'), ['.', '..']);
+    $result = [];
+    foreach ($fixtures as $fixture) {
+      $id = str_replace(array('assetData_','.json'),'', $fixture);
+      if (intval($id)) {
+        $assetData = Json::decode($this->getAssetFixture($id));
+        if (str_contains($assetData['name'], $search)) {
+          $result[] = $assetData;
+        }
+      }
+    }
+    $this->setApiResponse($result);
+    return $result;
   }
 
 }

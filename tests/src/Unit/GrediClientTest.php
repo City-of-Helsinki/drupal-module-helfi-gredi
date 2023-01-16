@@ -39,10 +39,10 @@ final class GrediClientTest extends UnitTestCase {
    */
   public function testGetAssetData(): void {
 
-    $expected_response = Json::decode(file_get_contents(__DIR__ . '/../../fixtures/responseGredi_1.json'));
+    $expected_response = Json::decode($this->getAssetFixture('1'));
 
     // Set the guzzleClient response in order to not make an actual API call.
-    $this->setApiResponse('/../../fixtures/responseGredi_1.json');
+    $this->setApiResponse('1');
 
     $grediClient = new GrediClient(
       $this->guzzleClientMock,
@@ -87,12 +87,12 @@ final class GrediClientTest extends UnitTestCase {
    * @covers \Drupal\helfi_gredi\GrediClient::getFileContent
    */
   public function testGetFileContent() {
-    $id = '14378736';
+    $id = '1';
 
-    $mock_data = file_get_contents(__DIR__ . '/../../fixtures/responseGredi_1.json');
+    $mock_data = $this->getAssetFixture('1');
 
     // Set the guzzleClient response in order to not make an actual API call.
-    $this->setApiResponse('/../../fixtures/responseGredi_1.json');
+    $this->setApiResponse('1');
 
     $grediClient = new GrediClient(
       $this->guzzleClientMock,
@@ -103,7 +103,7 @@ final class GrediClientTest extends UnitTestCase {
     );
 
     // Assert when apiPreviewLink is found.
-    $apiPreviewLink = '/api/v1/files/14378736/contents/preview';
+    $apiPreviewLink = '/test_path/preview';
     $remote_data = $grediClient->getFileContent($id, $apiPreviewLink);
     $this->assertEquals($mock_data, $remote_data);
 
@@ -132,7 +132,7 @@ final class GrediClientTest extends UnitTestCase {
     );
 
     // Mock cached data.
-    $mock_data = file_get_contents(__DIR__ . '/../../fixtures/responseGredi_metafields.json');
+    $mock_data = $this->getAssetFixture('metafields');
     $this->cacheBin->data = Json::decode($mock_data);
     $this->cacheBin->method('get')->willReturn($this->cacheBin);
 
@@ -161,16 +161,17 @@ final class GrediClientTest extends UnitTestCase {
     );
 
     // Set the guzzleClient response in order to not make an actual API call.
-    $this->setApiResponse('/../../fixtures/responseGredi_metafields.json');
+    $this->setApiResponse('metafields');
 
     // Create an immutable config for the get method.
     $immutableConfigMock = $this->createMock(ImmutableConfig::class);
     $this->configFactoryMock->method('get')->willReturn($immutableConfigMock);
 
-    $mock_data = file_get_contents(__DIR__ . '/../../fixtures/responseGredi_metafields.json');
+    $mock_data = $this->getAssetFixture('metafields');
     $expected_result = Json::decode($mock_data);
     // Assert all fields are processed when metafields are not cached.
     $remote_data = $grediClient->getMetaFields();
+
     $this->assertEquals(count($expected_result), count($remote_data));
   }
 
@@ -191,11 +192,8 @@ final class GrediClientTest extends UnitTestCase {
       $this->cacheBin
     );
 
-    // Set the guzzleClient response in order to not make an actual API call.
-    $this->setApiResponse('/../../fixtures/responseGredi_ThreeAssets.json');
-
-    $remote_data = $grediClient->searchAssets('search text', 'testSortBy', 'testSortOrder');
-    $expected_result = Json::decode(file_get_contents(__DIR__ . '/../../fixtures/responseGredi_ThreeAssets.json'));
+    $expected_result = $this->getSearchFixture('test');
+    $remote_data = $grediClient->searchAssets('test');
     // Assert that we received the expected assets.
     $count = 0;
     foreach ($expected_result as $expected_value) {
