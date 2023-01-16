@@ -176,6 +176,10 @@ final class GrediClientTest extends UnitTestCase {
 
   /**
    * Tests that search method returns the data completely.
+   *
+   * @covers \Drupal\helfi_gredi\GrediClient::searchAssets
+   * @covers \Drupal\helfi_gredi\GrediClient::__construct
+   * @covers \Drupal\helfi_gredi\GrediClient::apiCallGet
    */
   public function testSearchAssets() {
 
