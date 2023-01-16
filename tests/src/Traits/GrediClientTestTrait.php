@@ -85,7 +85,8 @@ trait GrediClientTestTrait {
    * Creates an API response.
    *
    * @param string|array $response_data
-   *   The response data. Could be a string representing the id of a stored fixture.
+   *   The response data.
+   *   Could be a string representing the id of a stored fixture.
    *   Or an array with data to be set for the response.
    */
   public function setApiResponse($response_data) {
@@ -113,6 +114,7 @@ trait GrediClientTestTrait {
    *   The id of the asset data fixture.
    *
    * @return false|string
+   *   The asset data or false if not found.
    */
   public function getAssetFixture($id) {
     return file_get_contents(__DIR__ . sprintf('/../../fixtures/assetData_%s.json', $id));
@@ -121,7 +123,7 @@ trait GrediClientTestTrait {
   /**
    * Method that searches in fixtures data.
    *
-   * @param $search
+   * @param string $search
    *   The search by value.
    *
    * @return array
@@ -131,7 +133,7 @@ trait GrediClientTestTrait {
     $fixtures = array_diff(scandir(__DIR__ . '/../../fixtures'), ['.', '..']);
     $result = [];
     foreach ($fixtures as $fixture) {
-      $id = str_replace(array('assetData_','.json'),'', $fixture);
+      $id = str_replace(['assetData_', '.json'], '', $fixture);
       if (intval($id)) {
         $assetData = Json::decode($this->getAssetFixture($id));
         if (str_contains($assetData['name'], $search)) {
