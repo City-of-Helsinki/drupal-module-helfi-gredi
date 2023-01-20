@@ -14,7 +14,8 @@ Integrates [Gredi API ](https://helsinki.contenthub.fi/) with Drupal.
 1. Install with composer and enable the module.
 2. Configure credentials at `/admin/config/gredi-dam` specifying the base API url, username,
 password, customer path and the upload folder id from the API.
-3. Create or edit a media reference field to accept the media type `Gredi Image`.
+3. Configure the form display of the media type `Gredi Image` as you want.
+4. Create or edit a media reference field to accept the media type `Gredi Image`.
 
 
 ## Usage
