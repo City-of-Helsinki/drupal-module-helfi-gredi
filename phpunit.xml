@@ -1,47 +1,68 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.5/phpunit.xsd"
-         colors="true"
-         cacheResultFile=".phpunit.cache/test-results"
-         executionOrder="depends,defects"
-         forceCoversAnnotation="true"
+
+<!-- For how to customize PHPUnit configuration, see core/tests/README.md. -->
+<!-- TODO set checkForUnintentionallyCoveredCode="true" once https://www.drupal.org/node/2626832 is resolved. -->
+<!-- PHPUnit expects functional tests to be run with either a privileged user
+ or your current system user. See core/tests/README.md and
+ https://www.drupal.org/node/2116263 for details.
+-->
+<phpunit bootstrap="../../../core/tests/bootstrap.php" colors="true"
          beStrictAboutTestsThatDoNotTestAnything="true"
          beStrictAboutOutputDuringTests="true"
          beStrictAboutChangesToGlobalState="true"
-         beStrictAboutCoversAnnotation="true"
-         printerClass="\Drupal\Tests\Listeners\HtmlOutputPrinter"
-         failOnRisky="true"
          failOnWarning="true"
-         verbose="true">
+         printerClass="\Drupal\Tests\Listeners\HtmlOutputPrinter"
+         cacheResult="false">
   <php>
     <!-- Set error reporting to E_ALL. -->
     <ini name="error_reporting" value="32767"/>
     <!-- Do not limit the amount of memory tests take to run. -->
     <ini name="memory_limit" value="-1"/>
-    <env name="MINK_DRIVER_ARGS_WEBDRIVER" value='["chrome", {"browserName":"chrome","chromeOptions":{"w3c": false, "args":["--disable-gpu","--headless", "--no-sandbox"]}}, "http://127.0.0.1:4444"]' />
-  </php>
+    <env name="BROWSERTEST_OUTPUT_DIRECTORY" value="public/sites/simpletest"/>
+    <env name="DTT_API_OPTIONS" value='{"socketTimeout": 360, "domWaitTimeout": 3600000}' />
+    <env name="DTT_API_URL" value="http://127.0.0.1:9222"/>
+    <env name="DTT_BASE_URL" value="http://127.0.0.1:8080"/>
+    <env name="MINK_DRIVER_ARGS_WEBDRIVER" value='["chrome", {"browserName":"chrome","chromeOptions":{"w3c": false, "args":["--disable-gpu","--headless", "--no-sandbox", "--disable-session-crashed-bubble", "–ignore-certificate-errors", "--enable-features=NetworkService,NetworkServiceInProcess", "--disable-site-isolation-trials", "--disable-gpu","--headless", "--no-sandbox", "--disable-dev-shm-usage", "--disable-web-security", "--allow-file-access-from-files", "--allow-file-access", "--user-data-dir=/tmp", "--disable-extensions"]}}, "http://127.0.0.1:4444"]' />  </php>
   <testsuites>
     <testsuite name="unit">
-      <directory>./tests/src/Unit</directory>
+      <file>./tests/TestSuites/UnitTestSuite.php</file>
     </testsuite>
     <testsuite name="kernel">
-      <directory>./tests/src/Kernel</directory>
+      <file>./tests/TestSuites/KernelTestSuite.php</file>
     </testsuite>
     <testsuite name="functional">
-      <directory>./tests/src/Functional</directory>
+      <file>./tests/TestSuites/FunctionalTestSuite.php</file>
     </testsuite>
     <testsuite name="functional-javascript">
-      <directory>./tests/src/FunctionalJavascript</directory>
+      <file>./tests/TestSuites/FunctionalJavascriptTestSuite.php</file>
+    </testsuite>
+    <testsuite name="build">
+      <file>./tests/TestSuites/BuildTestSuite.php</file>
     </testsuite>
   </testsuites>
   <listeners>
     <listener class="\Drupal\Tests\Listeners\DrupalListener">
     </listener>
   </listeners>
-  <coverage cacheDirectory=".phpunit.cache/code-coverage" processUncoveredFiles="true">
-    <include>
-      <directory suffix=".php">./src</directory>
-      <file>./*.module</file>
-    </include>
-  </coverage>
+  <!-- Filter for coverage reports. -->
+  <filter>
+    <whitelist>
+      <directory>./includes</directory>
+      <directory>./lib</directory>
+      <!-- Extensions can have their own test directories, so exclude those. -->
+      <directory>./modules</directory>
+      <exclude>
+        <directory>./modules/*/src/Tests</directory>
+        <directory>./modules/*/tests</directory>
+      </exclude>
+      <directory>../modules</directory>
+      <exclude>
+        <directory>../modules/*/src/Tests</directory>
+        <directory>../modules/*/tests</directory>
+        <directory>../modules/*/*/src/Tests</directory>
+        <directory>../modules/*/*/tests</directory>
+      </exclude>
+      <directory>../sites</directory>
+    </whitelist>
+  </filter>
 </phpunit>
