@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\helfi_gredi\FunctionalJavascript;
 
+use Behat\Mink\Element\NodeElement;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\file\Entity\File;
@@ -50,10 +51,9 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
     'media_library',
     'field_ui',
     'block',
-    'helfi_gredi',
-    'views_remote_data',
     // Install dblog to assist with debugging.
     'dblog',
+    'helfi_gredi',
   ];
 
   /**
@@ -87,6 +87,12 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
       ->setComponent('media_field', [
         'type' => 'media_library_widget',
         'region' => 'content',
+        'settings' => [
+          'media_types' => [
+            'image',
+            'gredi_asset',
+          ]
+        ]
       ])
       ->save();
     $display_repository->getViewDisplay('node', 'page', 'default')
@@ -94,42 +100,24 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
         'type' => 'entity_reference_entity_view',
       ])
       ->save();
-
-//    $grediClient = new GrediClient(
-//      $this->guzzleClientMock,
-//      $this->configFactoryMock,
-//      $this->authServiceMock,
-//      $this->loggerChannelFactoryMock,
-//      $this->cacheBin
-//    );
-//    $this->setApiResponse('1');
-
-//    $mock = $this->getMockBuilder(GrediClient::class)
-//      ->disableOriginalConstructor()
-//      ->getMock();
-//
-//    // Set the return value of the getAssetData() method to fixture data, since we don't want it to be called.
-//    $mock->method('getAssetData')
-//      ->willReturn(Json::decode($this->getAssetFixture('1')));
-//
-//    $this->container->set('helfi_gredi.client', $mock);
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  protected function tearDown(): void {
-    $status = $this->getStatus();
-    if ($status === BaseTestRunner::STATUS_ERROR || $status === BaseTestRunner::STATUS_WARNING || $status === BaseTestRunner::STATUS_FAILURE) {
-      $log = \Drupal::database()
-        ->select('watchdog', 'w')
-        ->fields('w')
-        ->execute()
-        ->fetchAll();
-      throw new \RuntimeException(var_export($log, TRUE));
-    }
-    parent::tearDown();
-  }
+//  /**
+//   * {@inheritdoc}
+//   */
+//  protected function tearDown(): void {
+//    $status = $this->getStatus();
+//
+//    if ($status === BaseTestRunner::STATUS_ERROR || $status === BaseTestRunner::STATUS_WARNING || $status === BaseTestRunner::STATUS_FAILURE) {
+//      $log = \Drupal::database()
+//        ->select('watchdog', 'w')
+//        ->fields('w')
+//        ->execute()
+//        ->fetchAll();
+//      throw new \RuntimeException(var_export($log, TRUE));
+//    }
+//    parent::tearDown();
+//  }
 
   /**
    * Test media library integration with gredi module.
@@ -148,30 +136,31 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
       'create media',
       'administer node form display',
     ]);
+
     $this->drupalLogin($user);
-
-
-    $this->drupalGet('/node/add/page');
 
     $this->drupalGet('/node/add/page');
     $this->assertSession()->responseContains('Create page');
 
-    $this->assertElementExistsAfterWait('css', "#media_field-media-library-wrapper.js-media-library-widget")
-      ->pressButton('Add media');
+    $grediClient = new GrediClient(
+      $this->guzzleClientMock,
+      $this->configFactoryMock,
+      $this->authServiceMock,
+      $this->loggerChannelFactoryMock,
+      $this->cacheBin
+    );
 
-//    $this->click('#edit-media-field-open-button');
-//
-//    $this->assertSession()->waitForElement('css', '#media-library-wrapper');
-//    $this->assertSession()->assertWaitOnAjaxRequest();
-//    $this->assertSession()->waitForElementVisible('css', '#media-library-wrapper');
+    $this->container->set('helfi_gredi.dam_client', $grediClient);
 
+    $this->setApiResponse('1');
 
-//    $modal = $this->assertSession()->waitForElement('css', '#media-library-wrapper');
-//    dump($modal);
+    $this->click('#edit-media-field-open-button');
+
+    $modal = $this->assertSession()->waitForElement('css', '#media-library-widget');
 
 //    $tabs = $this->getSession()
-//      ->getPage();
-
+//      ->getPage()
+//      ->findAll('css', '.media-library-menu__link');
 //    self::assertSame([
 //      'Gredi Image',
 //      'Image',

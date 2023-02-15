@@ -22,7 +22,7 @@
     <env name="DTT_API_OPTIONS" value='{"socketTimeout": 360, "domWaitTimeout": 3600000}' />
     <env name="DTT_API_URL" value="http://127.0.0.1:9222"/>
     <env name="DTT_BASE_URL" value="http://127.0.0.1:8080"/>
-    <env name="MINK_DRIVER_ARGS_WEBDRIVER" value='["chrome", {"browserName":"chrome","chromeOptions":{"w3c": false, "args":["--disable-gpu","--headless", "--no-sandbox", "--disable-session-crashed-bubble", "–ignore-certificate-errors", "--enable-features=NetworkService,NetworkServiceInProcess", "--disable-site-isolation-trials", "--disable-gpu","--headless", "--no-sandbox", "--disable-dev-shm-usage", "--disable-web-security", "--allow-file-access-from-files", "--allow-file-access", "--user-data-dir=/tmp", "--disable-extensions"]}}, "http://127.0.0.1:4444"]' />  </php>
+    <env name="MINK_DRIVER_ARGS_WEBDRIVER" value='["chrome", {"browserName":"chrome","chromeOptions":{"w3c": false, "args":["--disable-gpu","--headless", "--no-sandbox", "–ignore-certificate-errors", "--enable-features=NetworkService,NetworkServiceInProcess", "--disable-dev-shm-usage", "--disable-web-security", "--allow-file-access-from-files", "--allow-file-access", "--user-data-dir=/tmp"]}}, "http://127.0.0.1:4444"]' />  </php>
   <testsuites>
     <testsuite name="unit">
       <file>./tests/TestSuites/UnitTestSuite.php</file>
