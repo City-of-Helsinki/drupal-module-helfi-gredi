@@ -7,6 +7,11 @@ use Drupal\helfi_gredi\GrediClient;
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\ResponseInterface;
 
+/**
+ * Class GrediClientTest.
+ *
+ * Mocked class of GrediClient.
+ */
 class GrediClientTest extends GrediClient {
 
   /**
@@ -22,7 +27,7 @@ class GrediClientTest extends GrediClient {
    * {@inheritdoc}
    */
   public function getAssetData(string $id): array | NULL {
-   return Json::decode(file_get_contents(__DIR__ . sprintf('/../../../fixtures/assetData_%s.json', 'all')));
+    return Json::decode(file_get_contents(__DIR__ . sprintf('/../../../fixtures/assetData_%s.json', 'all')));
   }
 
   /**

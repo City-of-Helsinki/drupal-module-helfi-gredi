@@ -16,7 +16,7 @@ use Drupal\Tests\UnitTestCase;
  * @group helfi_gredi
  * @coversDefaultClass \Drupal\helfi_gredi\GrediClient
  */
-final class GrediClientTest extends UnitTestCase {
+final class GrediClientUnitTest extends UnitTestCase {
 
   use GrediClientTestTrait;
 

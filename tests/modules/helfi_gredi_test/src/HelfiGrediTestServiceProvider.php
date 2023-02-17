@@ -6,7 +6,10 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
 use Drupal\Core\DependencyInjection\ServiceProviderInterface;
 
-class HelfiGrediTestServiceProvider extends ServiceProviderBase implements ServiceProviderInterface{
+/**
+ * Service provider to register helfi_gredi_test service.
+ */
+class HelfiGrediTestServiceProvider extends ServiceProviderBase implements ServiceProviderInterface {
 
   /**
    * {@inheritdoc}

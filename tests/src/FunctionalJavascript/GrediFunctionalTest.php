@@ -46,7 +46,7 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
     'dblog',
     'views_remote_data',
     'helfi_gredi',
-    'helfi_gredi_test'
+    'helfi_gredi_test',
   ];
 
   /**
@@ -59,7 +59,6 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
 
     $this->drupalCreateContentType(['type' => 'page']);
 
-
     $this->createEntityReferenceField(
       'node',
       'page',
@@ -69,7 +68,7 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
       'default',
       [
         'target_bundles' => [
-          'gredi_asset'
+          'gredi_asset',
         ],
       ],
       -1);
@@ -80,9 +79,9 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
         'region' => 'content',
         'settings' => [
           'media_types' => [
-            'gredi_asset'
-            ]
-        ]
+            'gredi_asset',
+          ],
+        ],
       ])
       ->save();
     $display_repository->getViewDisplay('node', 'page', 'default')
@@ -92,27 +91,26 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
       ->save();
   }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function tearDown(): void {
-      $status = $this->getStatus();
+  /**
+   * {@inheritdoc}
+   */
+  protected function tearDown(): void {
+    $status = $this->getStatus();
 
-      if ($status === BaseTestRunner::STATUS_ERROR || $status === BaseTestRunner::STATUS_WARNING || $status === BaseTestRunner::STATUS_FAILURE) {
-        $log = \Drupal::database()
-          ->select('watchdog', 'w')
-          ->fields('w')
-          ->execute()
-          ->fetchAll();
-        throw new \RuntimeException(var_export($log, TRUE));
-      }
-      parent::tearDown();
+    if ($status === BaseTestRunner::STATUS_ERROR || $status === BaseTestRunner::STATUS_WARNING || $status === BaseTestRunner::STATUS_FAILURE) {
+      $log = \Drupal::database()
+        ->select('watchdog', 'w')
+        ->fields('w')
+        ->execute()
+        ->fetchAll();
+      throw new \RuntimeException(var_export($log, TRUE));
     }
+    parent::tearDown();
+  }
 
   /**
    * Test media library integration with gredi module.
    *
-   * @return void
    * @throws \Behat\Mink\Exception\ExpectationException
    * @throws \Drupal\Core\Entity\EntityStorageException
    */
