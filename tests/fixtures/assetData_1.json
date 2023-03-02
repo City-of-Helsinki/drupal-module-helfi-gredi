@@ -1,0 +1,61 @@
+{
+  "id" : "1",
+  "linkFileId" : "123",
+  "concreteFileId" : "123",
+  "parentId" : "134",
+  "linkParentId" : "145",
+  "concreteParentId" : "154",
+  "inCart" : false,
+  "fileType" : "nt:file",
+  "concreteFileType" : "nt:file",
+  "linkFileType" : "nt:file",
+  "contentStatus" : "EXISTS",
+  "previewStatus" : "EXISTS",
+  "imageMetaStatus" : "UNAVAILABLE",
+  "analyzeStatus" : "UNAVAILABLE",
+  "name" : "test1.jpg",
+  "path" : "test1.jpg",
+  "linkFilePath" : "/testpath/testimage.jpg",
+  "concreteFilePath" : "/testpath/testimage.jpg",
+  "apiLink" : "/api/v1/files/1",
+  "apiContentLink" : "/api/v1/files/1/contents/original",
+  "apiPreviewLink" : "/api/v1/files/1/contents/preview",
+  "fileSize" : 195072,
+  "created" : "2022-07-22T05:50:44.000Z",
+  "linkCreated" : "2022-07-22T05:50:44.000Z",
+  "modified" : "2022-08-12T11:14:01.000Z",
+  "propertiesById" : {
+    "nibo:name" : "test1.jpg"
+  },
+  "concretePropertiesById" : {
+    "nibo:name" : "test1.jpg"
+  },
+  "metaById" : { },
+  "inheritedPropertiesById" : { },
+  "inheritedMetaById" : { },
+  "thumbnails" : [ ],
+  "isInheritNode" : false,
+  "namesByLang" : {
+    "fi" : "test1.jpg",
+    "en" : "test1.jpg",
+    "se" : "test1.jpg"
+  },
+  "concreteNamesByLang" : {
+    "fi" : "test1.jpg",
+    "en" : "test1.jpg",
+    "se" : "test1.jpg"
+  },
+  "mimeGroup" : "picture",
+  "concreteMimeGroup" : "picture",
+  "allowedShareOut" : false,
+  "indicateSynkka" : false,
+  "metaLabelById" : { },
+  "inProcessing" : false,
+  "previewInProcessing" : false,
+  "longProcessing" : false,
+  "folder" : false,
+  "cart" : false,
+  "userProduct" : false,
+  "linked" : false,
+  "masterProduct" : false
+}
