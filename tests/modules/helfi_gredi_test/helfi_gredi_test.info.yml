@@ -1,0 +1,6 @@
+name: Helfi Gredi test helper
+description: Helper for helfi_gredi tests
+type: module
+core_version_requirement: '>=9'
+dependencies:
+  - helfi_gredi:helfi_gredi

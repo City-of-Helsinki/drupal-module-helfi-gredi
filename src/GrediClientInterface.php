@@ -68,7 +68,7 @@ interface GrediClientInterface {
    *
    * @throws \Exception
    */
-  public function getAssetData(string $id): array;
+  public function getAssetData(string $id): array|NULL;
 
   /**
    * Retrieves content of a file from the API.
