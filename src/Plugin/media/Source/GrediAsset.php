@@ -11,6 +11,7 @@ use Drupal\Core\Field\FieldTypePluginManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Image\ImageFactory;
 use Drupal\Core\Language\LanguageManagerInterface;
+use Drupal\Core\StreamWrapper\StreamWrapperManager;
 use Drupal\file\FileInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\helfi_gredi\GrediClient;
@@ -88,6 +89,13 @@ class GrediAsset extends Image {
   protected $fileRepository;
 
   /**
+   * The stream wrapper manager service.
+   *
+   * @var \Drupal\Core\StreamWrapper\StreamWrapperManager
+   */
+  protected $streamWrapperManager;
+
+  /**
    * GrediAsset constructor.
    *
    * {@inheritdoc}
@@ -106,7 +114,8 @@ class GrediAsset extends Image {
     LanguageManagerInterface $languageManager,
     TimeInterface $timeManager,
     DateFormatter $dateFormatter,
-    FileRepositoryInterface $fileRepository) {
+    FileRepositoryInterface $fileRepository,
+    StreamWrapperManager $streamWrapperManager) {
     parent::__construct(
       $configuration,
       $plugin_id,
@@ -116,7 +125,8 @@ class GrediAsset extends Image {
       $field_type_manager,
       $config_factory,
       $imageFactory,
-      $fileSystem
+      $fileSystem,
+      $streamWrapperManager
     );
 
     $this->grediClient = $grediClient;
@@ -124,6 +134,7 @@ class GrediAsset extends Image {
     $this->timeManager = $timeManager;
     $this->dateFormatter = $dateFormatter;
     $this->fileRepository = $fileRepository;
+    $this->streamWrapperManager = $streamWrapperManager;
   }
 
   /**
@@ -144,7 +155,8 @@ class GrediAsset extends Image {
       $container->get('language_manager'),
       $container->get('datetime.time'),
       $container->get('date.formatter'),
-      $container->get('file.repository')
+      $container->get('file.repository'),
+      $container->get('stream_wrapper_manager')
     );
   }
 
@@ -247,7 +259,14 @@ class GrediAsset extends Image {
 
           // Asset name contains id and last updated date.
           $asset_name = $assetId . '_' . strtotime($assetModified) . substr($assetName, strrpos($assetName, "."));
-          $directory = 'public://gredi/thumbs/' . $date;
+
+          // Get the file storage uri_scheme.
+          $field_storage = $this->entityTypeManager->getStorage('field_storage_config')
+            ->load('media.field_media_image')->getSettings();
+          $scheme = $field_storage['uri_scheme'];
+          $uri = $this->streamWrapperManager->getViaScheme($scheme)->getUri();
+
+          $directory = $uri . '/gredi/thumbs/' . $date;
           $this->fileSystem->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
 
           $location = $directory . '/' . $asset_name;
@@ -349,8 +368,12 @@ class GrediAsset extends Image {
       $date_output = $this->dateFormatter->format($current_timestamp, 'custom', 'd/M/Y');
       $date = str_replace('/', '-', substr($date_output, 3, 8));
 
-      // Create month folder.
-      $directory = 'public://gredi/original/' . $date;
+      // Get the file storage uri_scheme.
+      $field_storage = $this->entityTypeManager->getStorage('field_storage_config')
+        ->load('media.field_media_image')->getSettings();
+      $scheme = $field_storage['uri_scheme'];
+      $uri = $this->streamWrapperManager->getViaScheme($scheme)->getUri();
+      $directory = $uri . '/gredi/original/' . $date;
 
       $this->fileSystem->prepareDirectory($directory, FileSystemInterface:: CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
 
