@@ -1,7 +1,7 @@
 services:
   helfi_gredi.dam_client:
     class: Drupal\helfi_gredi\GrediClient
-    arguments: [ '@http_client', '@config.factory', '@helfi_gredi.auth_service', '@logger.factory', '@cache.default']
+    arguments: [ '@http_client', '@config.factory', '@helfi_gredi.auth_service', '@logger.factory', '@cache.default', '@entity_type.manager']
   helfi_gredi.auth_service:
     class: Drupal\helfi_gredi\GrediAuthService
     arguments: ['@http_client', '@state', '@config.factory']

@@ -33,9 +33,15 @@ class MetaUpdate extends QueueWorkerBase {
       $internal_field_modified = $media->gredi_modified->value;
       // Set fields that needs to be updated NULL to let Media::prepareSave()
       // fill up the fields with the newest fetched data.
+      $bundle = $media->getEntityType()->getBundleEntityType();
+      $field_map = \Drupal::entityTypeManager()->getStorage($bundle)
+        ->load($media->getSource()->getPluginId())->getFieldMap();
       if ($external_field_modified > $internal_field_modified) {
-        $media->set('field_alt_text', NULL);
-        $media->set('field_keywords', NULL);
+        foreach ($field_map as $key => $field) {
+          if (is_int($key)) {
+            $media->set($field, NULL);
+          }
+        }
         $media->save();
       }
 

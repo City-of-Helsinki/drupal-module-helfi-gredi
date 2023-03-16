@@ -125,8 +125,7 @@ class GrediAsset extends Image {
       $field_type_manager,
       $config_factory,
       $imageFactory,
-      $fileSystem,
-      $streamWrapperManager
+      $fileSystem
     );
 
     $this->grediClient = $grediClient;
@@ -181,10 +180,14 @@ class GrediAsset extends Image {
         if (isset($damField['namesByLang'][$lang_code])) {
           $label = $damField['namesByLang'][$lang_code];
         }
+        if (isset($damField['valuesByLang'][$lang_code])) {
+          $values = $damField['valuesByLang'][$lang_code];
+        }
         else {
           $label = current($damField['namesByLang']);
         }
         $fields[$damField['id']] = $label;
+        $fields[$damField['keywords']] = $values;
       }
     }
     catch (\Exception $e) {

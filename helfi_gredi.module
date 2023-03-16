@@ -6,11 +6,13 @@
  */
 
 use Drupal\Component\Utility\UrlHelper;
+use Drupal\Core\Cache\RefinableCacheableDependencyInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Url;
 use Drupal\media\MediaTypeInterface;
 use Drupal\helfi_gredi\Plugin\media\Source\GrediAsset;
 use Drupal\media_library\MediaLibraryState;
@@ -61,7 +63,8 @@ function _helfi_gredi_media_save_validate(array &$form, FormStateInterface &$for
   try {
     /** @var \Drupal\helfi_gredi\GrediClient $grediClient */
     $grediClient = \Drupal::service('helfi_gredi.dam_client');
-    $asset_id = $grediClient->uploadImage($file_entity);
+    // @todo Add inputs and media.
+    $asset_id = $grediClient->uploadImage($file_entity, NULL, NULL);
     $media->set('gredi_asset_id', $asset_id);
     $media->set('gredi_modified', \Drupal::time()->getCurrentTime());
   }
@@ -136,7 +139,7 @@ function helfi_gredi_cron() {
   /** @var int $request_time */
   $request_time = \Drupal::time()->getRequestTime();
 
-  if (($request_time - $last_run) > 60 * 60 * 24) {
+//  if (($request_time - $last_run) > 60 * 60 * 24) {
     /** @var \Drupal\Core\Entity\Query\QueryInterface $query */
     $query = \Drupal::entityQuery('media')
       ->condition('bundle', 'gredi_asset');
@@ -148,6 +151,19 @@ function helfi_gredi_cron() {
     }
 
     \Drupal::state()->set('helfi_gredi.last_run', $request_time);
+//  }
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ */
+function helfi_gredi_menu_local_tasks_alter(&$data, $route_name, RefinableCacheableDependencyInterface &$cacheability) {
+  if ($route_name === 'entity.media.canonical') {
+    /** @var \Drupal\media\Entity\Media $media */
+    $media = \Drupal::routeMatch()->getParameter('media');
+    if ($media->bundle() !== 'gredi_asset') {
+      $data['tabs'][0]['helfi_gredi.sync_tab']['#access'] = FALSE;
+    }
   }
 }
 
@@ -388,3 +404,4 @@ function helfi_gredi_preprocess_views_view_fields(&$variables) {
     }
   }
 }
+

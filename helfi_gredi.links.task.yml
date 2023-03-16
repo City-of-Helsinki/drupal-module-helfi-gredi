@@ -1,5 +1,17 @@
 helfi_gredi.config:
-  route_name : helfi_gredi.config
+  route_name: helfi_gredi.config
   title: Gredi Configurations
   base_route: helfi_gredi.config
   weight: 0
+
+helfi_gredi.sync_tab_config:
+  route_name: helfi_gredi.sync_config
+  title: 'Gredi Asset'
+  base_route: helfi_gredi.config
+  weight: 10
+
+helfi_gredi.sync_tab:
+  title: 'Gredi Asset'
+  route_name: helfi_gredi.sync
+  base_route: entity.media.canonical
+  weight: 20

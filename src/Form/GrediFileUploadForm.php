@@ -76,6 +76,13 @@ class GrediFileUploadForm extends FileUploadForm {
   protected $timeManager;
 
   /**
+   * The entity type manager service.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entity_type_manager;
+
+  /**
    * GrediFileUploadForm constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -101,7 +108,7 @@ class GrediFileUploadForm extends FileUploadForm {
    */
   public function __construct(EntityTypeManagerInterface $entity_type_manager, MediaLibraryUiBuilder $library_ui_builder, ElementInfoManagerInterface $element_info, RendererInterface $renderer, FileSystemInterface $file_system, OpenerResolverInterface $opener_resolver, FileUsageInterface $file_usage, FileRepositoryInterface $file_repository = NULL, GrediClient $damClient, TimeInterface $timeManager) {
     parent::__construct($entity_type_manager, $library_ui_builder, $element_info, $renderer, $file_system, $opener_resolver, $file_usage, $file_repository);
-
+    $this->entity_type_manager = $entity_type_manager;
     $this->damClient = $damClient;
     $this->timeManager = $timeManager;
   }
@@ -131,13 +138,33 @@ class GrediFileUploadForm extends FileUploadForm {
     $file_uri = $media->field_media_image->entity->getFileUri();
     $file_entity = $this->fileRepository->loadByUri($file_uri);
 
+    $bundle = $media->getEntityType()->getBundleEntityType();
+    $field_map = $this->entity_type_manager->getStorage($bundle)
+      ->load($media->getSource()->getPluginId())->getFieldMap();
+
+    $inputs = [];
+    foreach ($field_map as $key => $field) {
+      if (is_int($key)) {
+        foreach ($form_state->getValues()['media'][$delta]['fields'] as $name => $properties) {
+          if ($name === $field) {
+            $inputs[$field] = $properties[$delta]['value'];
+            break;
+          }
+        }
+      }
+    }
+    $inputs += [
+      'langcode' => $form_state->getValues()['media'][$delta]['fields']['langcode'][$delta]['value']
+    ];
+
     // Upload image to Gredi API.
     try {
-      $asset_id = $this->damClient->uploadImage($file_entity);
+      $asset_id = $this->damClient->uploadImage($file_entity, $inputs, $media);
       $media->set('gredi_asset_id', $asset_id);
       $media->set('gredi_modified', $this->timeManager->getCurrentTime());
     }
     catch (\Exception $exception) {
+      \Drupal::messenger()->addError($exception->getMessage());
       $form_state->setError($form['media'], 'Upload error');
     }
     $form_display = EntityFormDisplay::collectRenderDisplay($media, 'media_library');

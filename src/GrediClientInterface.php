@@ -3,6 +3,7 @@
 namespace Drupal\helfi_gredi;
 
 use Drupal\file\Entity\File;
+use Drupal\media\MediaInterface;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -30,11 +31,15 @@ interface GrediClientInterface {
    *
    * @param \Drupal\file\Entity\File $image
    *   Image to upload.
+   * @param array $inputs
+   *   An array of fields values for upload.
+   *
+   * @param \Drupal\media\MediaInterface
    *
    * @return string|null
    *   ID of the newly created DAM asset.
    */
-  public function uploadImage(File $image): ?string;
+  public function uploadImage(File $image, array $inputs, MediaInterface $media): ?string;
 
   /**
    * Retrieves metadata fields.

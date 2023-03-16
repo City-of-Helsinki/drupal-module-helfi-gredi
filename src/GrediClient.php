@@ -7,9 +7,11 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\file\Entity\File;
+use Drupal\media\MediaInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
@@ -81,6 +83,14 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
   private $metafields;
 
   /**
+   * Entity type manager object.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $typeManager;
+
+
+  /**
    * GrediClient constructor.
    *
    * @param \GuzzleHttp\ClientInterface $guzzleClient
@@ -93,13 +103,17 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
    *   The Drupal LoggerChannelFactory service.
    * @param \Drupal\Core\Cache\CacheBackendInterface $cacheBin
    *   The Drupal CacheBackendInterface service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $typeManager
+   *   The Drupal EntityTypeManager service.
+   *
    */
   public function __construct(
     ClientInterface $guzzleClient,
     ConfigFactoryInterface $config,
     GrediAuthService $grediAuthService,
     LoggerChannelFactoryInterface $loggerChannelFactory,
-    CacheBackendInterface $cacheBin
+    CacheBackendInterface $cacheBin,
+    EntityTypeManagerInterface $typeManager
   ) {
     $this->httpClient = $guzzleClient;
     $this->config = $config;
@@ -107,6 +121,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
     $this->loggerChannel = $loggerChannelFactory->get('helfi_gredi');
     $this->apiUrl = $this->authService->apiUrl;
     $this->cacheBin = $cacheBin;
+    $this->typeManager = $typeManager;
   }
 
   /**
@@ -118,7 +133,8 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
       $container->get('config.factory'),
       $container->get('helfi_gredi.auth_service'),
       $container->get('logger.factory'),
-      $container->get('cache.default')
+      $container->get('cache.default'),
+      $container->get('entity_type.manager')
     );
   }
 
@@ -286,10 +302,23 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
   /**
    * {@inheritdoc}
    */
-  public function uploadImage(File $image): ?string {
+  public function uploadImage(File $image, array $inputs, MediaInterface $media): ?string {
 
     $mime = $image->getMimeType();
 
+    $bundle = $media->getEntityType()->getBundleEntityType();
+    $field_map = $this->typeManager->getStorage($bundle)
+      ->load($media->getSource()->getPluginId())->getFieldMap();
+
+    $meta_fields = [];
+    foreach ($field_map as $key => $field) {
+      if (is_int($key)) {
+        $meta_fields += [
+          'custom:meta-field-' . $key . '_' . $inputs['langcode'] => $inputs[$field]
+        ];
+      }
+
+    }
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
@@ -301,7 +330,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
       "name" => basename($image->getFileUri()),
       "fileType" => "nt:file",
       "propertiesById" => [],
-      "metaById" => [],
+      "metaById" => $meta_fields
     ];
     $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
     $base64EncodedFile = base64_encode(file_get_contents($image->getFileUri()));
