@@ -6,7 +6,7 @@ dependencies:
 id: media.field_alt_text
 field_name: field_alt_text
 entity_type: media
-type: string_long
+type: string
 settings:
   case_sensitive: false
 module: core
