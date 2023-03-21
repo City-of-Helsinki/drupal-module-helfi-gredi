@@ -64,11 +64,9 @@ class GrediSyncConfigForm extends ConfigFormBase {
 
   public function buildForm(array $form, FormStateInterface $form_state) {
 
-    $config = $this->config('helfi_gredi.settings');
-
     $form['sync'] = [
       '#type' => 'fieldset',
-      '#title' => $this->t('Synchronize Gredi Assets with Gredi API'),
+      '#title' => $this->t('Synchronize Gredi Assets with Gredi DAM'),
     ];
 
     $form['sync']['interval'] = [
@@ -77,7 +75,8 @@ class GrediSyncConfigForm extends ConfigFormBase {
       '#default_value' => 24,
       '#min' => 6,
       '#field_suffix' => 'Hours',
-      '#description' => $this->t('Choose the interval on which assets will be automatically synced.'),
+      '#description' => $this->t('Choose the interval on which assets will be automatically synced.'
+      . '<br>' . 'Defaults to 24 hours.'),
     ];
     $form['sync']['sync_button'] = [
       '#type' => 'submit',
@@ -98,9 +97,13 @@ class GrediSyncConfigForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
 
-    $config = $this->config('helfi_gredi.settings');
+    $config = $this->configFactory->getEditable('helfi_gredi.settings');
     $interval = $form_state->getValues()['interval'];
-    $config->set('sync_interval', $interval);
+    $current_config = $config->get();
+    $current_config['cron_interval'] = $interval;
+    $config->setData($current_config);
+    $config->save();
+
     \Drupal::messenger()->addMessage('Configuration successfully saved.');
   }
 
@@ -121,7 +124,10 @@ class GrediSyncConfigForm extends ConfigFormBase {
         $count++;
         $queue_worker->processItem($value);
       }
-      \Drupal::messenger()->addStatus(t('Successfully synced' . $count . 'assets'));
+      \Drupal::messenger()->addStatus(t('Successfully synced ' . $count . ' assets'));
+
+      // Store the last sync time to use it at cron.
+      \Drupal::state()->set('helfi_gredi.last_run', \Drupal::time()->getCurrentTime());
     }
     catch(\Exception $e) {
       $this->loggerFactory->error(t('Error on syncing asset: @error', [

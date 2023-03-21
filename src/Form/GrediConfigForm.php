@@ -222,6 +222,7 @@ class GrediConfigForm extends ConfigFormBase {
 
     $this->config('helfi_gredi.settings')->setData(
       [
+        'cron_interval' => 24,
         'api_url' => $form_state->getValue('api_url'),
         'username' => $form_state->getValue('username'),
         'password' => $form_state->getValue('password'),

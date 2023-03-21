@@ -60,11 +60,29 @@ function _helfi_gredi_media_save_validate(array &$form, FormStateInterface &$for
   }
 
   $file_entity = File::load($input);
+  // Retrieve meta fields from config and input values.
+  $bundle = $media->getEntityType()->getBundleEntityType();
+  $field_map = \Drupal::service('entity_type.manager')->getStorage($bundle)
+    ->load($media->getSource()->getPluginId())->getFieldMap();
+
+  $inputs = [];
+  foreach ($field_map as $key => $field) {
+    if (is_int($key)) {
+      foreach ($form_state->getValues() as $name => $properties) {
+        if ($name === $field) {
+          $inputs[$field] = $properties[0]['value'];
+          break;
+        }
+      }
+    }
+  }
+  $inputs += [
+    'langcode' => $form_state->getValues()['langcode'][0]['value']
+  ];
   try {
     /** @var \Drupal\helfi_gredi\GrediClient $grediClient */
     $grediClient = \Drupal::service('helfi_gredi.dam_client');
-    // @todo Add inputs and media.
-    $asset_id = $grediClient->uploadImage($file_entity, NULL, NULL);
+    $asset_id = $grediClient->uploadImage($file_entity, $inputs, $media);
     $media->set('gredi_asset_id', $asset_id);
     $media->set('gredi_modified', \Drupal::time()->getCurrentTime());
   }
@@ -139,7 +157,12 @@ function helfi_gredi_cron() {
   /** @var int $request_time */
   $request_time = \Drupal::time()->getRequestTime();
 
-//  if (($request_time - $last_run) > 60 * 60 * 24) {
+  /** @var \Drupal\Core\Config\ConfigFactory $config_factory */
+  $config_factory = \Drupal::service('config.factory');
+  $config = $config_factory->getEditable('helfi_gredi.settings');
+  $cron_interval = $config->get('cron_interval');
+
+  if (($request_time - $last_run) > $cron_interval) {
     /** @var \Drupal\Core\Entity\Query\QueryInterface $query */
     $query = \Drupal::entityQuery('media')
       ->condition('bundle', 'gredi_asset');
@@ -151,7 +174,7 @@ function helfi_gredi_cron() {
     }
 
     \Drupal::state()->set('helfi_gredi.last_run', $request_time);
-//  }
+  }
 }
 
 /**

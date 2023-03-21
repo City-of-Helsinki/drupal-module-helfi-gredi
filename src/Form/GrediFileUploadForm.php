@@ -138,6 +138,7 @@ class GrediFileUploadForm extends FileUploadForm {
     $file_uri = $media->field_media_image->entity->getFileUri();
     $file_entity = $this->fileRepository->loadByUri($file_uri);
 
+    // Retrieve meta fields from config and input values.
     $bundle = $media->getEntityType()->getBundleEntityType();
     $field_map = $this->entity_type_manager->getStorage($bundle)
       ->load($media->getSource()->getPluginId())->getFieldMap();
@@ -164,7 +165,7 @@ class GrediFileUploadForm extends FileUploadForm {
       $media->set('gredi_modified', $this->timeManager->getCurrentTime());
     }
     catch (\Exception $exception) {
-      \Drupal::messenger()->addError($exception->getMessage());
+      \Drupal::messenger()->addError(t('Failed to upload image.'));
       $form_state->setError($form['media'], 'Upload error');
     }
     $form_display = EntityFormDisplay::collectRenderDisplay($media, 'media_library');
