@@ -103,7 +103,7 @@ class GrediConfigForm extends ConfigFormBase {
     ];
 
     $form['auth']['password'] = [
-      '#type' => 'textfield',
+      '#type' => 'password',
       '#title' => $this->t('Password'),
       '#description' => 'ENVIRONMENT VARIABLE: GREDI_PASSWORD',
       '#default_value' => $config->get('password'),
