@@ -191,6 +191,21 @@ function helfi_gredi_menu_local_tasks_alter(&$data, $route_name, RefinableCachea
 }
 
 /**
+ * Implements hook_entity_operation_alter().
+ */
+function helfi_gredi_entity_operation_alter(array &$operations, EntityInterface $entity) {
+  if ($entity->getSource() instanceof GrediAsset) {
+    $operations += [
+      'Gredi Asset' => [
+        'title' => t('Gredi Asset'),
+        'url' => Url::fromRoute('helfi_gredi.sync', ['media' => $entity->id()]),
+        'weight' => 0,
+      ]
+    ];
+  }
+}
+
+/**
  * Implements hook_form_id_alter().
  */
 function helfi_gredi_form_media_gredi_asset_edit_form_alter(&$form, FormStateInterface $form_state) {

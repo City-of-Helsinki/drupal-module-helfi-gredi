@@ -186,8 +186,9 @@ class GrediAsset extends Image {
         else {
           $label = current($damField['namesByLang']);
         }
-        $fields[$damField['id']] = $label;
-        $fields[$damField['keywords']] = $values;
+        // @todo Retrieve keywords list and store it.
+//        $fields[$damField['id']] = $label;
+//        $fields[$damField['keywords']] = $values;
       }
     }
     catch (\Exception $e) {
