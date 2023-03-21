@@ -220,18 +220,20 @@ class GrediConfigForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $customerId = $form_state->get('customerId');
 
-    $this->config('helfi_gredi.settings')->setData(
-      [
-        'cron_interval' => 24,
-        'api_url' => $form_state->getValue('api_url'),
-        'username' => $form_state->getValue('username'),
-        'password' => $form_state->getValue('password'),
-        'customer' => $form_state->getValue('customer'),
-        'upload_folder_id' => $form_state->getValue('upload_folder_id'),
-        'customer_id' => $customerId,
-        'num_assets_per_page' => $form_state->getValue('num_assets_per_page'),
-      ]
-    )->save();
+    $config = $this->config('helfi_gredi.settings');
+    $current_config = $config->get();
+    $current_config += [
+      'api_url' => $form_state->getValue('api_url'),
+      'username' => $form_state->getValue('username'),
+      'password' => $form_state->getValue('password'),
+      'customer' => $form_state->getValue('customer'),
+      'upload_folder_id' => $form_state->getValue('upload_folder_id'),
+      'customer_id' => $customerId,
+      'num_assets_per_page' => $form_state->getValue('num_assets_per_page'),
+    ];
+    $config->setData($current_config);
+    $config->save();
+
     parent::submitForm($form, $form_state);
   }
 
