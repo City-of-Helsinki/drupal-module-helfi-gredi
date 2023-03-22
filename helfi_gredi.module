@@ -390,7 +390,7 @@ function helfi_gredi_views_pre_render(ViewExecutable $view) {
  * Implements hook_preprocess_image().
  */
 function helfi_gredi_preprocess_image(&$variables) {
-  if (!empty($variables['attributes']['data-media-alt'])) {
+  if (isset($variables['attributes']['data-media-alt'])) {
     $variables['alt'] = $variables['attributes']['data-media-alt'];
     $variables['attributes']['alt'] = $variables['attributes']['data-media-alt'];
     unset($variables['attributes']['data-media-alt']);
@@ -406,12 +406,12 @@ function helfi_gredi_preprocess_field(&$variables) {
     && $variables['element']['#field_type'] == 'image') {
     /** @var \Drupal\media\MediaInterface $media */
     $media = $variables['element']['#object'];
-    if (!empty($media->get('field_alt_text')->value)) {
+    if ($media->hasField('field_alt_text')) {
       if ($variables['items'][0]['content']['#theme'] == 'image') {
-        $variables['items'][0]['content']['#attributes']['data-media-alt'] = $media->get('field_alt_text')->value;
+        $variables['items'][0]['content']['#attributes']['data-media-alt'] = $media->get('field_alt_text')->value ?? '';
       }
       if ($variables['items'][0]['content']['#theme'] == 'image_formatter') {
-        $variables['items'][0]['content']['#item_attributes']['data-media-alt'] = $media->get('field_alt_text')->value;
+        $variables['items'][0]['content']['#item_attributes']['data-media-alt'] = $media->get('field_alt_text')->value ?? '';
       }
       // @todo cover more theme hooks?
     }
