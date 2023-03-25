@@ -375,7 +375,6 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
       return $this->metafields;
     }
     $cache = $this->cacheBin->get('helfi_gredi_metafields');
-
     if (!empty($cache->data)) {
       $this->metafields = $cache->data;
       return $this->metafields;

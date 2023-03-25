@@ -7,16 +7,16 @@ helfi_gredi.config:
     _permission: 'administer site configuration'
 
 helfi_gredi.sync:
-  path: '/media/{media}/sync'
+  path: '/media/{media}/gredi'
   defaults:
-    _form: '\Drupal\helfi_gredi\Form\GrediSyncForm'
+    _form: '\Drupal\helfi_gredi\Form\GrediMediaSyncForm'
   options:
     _admin_route: TRUE
     parameters:
       media:
         type: entity:media
   requirements:
-    _permission: 'administer site configuration'
+    _entity_access: 'media.update'
 
 helfi_gredi.sync_config:
   path: '/admin/config/gredi-dam/sync'

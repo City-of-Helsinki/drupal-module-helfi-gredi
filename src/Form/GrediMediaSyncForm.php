@@ -11,7 +11,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Sync class for synchronizing Gredi Asset with Gredi API.
  */
-class GrediSyncForm extends FormBase {
+class GrediMediaSyncForm extends FormBase {
 
   /**
    * Queue worker manager.
@@ -62,23 +62,62 @@ class GrediSyncForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $media = NULL) {
-
+    /** @var $media \Drupal\media\MediaInterface */
     $form['asset'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Gredi Asset'),
     ];
     $form['asset']['asset_id'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Asset ID'),
-      '#default_value' => $media->id(),
-      '#disabled' => TRUE
-    ];
-    $form['asset']['asset_sync'] = [
-      '#type' => 'submit',
-      '#value' => $this->t('Sync asset with Gredi API'),
+      '#type' => 'item',
+      '#title' => $this->t('Gredi asset ID'),
+      '#markup' => $media->getSource()->getMetadata($media, 'gredi_asset_id'),
     ];
 
-    $form_state->set($media->getSource()->getPluginId(), $media);
+    $table_header = [
+        $this->t('Field'),
+        $this->t('Drupal value'),
+        $this->t('Gredi value')
+    ];
+    $table_rows = [];
+
+    $bundle = $media->getEntityType()->getBundleEntityType();
+    $field_map = \Drupal::entityTypeManager()->getStorage($bundle)
+      ->load($media->getSource()->getPluginId())->getFieldMap();
+    // TODO should we show all languages here, or leave as it is with current language?
+    // TODO depends on if we sync from gredi / to gredi all languages - now it seems that this is what we are doing
+    // TODO
+    // $translated_langs = $media->getTranslationLanguages();
+    foreach ($field_map as $key => $field) {
+      if ($key === 'original_file') {
+        continue;
+      }
+      if (!$media->hasField($field)) {
+        continue;
+      }
+      $table_rows[] = [
+        $media->get($field)->getFieldDefinition()->getLabel(),
+        $media->get($field)->getString(),
+        $media->getSource()->getMetadata($media, $key),
+      ];
+    }
+    $form['asset']['fields'] = [
+      '#theme' => 'table',
+      '#title' => $this->t('Metadata'),
+      '#header' => $table_header,
+      '#rows' => $table_rows,
+    ];
+
+    $form['asset']['asset_pull'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Sync asset from Gredi'),
+    ];
+
+    $form['asset']['asset_push'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Sync asset into Gredi'),
+    ];
+
+    $form_state->set('media_id', $media->id());
 
     return $form;
   }
@@ -86,8 +125,8 @@ class GrediSyncForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state, $media = NULL) {
-    $media_id = $form_state->get($media->getSource()->getPluginId())->id();
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    $media_id = $form_state->get('media_id');
     try {
       $queue_worker = $this->queueWorkerManager->createInstance('gredi_asset_update');
       $queue_worker->processItem($media_id);

@@ -93,7 +93,6 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
       if (!empty($existing_ids)) {
         // We should not have more than 1 with same gredi id.
         $mediaId = end($existing_ids);
-        // @todo should we check if modified since our copy and resave it?
         $media_ids[] = $mediaId;
       }
       else {
@@ -140,11 +139,11 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
 
         $siteLanguages = array_keys(\Drupal::languageManager()->getLanguages());
         $apiLanguages = $source->getMetadata($entity, 'lang_codes');
-        // @todo the api lang code for Swedish is SE, but in Drupal is SV.
-        // @todo How to handle this?
-        // @todo langcode SE in Drupal stands for Northern Sami.
-        // @todo Is this the dialect we want?
+        // API uses SE for Swedish, so we hardcode here the mapping.
         foreach ($apiLanguages as $apiLangCode) {
+          if ($apiLangCode == 'se') {
+            $apiLangCode = 'sv';
+          }
           if (!in_array($apiLangCode, $siteLanguages)) {
             continue;
           }

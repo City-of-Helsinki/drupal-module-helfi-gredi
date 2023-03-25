@@ -180,15 +180,10 @@ class GrediAsset extends Image {
         if (isset($damField['namesByLang'][$lang_code])) {
           $label = $damField['namesByLang'][$lang_code];
         }
-        if (isset($damField['valuesByLang'][$lang_code])) {
-          $values = $damField['valuesByLang'][$lang_code];
-        }
         else {
           $label = current($damField['namesByLang']);
         }
-        // @todo Retrieve keywords list and store it.
-//        $fields[$damField['id']] = $label;
-//        $fields[$damField['keywords']] = $values;
+        $fields[$damField['id']] = $label;
       }
     }
     catch (\Exception $e) {
@@ -219,6 +214,7 @@ class GrediAsset extends Image {
       'default_name',
       'name',
       'thumbnail_uri',
+      'gredi_asset_id',
     ];
     if (!in_array($attribute_name, $attr_with_fallback) && empty($this->assetData)) {
       try {
@@ -230,6 +226,9 @@ class GrediAsset extends Image {
       }
     }
     switch ($attribute_name) {
+      case 'gredi_asset_id':
+        return $media->get('gredi_asset_id')->value;
+
       case 'name':
       case 'default_name':
         if (!$media->isNew()) {

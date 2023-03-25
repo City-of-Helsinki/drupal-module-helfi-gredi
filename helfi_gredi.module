@@ -14,6 +14,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Url;
 use Drupal\media\MediaTypeInterface;
+use Drupal\media\MediaInterface;
 use Drupal\helfi_gredi\Plugin\media\Source\GrediAsset;
 use Drupal\media_library\MediaLibraryState;
 use Drupal\helfi_gredi\Form\GrediFileUploadForm;
@@ -116,6 +117,8 @@ function helfi_gredi_entity_field_storage_info(EntityTypeInterface $entity_type)
       ->setTargetEntityTypeId('media')
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayConfigurable('form', FALSE);
+
+    // TODO add gredi_autosync checkbox, editable, default unchecked - based on this will autosync on cron.
   }
   return $definitions;
 }
@@ -194,12 +197,12 @@ function helfi_gredi_menu_local_tasks_alter(&$data, $route_name, RefinableCachea
  * Implements hook_entity_operation_alter().
  */
 function helfi_gredi_entity_operation_alter(array &$operations, EntityInterface $entity) {
-  if ($entity->getSource() instanceof GrediAsset) {
+  if ($entity instanceof MediaInterface && $entity->getSource() instanceof GrediAsset) {
     $operations += [
-      'Gredi Asset' => [
+      'gredi_asset' => [
         'title' => t('Gredi Asset'),
         'url' => Url::fromRoute('helfi_gredi.sync', ['media' => $entity->id()]),
-        'weight' => 0,
+        'weight' => 60,
       ]
     ];
   }
@@ -209,6 +212,7 @@ function helfi_gredi_entity_operation_alter(array &$operations, EntityInterface 
  * Implements hook_form_id_alter().
  */
 function helfi_gredi_form_media_gredi_asset_edit_form_alter(&$form, FormStateInterface $form_state) {
+  // TODO block only image edits.
   $form['actions']['submit']['#access'] = FALSE;
   $form['actions']['delete']['#access'] = FALSE;
   \Drupal::messenger()->addWarning('Gredi Image cannot be edited after it was fetched.');
