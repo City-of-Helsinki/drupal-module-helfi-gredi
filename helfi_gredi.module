@@ -118,7 +118,23 @@ function helfi_gredi_entity_field_storage_info(EntityTypeInterface $entity_type)
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayConfigurable('form', FALSE);
 
-    // TODO add gredi_autosync checkbox, editable, default unchecked - based on this will autosync on cron.
+    $definitions['gredi_autosync'] = BaseFieldDefinition::create('boolean')
+      ->setName('gredi_autosync')
+      ->setLabel(new TranslatableMarkup('Gredi Autosync'))
+      ->setDescription(new TranslatableMarkup('Autosync with Gredi on cron run.'))
+      ->setDefaultValue(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'checkbox',
+      ])
+      ->setDisplayOptions('view', [
+        'type' => 'hidden',
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setTargetEntityTypeId('media')
+      ->setRevisionable(FALSE);
+
   }
   return $definitions;
 }
@@ -146,6 +162,19 @@ function helfi_gredi_entity_bundle_field_info(EntityTypeInterface $entity_type, 
         ->setLabel(new TranslatableMarkup('Gredi Asset Modified'))
         ->setTranslatable(FALSE)
         ->setRevisionable(FALSE);
+
+      $definitions['gredi_autosync'] = BaseFieldDefinition::create('boolean')
+        ->setName('gredi_autosync')
+        ->setLabel(new TranslatableMarkup('Gredi Autosync'))
+        ->setTranslatable(FALSE)
+        ->setRevisionable(FALSE)
+        ->setDisplayOptions('form', [
+          'type' => 'checkbox',
+        ])
+        ->setDescription(new TranslatableMarkup('Autosync this asset with Gredi API on cron run.'))
+        ->setDefaultValue(FALSE)
+        ->setDisplayConfigurable('form', TRUE)
+        ->setDisplayConfigurable('view', FALSE);
     }
   }
   return $definitions;
@@ -168,7 +197,8 @@ function helfi_gredi_cron() {
   if (($request_time - $last_run) > $cron_interval) {
     /** @var \Drupal\Core\Entity\Query\QueryInterface $query */
     $query = \Drupal::entityQuery('media')
-      ->condition('bundle', 'gredi_asset');
+      ->condition('bundle', 'gredi_asset')
+      ->condition('gredi_autosync' ,1);
     /** @var array $results */
     $results = $query->execute();
     $queue = \Drupal::queue('gredi_asset_update');
@@ -212,10 +242,8 @@ function helfi_gredi_entity_operation_alter(array &$operations, EntityInterface 
  * Implements hook_form_id_alter().
  */
 function helfi_gredi_form_media_gredi_asset_edit_form_alter(&$form, FormStateInterface $form_state) {
-  // TODO block only image edits.
-  $form['actions']['submit']['#access'] = FALSE;
-  $form['actions']['delete']['#access'] = FALSE;
-  \Drupal::messenger()->addWarning('Gredi Image cannot be edited after it was fetched.');
+  $form['field_media_image']['#disabled'] = TRUE;
+  $form['field_media_image']['#prefix'] = 'Gredi Image cannot be edited after it was fetched.';
 }
 
 /**

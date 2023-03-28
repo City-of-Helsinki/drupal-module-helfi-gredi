@@ -2,6 +2,7 @@
 
 namespace Drupal\helfi_gredi\Plugin\QueueWorker;
 
+use Drupal\Core\Logger\RfcLogLevel;
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\media\Entity\Media;
 
@@ -22,7 +23,7 @@ class MetaUpdate extends QueueWorkerBase {
   public function processItem($media_id) {
     $media = Media::load($media_id);
     if (empty($media)) {
-      // TODO log that media was no longer found.
+      \Drupal::logger('helfi_gredi')->log(RfcLogLevel::NOTICE, 'Media with id ' . $media_id . ' was not found.');
       return;
     }
     // External asset modified timestamp.
