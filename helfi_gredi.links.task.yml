@@ -1,12 +1,12 @@
 helfi_gredi.config:
   route_name: helfi_gredi.config
-  title: Gredi Configurations
+  title: API details
   base_route: helfi_gredi.config
   weight: 0
 
 helfi_gredi.sync_tab_config:
   route_name: helfi_gredi.sync_config
-  title: 'Gredi Asset'
+  title: 'Sync settings'
   base_route: helfi_gredi.config
   weight: 10
 

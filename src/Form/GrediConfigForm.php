@@ -14,8 +14,6 @@ use GuzzleHttp\ClientInterface;
  */
 class GrediConfigForm extends ConfigFormBase {
 
-  const NUM_ASSETS_PER_PAGE = 12;
-
   /**
    * Client interface.
    *
@@ -194,20 +192,15 @@ class GrediConfigForm extends ConfigFormBase {
    *   Form state.
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $config = $this->config('helfi_gredi.settings');
     $customerId = $form_state->get('customerId');
 
-    $config = $this->config('helfi_gredi.settings');
-    $current_config = $config->get();
-    $current_config += [
-      'api_url' => $form_state->getValue('api_url'),
-      'username' => $form_state->getValue('username'),
-      'password' => $form_state->getValue('password'),
-      'customer' => $form_state->getValue('customer'),
-      'upload_folder_id' => $form_state->getValue('upload_folder_id'),
-      'customer_id' => $customerId,
-      'num_assets_per_page' => $form_state->getValue('num_assets_per_page'),
-    ];
-    $config->setData($current_config);
+    $config->set('api_url', $form_state->getValue('api_url'));
+    $config->set('username', $form_state->getValue('username'));
+    $config->set('password', $form_state->getValue('password'));
+    $config->set('customer', $form_state->getValue('customer'));
+    $config->set('upload_folder_id', $form_state->getValue('upload_folder_id'));
+    $config->set('customer_id', $customerId);
     $config->save();
 
     parent::submitForm($form, $form_state);

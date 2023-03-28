@@ -184,16 +184,18 @@ function helfi_gredi_entity_bundle_field_info(EntityTypeInterface $entity_type, 
  * Implements hook_cron().
  */
 function helfi_gredi_cron() {
+  /** @var \Drupal\Core\Config\ConfigFactory $config_factory */
+  $config_factory = \Drupal::service('config.factory');
+  $config = $config_factory->get('helfi_gredi.settings');
+  if (empty($config->get('sync.enabled'))) {
+    return;
+  }
+
   /** @var int $last_run */
   $last_run = \Drupal::state()->get('helfi_gredi.last_run', 0);
   /** @var int $request_time */
   $request_time = \Drupal::time()->getRequestTime();
-
-  /** @var \Drupal\Core\Config\ConfigFactory $config_factory */
-  $config_factory = \Drupal::service('config.factory');
-  $config = $config_factory->getEditable('helfi_gredi.settings');
-  $cron_interval = $config->get('cron_interval');
-
+  $cron_interval = $config->get('sync.cron_interval') ?? 86400;
   if (($request_time - $last_run) > $cron_interval) {
     /** @var \Drupal\Core\Entity\Query\QueryInterface $query */
     $query = \Drupal::entityQuery('media')

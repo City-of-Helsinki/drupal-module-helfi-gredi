@@ -63,30 +63,38 @@ class GrediSyncConfigForm extends ConfigFormBase {
   }
 
   public function buildForm(array $form, FormStateInterface $form_state) {
+    $config = $this->config('helfi_gredi.settings');
 
     $form['sync'] = [
       '#type' => 'fieldset',
-      '#title' => $this->t('Synchronize Gredi Assets with Gredi DAM'),
+      '#title' => $this->t('Synchronize local data from Gredi DAM during cron'),
+    ];
+
+    $form['sync']['enabled'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Enabled'),
+      '#default_value' => $config->get('sync.enabled') ?? FALSE,
     ];
 
     $form['sync']['interval'] = [
       '#type' => 'number',
-      '#title' => $this->t('Sync interval'),
-      '#default_value' => 24,
+      '#title' => $this->t('Interval'),
+      '#default_value' => $config->get('sync.interval') ?? 24,
       '#min' => 6,
+      '#step' => 1,
       '#field_suffix' => 'Hours',
-      '#description' => $this->t('Choose the interval on which assets will be automatically synced.'
-      . '<br>' . 'Defaults to 24 hours.'),
+      '#description' => $this->t('Interval on which all local assets marked with autosync will be synced from Gredi.'),
     ];
+
+    $form['sync']['save_button'] = [
+      '#type' => 'submit',
+      '#value' => 'Save',
+    ];
+
     $form['sync']['sync_button'] = [
       '#type' => 'submit',
       '#value' => 'Sync All Gredi Assets',
       '#submit' => ['::syncGrediAssets']
-    ];
-    $form['sync']['save_button'] = [
-      '#type' => 'submit',
-      '#value' => 'Save',
-      '#weight' => 0
     ];
 
     return $form;
@@ -96,15 +104,13 @@ class GrediSyncConfigForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-
-    $config = $this->configFactory->getEditable('helfi_gredi.settings');
-    $interval = $form_state->getValues()['interval'];
-    $current_config = $config->get();
-    $current_config['cron_interval'] = $interval;
-    $config->setData($current_config);
+    $config = $this->config('helfi_gredi.settings');
+    $values['interval'] = $form_state->getValue('interval', 24);
+    $values['enabled'] = $form_state->getValue('enabled', FALSE);
+    $config->set('sync', $values);
     $config->save();
 
-    \Drupal::messenger()->addMessage('Configuration successfully saved.');
+    parent::submitForm($form, $form_state);
   }
 
   /**
