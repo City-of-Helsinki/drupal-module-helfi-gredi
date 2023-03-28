@@ -46,8 +46,9 @@ class MetaUpdate extends QueueWorkerBase {
         $media->set($field, NULL);
       }
       $media->save();
-      // TODO we are not processing the translation here, but somehow it gets sync also on existing Drupal translations.
-      // TODO we should handle the case when a new translation in gredi appears and we have that lang enabled.
+      // When a new translation is present in gredi, we need to create.
+      // TODO we need to loop and set null through all translations.
+      // TODO we should handle the case when a new language in gredi appears and we have that lang enabled -> create the translation in Drupal.
       // TODO maybe find a way to reuse code from MediaLibrarySelectForm in regards with translation?
     }
 

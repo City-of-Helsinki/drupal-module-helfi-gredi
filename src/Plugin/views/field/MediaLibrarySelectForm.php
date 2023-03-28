@@ -106,7 +106,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         $entity = Media::create([
           'bundle' => $media_type->id(),
           'uid' => \Drupal::currentUser()->id(),
-          'langcode' => \Drupal::languageManager()->getCurrentLanguage()->getId(),
+          'langcode' => \Drupal::languageManager()->getDefaultLanguage()->getId(),
           'status' => 1,
           'gredi_asset_id' => $id,
         ]);

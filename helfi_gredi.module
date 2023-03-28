@@ -242,8 +242,15 @@ function helfi_gredi_entity_operation_alter(array &$operations, EntityInterface 
  * Implements hook_form_id_alter().
  */
 function helfi_gredi_form_media_gredi_asset_edit_form_alter(&$form, FormStateInterface $form_state) {
-  $form['field_media_image']['#disabled'] = TRUE;
-  $form['field_media_image']['#prefix'] = 'Gredi Image cannot be edited after it was fetched.';
+  $form['field_media_image']['widget'][0]['#description'] = t('The image must not be changed.');
+  $form['field_media_image']['widget'][0]['#process'][] = '_helfi_gredi_edit_image_process';
+}
+
+// TODO add function doc.
+function _helfi_gredi_edit_image_process($element, FormStateInterface $form_state, $form) {
+  $element['remove_button']['#access'] = FALSE;
+
+  return $element;
 }
 
 /**

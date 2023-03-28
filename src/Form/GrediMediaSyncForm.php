@@ -75,6 +75,7 @@ class GrediMediaSyncForm extends FormBase {
 
     $table_header = [
         $this->t('Field'),
+        $this->t('Language'),
         $this->t('Drupal value'),
         $this->t('Gredi value')
     ];
@@ -96,6 +97,7 @@ class GrediMediaSyncForm extends FormBase {
       }
       $table_rows[] = [
         $media->get($field)->getFieldDefinition()->getLabel(),
+        $media->language()->getName(),
         $media->get($field)->getString(),
         $media->getSource()->getMetadata($media, $key),
       ];

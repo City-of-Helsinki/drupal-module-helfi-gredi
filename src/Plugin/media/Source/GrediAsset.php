@@ -309,7 +309,7 @@ class GrediAsset extends Image {
           return NULL;
         }
         $lang_code = $media->language()->getId();
-        $fallbackLangCode = $this->languageManager->getCurrentLanguage()->getId();
+        $fallbackLangCode = $this->languageManager->getDefaultLanguage()->getId();
         // Trying to find the attr id in the metaById,
         // as they come as custom:meta-field-1285_fi.
         foreach ($this->assetData['metaById'] as $attr_name_key => $value) {

@@ -89,15 +89,14 @@ class GrediConfigForm extends ConfigFormBase {
       '#title' => $this->t('Base URL'),
       '#default_value' => $config->get('api_url'),
       '#description' =>
-        $this->t('The base URL for the API v1. ex: https://api4.domain.net/api/v1')
-      . '<br>' . 'ENVIRONMENT VARIABLE: GREDI_API_URL',
+        $this->t('The base URL for the API v1. ex: https://api4.domain.net/api/v1 . Can be defined with env var GREDI_API_URL.'),
       '#required' => TRUE,
     ];
 
     $form['auth']['username'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Username'),
-      '#description' => 'ENVIRONMENT VARIABLE: GREDI_USERNAME',
+      '#description' => $this->t('Can be defined with env var GREDI_USERNAME.'),
       '#default_value' => $config->get('username'),
       '#required' => TRUE,
     ];
@@ -105,7 +104,7 @@ class GrediConfigForm extends ConfigFormBase {
     $form['auth']['password'] = [
       '#type' => 'password',
       '#title' => $this->t('Password'),
-      '#description' => 'ENVIRONMENT VARIABLE: GREDI_PASSWORD',
+      '#description' => $this->t('Can be defined with env var GREDI_PASSWORD.'),
       '#default_value' => $config->get('password'),
       '#required' => TRUE,
     ];
@@ -114,8 +113,7 @@ class GrediConfigForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Customer path'),
       '#default_value' => $config->get('customer'),
-      '#description' => $this->t('Customer path based on which customer id is fetched.')
-      . '<br>' . 'ENVIRONMENT VARIABLE: GREDI_CUSTOMER',
+      '#description' => $this->t('Customer path based on which customer id is fetched. Can be defined with env var GREDI_CUSTOMER.'),
       '#required' => TRUE,
     ];
 
@@ -123,8 +121,7 @@ class GrediConfigForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Customer ID'),
       '#default_value' => $config->get('customer_id'),
-      '#description' => $this->t('This will be fetched upon submission.')
-        . '<br>' . 'ENVIRONMENT VARIABLE: GREDI_CUSTOMER_ID',
+      '#description' => $this->t('This will be fetched upon submission. Can be defined with env var GREDI_CUSTOMER_ID.'),
       '#disabled' => TRUE,
     ];
 
@@ -132,28 +129,7 @@ class GrediConfigForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Upload folder ID'),
       '#default_value' => $config->get('upload_folder_id'),
-      '#description' => $this->t('The Gredi folder ID on which files will be uploaded.')
-        . '<br>' . 'ENVIRONMENT VARIABLE: GREDI_UPLOAD_FOLDER_ID',
-      '#required' => TRUE,
-    ];
-
-    $form['entity_browser'] = [
-      '#type' => 'fieldset',
-      '#title' => $this->t('Gredi DAM media library settings'),
-      '#collapsible' => TRUE,
-      '#collapsed' => FALSE,
-    ];
-
-    $form['entity_browser']['num_assets_per_page'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Assets per page'),
-      '#default_value' => $config->get('num_assets_per_page') ?? self::NUM_ASSETS_PER_PAGE,
-      '#description' => $this->t(
-        'The number of assets to be shown per page in the media library can be set using this field. Default is set to @num_assets_per_page assets.',
-        [
-          '@num_assets_per_page' => self::NUM_ASSETS_PER_PAGE,
-        ]
-      ),
+      '#description' => $this->t('The Gredi folder ID on which files will be uploaded. Can be defined with env var GREDI_UPLOAD_FOLDER_ID.'),
       '#required' => TRUE,
     ];
 
