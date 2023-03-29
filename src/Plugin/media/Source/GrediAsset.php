@@ -318,6 +318,10 @@ class GrediAsset extends Image {
           }
           $attr_id_and_lang = str_replace('custom:meta-field-', '', $attr_name_key);
           [$attr_id, $attr_lang_code] = explode('_', $attr_id_and_lang);
+          // API uses 'SE' lang code for Swedish, so we hardcode it here.
+            if ($attr_lang_code === 'se') {
+              $attr_lang_code = 'sv';
+            }
           if ($attr_id != $attribute_name) {
             continue;
           }

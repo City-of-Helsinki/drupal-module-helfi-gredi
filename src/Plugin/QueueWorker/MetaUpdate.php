@@ -37,13 +37,58 @@ class MetaUpdate extends QueueWorkerBase {
     $field_map = \Drupal::entityTypeManager()->getStorage($bundle)
       ->load($media->getSource()->getPluginId())->getFieldMap();
     if ($external_field_modified > $internal_field_modified) {
+
       $media->set('gredi_modified', $external_field_modified);
+      $apiLanguages = $media->getSource()->getMetadata($media, 'lang_codes');
+      $siteLanguages = array_keys(\Drupal::languageManager()->getLanguages());
+      $currentLanguage = \Drupal::languageManager()->getCurrentLanguage()->getId();
+
+      // API uses SE for Swedish, so we hardcode here the mapping.
+      // Loop through all the languages to check for new translations.
+      foreach ($apiLanguages as $apiLangCode) {
+        if ($apiLangCode == 'se') {
+          $apiLangCode = 'sv';
+        }
+        if (!in_array($apiLangCode, $siteLanguages)) {
+          continue;
+        }
+        if ($currentLanguage == $apiLangCode) {
+          continue;
+        }
+        if ($media->hasTranslation($apiLangCode)) {
+          continue;
+        }
+        $translation = $media->addTranslation($apiLangCode);
+        $assetName = $media->getSource()->getMetadata($media, 'name');
+        $translation->set('name', $assetName);
+        $translation->set('field_alt_text', NULL);
+        $translation->set('field_keywords', NULL);
+
+        $source_field_name = $media->getSource()
+          ->getConfiguration()['source_field'];
+        if (!empty($file) && $translation->get($source_field_name)
+            ->getFieldDefinition()
+            ->isTranslatable()) {
+          $translation->set($source_field_name, ['target_id' => $file->id()]);
+        }
+        $translation->save();
+      }
+
+      // Loop through all fields and set them on NULL to force fetch again.
       foreach ($field_map as $key => $field) {
+        // Skip the original_file field.
         if ($key === 'original_file') {
           continue;
         }
-        // Setting null will trigger media to fetch again the mapped values.
-        $media->set($field, NULL);
+        foreach ($media->getTranslationLanguages() as $langCode) {
+          if ($langCode->getId() === $currentLanguage) {
+            $media->set($field, NULL);
+            continue;
+          }
+          $media->getTranslation($langCode->getId())->set($field, NULL);
+        }
+        $media->getTranslation($langCode->getId())->save();
+          // Setting null will trigger media to fetch again the mapped values.
       }
       $media->save();
       // When a new translation is present in gredi, we need to create.
