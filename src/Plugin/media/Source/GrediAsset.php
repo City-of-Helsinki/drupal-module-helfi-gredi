@@ -308,6 +308,9 @@ class GrediAsset extends Image {
         if (!isset($this->assetData['metaById'])) {
           return NULL;
         }
+        // TODO figure out a way that when creating a new translation in drupal
+        // TODO the Gredi value, from the table from Gredi Asset tab to display correct value
+        // TODO as it is now it follows the source values if the language is not avaialable in gredi
         $lang_code = $media->language()->getId();
         $fallbackLangCode = $this->languageManager->getDefaultLanguage()->getId();
         // Trying to find the attr id in the metaById,
