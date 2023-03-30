@@ -160,7 +160,7 @@ class GrediFileUploadForm extends FileUploadForm {
 
     // Upload image to Gredi API.
     try {
-      $asset_id = $this->damClient->uploadImage($file_entity, $inputs, $media);
+      $asset_id = $this->damClient->uploadImage($file_entity, $inputs, $media, 'POST', FALSE);
       $media->set('gredi_asset_id', $asset_id);
       $media->set('gredi_modified', $this->timeManager->getCurrentTime());
     }

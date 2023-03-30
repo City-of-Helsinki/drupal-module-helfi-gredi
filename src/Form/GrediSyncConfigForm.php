@@ -93,7 +93,7 @@ class GrediSyncConfigForm extends ConfigFormBase {
 
     $form['sync']['sync_button'] = [
       '#type' => 'submit',
-      '#value' => 'Sync All Gredi Assets',
+      '#value' => $this->t('Sync All Gredi Assets'),
       '#submit' => ['::syncGrediAssets']
     ];
 

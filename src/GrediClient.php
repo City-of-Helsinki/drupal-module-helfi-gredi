@@ -302,7 +302,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
   /**
    * {@inheritdoc}
    */
-  public function uploadImage(File $image, array $inputs, MediaInterface $media): ?string {
+  public function uploadImage(File $image, array $inputs, MediaInterface $media, string $method, bool $is_sync): ?string {
 
     $mime = $image->getMimeType();
 
@@ -310,61 +310,138 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
     $field_map = $this->typeManager->getStorage($bundle)
       ->load($media->getSource()->getPluginId())->getFieldMap();
 
-    $meta_fields = [];
-    foreach ($field_map as $key => $field) {
-      if (is_int($key)) {
-        $meta_fields += [
-          'custom:meta-field-' . $key . '_' . $inputs['langcode'] => $inputs[$field]
-        ];
+    // Here we send only one asset in one language (uploading an image).
+    if (!$is_sync) {
+      $meta_fields = [];
+      foreach ($field_map as $key => $field) {
+        if (is_int($key)) {
+          $meta_fields += [
+            'custom:meta-field-' . $key . '_' . $inputs['langcode'] => $inputs[$field]
+          ];
+        }
       }
-
     }
+    // In the case of syncing assets, we want to send all meta fields in all translations.
+    else {
+      $meta_fields = [];
+      foreach ($field_map as $key => $field) {
+        if (is_int($key)) {
+          foreach ($inputs as $lang_code => $value) {
+            // API uses 'SE' for 'SV' lang code.
+            if ($lang_code === 'sv') {
+              $lang_code = 'se';
+            }
+            $meta_fields += [
+              'custom:meta-field-' . $key . '_' . $lang_code => $value[$field]
+            ];
+          }
+        }
+      }
+    }
+
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
     // Create the upload URL.
     $urlUpload = sprintf("folders/%s/files/", $this->authService->uploadFolder);
-    $url = sprintf("%s/%s", $this->apiUrl, $urlUpload);
+    $urlSync = sprintf("files/%s",
+      $media->getSource()->getMetadata($media, 'gredi_asset_id'));
+    // The url is constructed based on the operation we do.
+    // For syncing the url will be of type: apiUrl/files/{id}
+    // For uploading an image will be of type: apiUrl/folders/{id}
+    $url = $is_sync ? sprintf("%s/%s", $this->apiUrl, $urlSync) :
+       sprintf("%s/%s", $this->apiUrl, $urlUpload);
 
-    $fieldData = [
-      "name" => basename($image->getFileUri()),
-      "fileType" => "nt:file",
-      "propertiesById" => [],
-      "metaById" => $meta_fields
-    ];
-    $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
-    $base64EncodedFile = base64_encode(file_get_contents($image->getFileUri()));
-    // @todo check this instead of this hardcoded string.
-    // https://docs.guzzlephp.org/en/stable/quickstart.html#sending-form-fields
-    $boundary = "helfiboundary";
-    $requestBody = "";
-    $requestBody .= "\r\n";
-    $requestBody .= "\r\n";
-    $requestBody .= "--" . $boundary . "\r\n";
-    $requestBody .= "Content-Disposition: form-data; name=\"json\"\r\n";
-    $requestBody .= "Content-Type: application/json\r\n";
-    $requestBody .= "\r\n";
-    $requestBody .= $fieldString . "\r\n";
-    $requestBody .= "--" . $boundary . "\r\n";
-    $requestBody .= "Content-Disposition: form-data; name=\"file\"\r\n";
-    $requestBody .= "Content-Type: " . $mime . "\r\n";
-    $requestBody .= "Content-Transfer-Encoding: base64\r\n";
-    $requestBody .= "\r\n";
-    $requestBody .= $base64EncodedFile . "\r\n";
-    $requestBody .= "--" . $boundary . "--\r\n";
-    $requestBody .= "\r\n";
+    // If we create a new asset we give it the basename of the file,
+    // Otherwise (when syncing) we want to send the name that the user inputs
+    // In the name field of the asset (the Drupal value).
+    $asset_name = $is_sync ? $media->getName() : basename($image->getFileUri());
 
-    $response = $this->httpClient->request('POST', $url, [
-      'cookies' => $this->authService->getCookieJar(),
-      'headers' => [
-        'Content-Type' => 'multipart/form-data;boundary=' . $boundary,
-        'Content-Length' => strlen($requestBody),
-      ],
-      'body' => $requestBody,
-    ])->getBody()->getContents();
+    // When is not syncing we want to upload an asset.
+    if (!$is_sync) {
+      $fieldData = [
+        "name" => $asset_name,
+        "fileType" => "nt:file",
+        "propertiesById" => [],
+        "metaById" => $meta_fields
+      ];
 
-    // Return file ID from API as string.
-    return json_decode($response, TRUE)['id'];
+      $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
+      $base64EncodedFile = base64_encode(file_get_contents($image->getFileUri()));
+      // @todo check this instead of this hardcoded string.
+      // https://docs.guzzlephp.org/en/stable/quickstart.html#sending-form-fields
+
+      $boundary = "helfiboundary";
+      $requestBody = "";
+      $requestBody .= "\r\n";
+      $requestBody .= "\r\n";
+      $requestBody .= "--" . $boundary . "\r\n";
+      $requestBody .= "Content-Disposition: form-data; name=\"json\"\r\n";
+      $requestBody .= "Content-Type: application/json\r\n";
+      $requestBody .= "\r\n";
+      $requestBody .= $fieldString . "\r\n";
+      $requestBody .= "--" . $boundary . "\r\n";
+      $requestBody .= "Content-Disposition: form-data; name=\"file\"\r\n";
+      $requestBody .= "Content-Type: " . $mime . "\r\n";
+      $requestBody .= "Content-Transfer-Encoding: base64\r\n";
+      $requestBody .= "\r\n";
+      $requestBody .= $base64EncodedFile . "\r\n";
+      $requestBody .= "--" . $boundary . "--\r\n";
+      $requestBody .= "\r\n";
+
+      try {
+        // Request made when uploading assets.
+        $response = $this->httpClient->request($method, $url, [
+          'cookies' => $this->authService->getCookieJar(),
+          'headers' => [
+            'Content-Type' => 'multipart/form-data;boundary=' . $boundary,
+            'Content-Length' => strlen($requestBody),
+          ],
+          'body' => $requestBody,
+        ])->getBody()->getContents();
+
+        // Return file ID from API as string.
+        return json_decode($response, TRUE)['id'];
+      }
+      catch(\Exception $e) {
+        $this->loggerChannel->error(t('Error on calling @url : @error', [
+          '@error' => $e->getMessage(),
+          '@url' => $url,
+        ]));
+        throw new \Exception($e->getMessage());
+      }
+    }
+    // When it is syncing we want to update some values.
+    else {
+      $fieldData = [
+        "name" => $asset_name,
+        "propertiesById" => [],
+        "metaById" => $meta_fields
+      ];
+      $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
+      // Request made when syncing assets.
+      try {
+        $response = $this->httpClient->request($method, $url, [
+          'cookies' => $this->authService->getCookieJar(),
+          'headers' => [
+            'Content-Type' => 'application/json',
+            'Content-Length' => strlen($fieldString),
+          ],
+          'body' => $fieldString,
+        ])->getBody()->getContents();
+
+        // Return file ID from API as string.
+        return json_decode($response, TRUE)['id'];
+      }
+      catch(\Exception $e) {
+        $this->loggerChannel->error(t('Error on calling @url : @error', [
+          '@error' => $e->getMessage(),
+          '@url' => $url,
+        ]));
+        throw new \Exception($e->getMessage());
+      }
+    }
+
   }
 
   /**

@@ -6,6 +6,9 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Queue\QueueWorkerManager;
+use Drupal\file\Entity\File;
+use Drupal\helfi_gredi\GrediClient;
+use Drupal\media\Entity\Media;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -28,17 +31,27 @@ class GrediMediaSyncForm extends FormBase {
   protected $loggerFactory;
 
   /**
+   * The Gredi client service.
+   *
+   * @var \Drupal\helfi_gredi\GrediClient
+   */
+  protected $grediClient;
+
+  /**
    * GrediSyncForm constructor.
    *
    * @param \Drupal\Core\Queue\QueueWorkerManager $queueWorkerManager
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
+   * @param \Drupal\helfi_gredi\GrediClient $grediClient
    */
   public function __construct(
     QueueWorkerManager $queueWorkerManager,
-    LoggerChannelFactoryInterface $loggerChannelFactory
+    LoggerChannelFactoryInterface $loggerChannelFactory,
+    GrediClient $grediClient
   ) {
     $this->queueWorkerManager = $queueWorkerManager;
     $this->loggerFactory = $loggerChannelFactory->get('helfi_gredi');
+    $this->grediClient = $grediClient;
   }
 
   /**
@@ -47,7 +60,8 @@ class GrediMediaSyncForm extends FormBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('plugin.manager.queue_worker'),
-      $container->get('logger.factory')
+      $container->get('logger.factory'),
+      $container->get('helfi_gredi.dam_client')
     );
   }
 
@@ -117,6 +131,7 @@ class GrediMediaSyncForm extends FormBase {
     $form['asset']['asset_push'] = [
       '#type' => 'submit',
       '#value' => $this->t('Sync asset into Gredi'),
+      '#submit' => ['::syncAssetToGredi'],
     ];
 
     $form_state->set('media_id', $media->id());
@@ -139,7 +154,47 @@ class GrediMediaSyncForm extends FormBase {
         '@error' => $e->getMessage(),
       ]));
     }
+  }
 
+  public function syncAssetToGredi(array &$form, FormStateInterface $form_state) {
+    try {
+      /** @var \Drupal\media\MediaInterface $media */
+      $media = Media::load($form_state->getStorage()['media_id']);
+
+      $bundle = $media->getEntityType()->getBundleEntityType();
+      $field_map = \Drupal::entityTypeManager()->getStorage($bundle)
+        ->load($media->getSource()->getPluginId())->getFieldMap();
+
+      $inputs = [];
+      $apiLanguages = $media->getSource()->getMetadata($media, 'lang_codes');
+      $currentLanguage = \Drupal::languageManager()->getCurrentLanguage()->getId();
+
+      foreach ($field_map as $key => $field) {
+        if ($key === 'original_file') {
+          continue;
+        }
+        foreach ($apiLanguages as $apiLanguage) {
+          if ($apiLanguage === 'se') {
+            $apiLanguage = 'sv';
+          }
+          if ($apiLanguage === $currentLanguage) {
+            $inputs[$apiLanguage][$field] = $media->$field->value;
+            continue;
+          }
+          if ($media->hasTranslation($apiLanguage)) {
+            $translated_media = $media->getTranslation($apiLanguage);
+            $inputs[$apiLanguage][$field] = $translated_media->$field->value;
+          }
+        }
+      }
+      $fid = $media->field_media_image->target_id;
+      $file = File::load($fid);
+      // TODO add try catch.
+      $this->grediClient->uploadImage($file, $inputs, $media, 'PUT', TRUE);
+    }
+    catch (\Exception $e) {
+
+    }
   }
 
 }

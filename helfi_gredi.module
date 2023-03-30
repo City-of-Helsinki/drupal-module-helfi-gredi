@@ -83,7 +83,7 @@ function _helfi_gredi_media_save_validate(array &$form, FormStateInterface &$for
   try {
     /** @var \Drupal\helfi_gredi\GrediClient $grediClient */
     $grediClient = \Drupal::service('helfi_gredi.dam_client');
-    $asset_id = $grediClient->uploadImage($file_entity, $inputs, $media);
+    $asset_id = $grediClient->uploadImage($file_entity, $inputs, $media, 'POST', FALSE);
     $media->set('gredi_asset_id', $asset_id);
     $media->set('gredi_modified', \Drupal::time()->getCurrentTime());
   }
