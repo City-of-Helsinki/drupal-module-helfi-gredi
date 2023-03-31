@@ -305,39 +305,9 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
   public function uploadImage(File $image, array $inputs, MediaInterface $media, string $method, bool $is_sync): ?string {
 
     $mime = $image->getMimeType();
-
     $bundle = $media->getEntityType()->getBundleEntityType();
     $field_map = $this->typeManager->getStorage($bundle)
       ->load($media->getSource()->getPluginId())->getFieldMap();
-
-    // Here we send only one asset in one language (uploading an image).
-    if (!$is_sync) {
-      $meta_fields = [];
-      foreach ($field_map as $key => $field) {
-        if (is_int($key)) {
-          $meta_fields += [
-            'custom:meta-field-' . $key . '_' . $inputs['langcode'] => $inputs[$field]
-          ];
-        }
-      }
-    }
-    // In the case of syncing assets, we want to send all meta fields in all translations.
-    else {
-      $meta_fields = [];
-      foreach ($field_map as $key => $field) {
-        if (is_int($key)) {
-          foreach ($inputs as $lang_code => $value) {
-            // API uses 'SE' for 'SV' lang code.
-            if ($lang_code === 'sv') {
-              $lang_code = 'se';
-            }
-            $meta_fields += [
-              'custom:meta-field-' . $key . '_' . $lang_code => $value[$field]
-            ];
-          }
-        }
-      }
-    }
 
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
@@ -359,6 +329,15 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
 
     // When is not syncing we want to upload an asset.
     if (!$is_sync) {
+
+      $meta_fields = [];
+      foreach ($field_map as $key => $field) {
+        if (is_int($key)) {
+          $meta_fields += [
+            'custom:meta-field-' . $key . '_' . $inputs['langcode'] => $inputs[$field]
+          ];
+        }
+      }
       $fieldData = [
         "name" => $asset_name,
         "fileType" => "nt:file",
@@ -389,30 +368,37 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
       $requestBody .= "--" . $boundary . "--\r\n";
       $requestBody .= "\r\n";
 
-      try {
-        // Request made when uploading assets.
-        $response = $this->httpClient->request($method, $url, [
-          'cookies' => $this->authService->getCookieJar(),
-          'headers' => [
-            'Content-Type' => 'multipart/form-data;boundary=' . $boundary,
-            'Content-Length' => strlen($requestBody),
-          ],
-          'body' => $requestBody,
-        ])->getBody()->getContents();
+      // Request made when uploading assets.
+      $response = $this->httpClient->request($method, $url, [
+        'cookies' => $this->authService->getCookieJar(),
+        'headers' => [
+          'Content-Type' => 'multipart/form-data;boundary=' . $boundary,
+          'Content-Length' => strlen($requestBody),
+        ],
+        'body' => $requestBody,
+      ])->getBody()->getContents();
 
-        // Return file ID from API as string.
-        return json_decode($response, TRUE)['id'];
+      // Return file ID from API as string.
+      return json_decode($response, TRUE)['id'];
       }
-      catch(\Exception $e) {
-        $this->loggerChannel->error(t('Error on calling @url : @error', [
-          '@error' => $e->getMessage(),
-          '@url' => $url,
-        ]));
-        throw new \Exception($e->getMessage());
-      }
-    }
     // When it is syncing we want to update some values.
     else {
+
+      $meta_fields = [];
+      foreach ($field_map as $key => $field) {
+        if (is_int($key)) {
+          foreach ($inputs as $lang_code => $value) {
+            // API uses 'SE' for 'SV' lang code.
+            if ($lang_code === 'sv') {
+              $lang_code = 'se';
+            }
+            $meta_fields += [
+              'custom:meta-field-' . $key . '_' . $lang_code => $value[$field]
+            ];
+          }
+        }
+      }
+
       $fieldData = [
         "name" => $asset_name,
         "propertiesById" => [],
@@ -420,7 +406,6 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
       ];
       $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
       // Request made when syncing assets.
-      try {
         $response = $this->httpClient->request($method, $url, [
           'cookies' => $this->authService->getCookieJar(),
           'headers' => [
@@ -431,15 +416,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
         ])->getBody()->getContents();
 
         // Return file ID from API as string.
-        return json_decode($response, TRUE)['id'];
-      }
-      catch(\Exception $e) {
-        $this->loggerChannel->error(t('Error on calling @url : @error', [
-          '@error' => $e->getMessage(),
-          '@url' => $url,
-        ]));
-        throw new \Exception($e->getMessage());
-      }
+        return json_decode($response, TRUE);
     }
 
   }

@@ -156,8 +156,17 @@ class GrediMediaSyncForm extends FormBase {
     }
   }
 
+  /**
+   * Sending updated information of an asset to Gredi API.
+   *
+   * @param array $form
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *
+   * @return void
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
   public function syncAssetToGredi(array &$form, FormStateInterface $form_state) {
-    try {
       /** @var \Drupal\media\MediaInterface $media */
       $media = Media::load($form_state->getStorage()['media_id']);
 
@@ -187,14 +196,16 @@ class GrediMediaSyncForm extends FormBase {
           }
         }
       }
-      $fid = $media->field_media_image->target_id;
-      $file = File::load($fid);
-      // TODO add try catch.
-      $this->grediClient->uploadImage($file, $inputs, $media, 'PUT', TRUE);
+      try {
+        $this->grediClient->uploadImage(NULL, $inputs, $media, 'PUT', TRUE);
+        \Drupal::messenger()->addStatus(t('Asset successfully updated.'));
+      }
+      catch(\Exception $e) {
+        \Drupal::messenger()->addError(t('Asset was not updated. Check logs.'));
+        \Drupal::logger('helfi_gredi')->error(t('@error', [
+          '@error' => $e->getMessage(),
+        ]));
+      }
     }
-    catch (\Exception $e) {
-
-    }
-  }
 
 }
