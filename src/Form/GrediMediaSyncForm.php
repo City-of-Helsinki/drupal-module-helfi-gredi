@@ -134,6 +134,12 @@ class GrediMediaSyncForm extends FormBase {
       '#submit' => ['::syncAssetToGredi'],
     ];
 
+    if (!$media->get('active_external_asset')->value) {
+      \Drupal::messenger()->addWarning(t('External asset no longer exists.'));
+      $form['asset']['asset_pull']['#disabled'] = TRUE;
+      $form['asset']['asset_push']['#disabled'] = TRUE;
+    }
+
     $form_state->set('media_id', $media->id());
 
     return $form;
@@ -147,7 +153,6 @@ class GrediMediaSyncForm extends FormBase {
     try {
       $queue_worker = $this->queueWorkerManager->createInstance('gredi_asset_update');
       $queue_worker->processItem($media_id);
-      \Drupal::messenger()->addStatus(t('Gredi Asset synced successfully.'));
     }
     catch(\Exception $e) {
       $this->loggerFactory->error(t('Error on syncing asset: @error', [
@@ -169,6 +174,14 @@ class GrediMediaSyncForm extends FormBase {
   public function syncAssetToGredi(array &$form, FormStateInterface $form_state) {
       /** @var \Drupal\media\MediaInterface $media */
       $media = Media::load($form_state->getStorage()['media_id']);
+
+      if ($media->get('active_external_asset')->value === FALSE) {
+        // TODO : disable the buttons for sync to gredi and from gredi.
+        $this->messenger()->addWarning(
+          'This asset no longer corresponds with any Gredi asset ID.
+          Please re-fetch the asset using media library.');
+        return;
+      }
 
       $bundle = $media->getEntityType()->getBundleEntityType();
       $field_map = \Drupal::entityTypeManager()->getStorage($bundle)
@@ -197,7 +210,9 @@ class GrediMediaSyncForm extends FormBase {
         }
       }
       try {
-        $this->grediClient->uploadImage(NULL, $inputs, $media, 'PUT', TRUE);
+        $fid = $media->field_media_image->target_id;
+        $file = File::load($fid);
+        $this->grediClient->uploadImage($file, $inputs, $media, 'PUT', TRUE);
         \Drupal::messenger()->addStatus(t('Asset successfully updated.'));
       }
       catch(\Exception $e) {

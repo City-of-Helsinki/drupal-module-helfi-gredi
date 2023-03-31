@@ -102,13 +102,14 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         $media_type = $entityTypeManager->getStorage('media_type')
           ->load('gredi_asset');
 
-        $currentLanguage = \Drupal::languageManager()->getCurrentLanguage()->getId();
+        $currentLanguage = \Drupal::languageManager()->getDefaultLanguage()->getId();
         $entity = Media::create([
           'bundle' => $media_type->id(),
           'uid' => \Drupal::currentUser()->id(),
-          'langcode' => \Drupal::languageManager()->getDefaultLanguage()->getId(),
+          'langcode' => $currentLanguage,
           'status' => 1,
           'gredi_asset_id' => $id,
+          'active_external_asset' => TRUE
         ]);
         /** @var \Drupal\helfi_gredi\Plugin\media\Source\GrediAsset $source */
         $source = $entity->getSource();

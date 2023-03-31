@@ -221,6 +221,9 @@ class GrediAsset extends Image {
         $this->assetData = $this->grediClient->getAssetData($media->get('gredi_asset_id')->value);
       }
       catch (\Exception $e) {
+        if (str_contains($e->getMessage(), 'RemovedNode') || str_contains($e->getMessage(), '400 Bad Request')) {
+          $media->set('active_external_asset', FALSE);
+        }
         $this->messenger()->addError('Failed to fetch asset data');
         return NULL;
       }

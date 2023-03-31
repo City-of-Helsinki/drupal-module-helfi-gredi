@@ -135,6 +135,15 @@ function helfi_gredi_entity_field_storage_info(EntityTypeInterface $entity_type)
       ->setTargetEntityTypeId('media')
       ->setRevisionable(FALSE);
 
+    $definitions['active_external_asset'] = BaseFieldDefinition::create('boolean')
+      ->setName('active_external_asset')
+      ->setLabel(new TranslatableMarkup('Asset exists on Gredi'))
+      ->setTranslatable(FALSE)
+      ->setDisplayConfigurable('form', FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setTargetEntityTypeId('media')
+      ->setRevisionable(FALSE);
+
   }
   return $definitions;
 }
@@ -175,6 +184,15 @@ function helfi_gredi_entity_bundle_field_info(EntityTypeInterface $entity_type, 
         ->setDefaultValue(FALSE)
         ->setDisplayConfigurable('form', TRUE)
         ->setDisplayConfigurable('view', FALSE);
+
+      $definitions['active_external_asset'] = BaseFieldDefinition::create('boolean')
+        ->setName('active_external_asset')
+        ->setLabel(new TranslatableMarkup('Asset exists on Gredi'))
+        ->setTranslatable(FALSE)
+        ->setDisplayConfigurable('form', FALSE)
+        ->setDisplayConfigurable('view', FALSE)
+        ->setTargetEntityTypeId('media')
+        ->setRevisionable(FALSE);
     }
   }
   return $definitions;
