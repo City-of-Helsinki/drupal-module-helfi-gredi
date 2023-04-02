@@ -109,7 +109,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
           'langcode' => $currentLanguage,
           'status' => 1,
           'gredi_asset_id' => $id,
-          'active_external_asset' => TRUE
+          'gredi_removed' => FALSE,
         ]);
         /** @var \Drupal\helfi_gredi\Plugin\media\Source\GrediAsset $source */
         $source = $entity->getSource();

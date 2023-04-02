@@ -2,6 +2,7 @@
 
 namespace Drupal\helfi_gredi\Form;
 
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -26,9 +27,16 @@ class GrediMediaSyncForm extends FormBase {
   /**
    * Logger channel.
    *
-   * @var LoggerChannelFactoryInterface
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
    */
   protected $loggerFactory;
+
+  /**
+   * Entity manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
 
   /**
    * The Gredi client service.
@@ -47,10 +55,12 @@ class GrediMediaSyncForm extends FormBase {
   public function __construct(
     QueueWorkerManager $queueWorkerManager,
     LoggerChannelFactoryInterface $loggerChannelFactory,
+    EntityTypeManagerInterface $entityTypeManager,
     GrediClient $grediClient
   ) {
     $this->queueWorkerManager = $queueWorkerManager;
     $this->loggerFactory = $loggerChannelFactory->get('helfi_gredi');
+    $this->entityTypeManager = $entityTypeManager;
     $this->grediClient = $grediClient;
   }
 
@@ -61,6 +71,7 @@ class GrediMediaSyncForm extends FormBase {
     return new static(
       $container->get('plugin.manager.queue_worker'),
       $container->get('logger.factory'),
+      $container->get('entity_type.manager'),
       $container->get('helfi_gredi.dam_client')
     );
   }
@@ -96,26 +107,44 @@ class GrediMediaSyncForm extends FormBase {
     $table_rows = [];
 
     $bundle = $media->getEntityType()->getBundleEntityType();
-    $field_map = \Drupal::entityTypeManager()->getStorage($bundle)
+    $field_map = $this->entityTypeManager->getStorage($bundle)
       ->load($media->getSource()->getPluginId())->getFieldMap();
     // TODO should we show all languages here, or leave as it is with current language?
     // TODO depends on if we sync from gredi / to gredi all languages - now it seems that this is what we are doing
     // TODO
-    // $translated_langs = $media->getTranslationLanguages();
-    foreach ($field_map as $key => $field) {
-      if ($key === 'original_file') {
-        continue;
-      }
-      if (!$media->hasField($field)) {
-        continue;
-      }
-      $table_rows[] = [
-        $media->get($field)->getFieldDefinition()->getLabel(),
-        $media->language()->getName(),
-        $media->get($field)->getString(),
-        $media->getSource()->getMetadata($media, $key),
-      ];
+
+    $gredi_langs = $media->getSource()->getMetadata($media, 'lang_codes');
+    if (empty($gredi_langs)) {
+      return $form;
     }
+    $site_languages = \Drupal::languageManager()->getLanguages();
+    foreach ($site_languages as $language) {
+      try {
+        /** @var \Drupal\media\MediaInterface $mediaTrans */
+        $mediaTrans = $media->getTranslation($language->getId());
+      }
+      catch (\Exception $e) {
+        $mediaTrans = $media->addTranslation($language->getId());
+        // Nothing, as it means translation doesn't exist.
+      }
+
+      foreach ($field_map as $key => $field) {
+        if ($key === 'original_file') {
+          continue;
+        }
+        if (!$media->hasField($field)) {
+          continue;
+        }
+        $table_rows[] = [
+          $mediaTrans->get($field)->getFieldDefinition()->getLabel(),
+          $mediaTrans->language()->getName(),
+          $mediaTrans->get($field)->getString(),
+          $mediaTrans->getSource()->getMetadata($mediaTrans, $key),
+        ];
+      }
+    }
+
+
     $form['asset']['fields'] = [
       '#theme' => 'table',
       '#title' => $this->t('Metadata'),
@@ -134,8 +163,8 @@ class GrediMediaSyncForm extends FormBase {
       '#submit' => ['::syncAssetToGredi'],
     ];
 
-    if (!$media->get('active_external_asset')->value) {
-      \Drupal::messenger()->addWarning(t('External asset no longer exists.'));
+    if ($media->get('gredi_removed')->value) {
+      \Drupal::messenger()->addWarning(t('Gredi remote asset no longer exists.'));
       $form['asset']['asset_pull']['#disabled'] = TRUE;
       $form['asset']['asset_push']['#disabled'] = TRUE;
     }
@@ -175,7 +204,7 @@ class GrediMediaSyncForm extends FormBase {
       /** @var \Drupal\media\MediaInterface $media */
       $media = Media::load($form_state->getStorage()['media_id']);
 
-      if ($media->get('active_external_asset')->value === FALSE) {
+      if ($media->get('gredi_removed')->value) {
         // TODO : disable the buttons for sync to gredi and from gredi.
         $this->messenger()->addWarning(
           'This asset no longer corresponds with any Gredi asset ID.
@@ -200,17 +229,17 @@ class GrediMediaSyncForm extends FormBase {
             $apiLanguage = 'sv';
           }
           if ($apiLanguage === $currentLanguage) {
-            $inputs[$apiLanguage][$field] = $media->$field->value;
+            $inputs[$apiLanguage][$field] = $media->get($field)->value;
             continue;
           }
           if ($media->hasTranslation($apiLanguage)) {
             $translated_media = $media->getTranslation($apiLanguage);
-            $inputs[$apiLanguage][$field] = $translated_media->$field->value;
+            $inputs[$apiLanguage][$field] = $translated_media->get($field)->value;
           }
         }
       }
       try {
-        $fid = $media->field_media_image->target_id;
+        $fid = $media->get('field_media_image')->target_id;
         $file = File::load($fid);
         $this->grediClient->uploadImage($file, $inputs, $media, 'PUT', TRUE);
         \Drupal::messenger()->addStatus(t('Asset successfully updated.'));

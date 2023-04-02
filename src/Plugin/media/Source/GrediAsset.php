@@ -96,6 +96,16 @@ class GrediAsset extends Image {
   protected $streamWrapperManager;
 
   /**
+   * Lang codes mismatch between api and site.
+   * Key is code lang in Gredi and value is code lang in Drupal.
+   *
+   * @var string[]
+   */
+  public $langMappingsFix = [
+    'se' => 'sv',
+  ];
+
+  /**
    * GrediAsset constructor.
    *
    * {@inheritdoc}
@@ -209,25 +219,39 @@ class GrediAsset extends Image {
    *   The metadata value or NULL if unset.
    */
   public function getMetadata(MediaInterface $media, $attribute_name) {
-    // Most of attributes requires data from API.
+    // Most of the attributes requires data from API.
     $attr_with_fallback = [
       'default_name',
       'name',
       'thumbnail_uri',
       'gredi_asset_id',
     ];
-    if (!in_array($attribute_name, $attr_with_fallback) && empty($this->assetData)) {
+    $is_gredi_attr = !in_array($attribute_name, $attr_with_fallback);
+    $removed_from_gredi = !empty($media->get('gredi_removed')->value);
+    if ($is_gredi_attr && $removed_from_gredi) {
+      return NULL;
+    }
+
+    // Fetch asset data if not already fetched.
+    if ($is_gredi_attr && empty($this->assetData)) {
       try {
         $this->assetData = $this->grediClient->getAssetData($media->get('gredi_asset_id')->value);
       }
       catch (\Exception $e) {
-        if (str_contains($e->getMessage(), 'RemovedNode') || str_contains($e->getMessage(), '400 Bad Request')) {
-          $media->set('active_external_asset', FALSE);
+        // The api return 400 Bad request instead of 404 when asset not found.
+        if ($e->getCode() === 400) {
+          if (empty($media->get('gredi_removed')->value)) {
+            // This might not be the best place to save.
+            $media->set('gredi_removed', FALSE);
+            $media->save();
+          }
+          return NULL;
         }
         $this->messenger()->addError('Failed to fetch asset data');
         return NULL;
       }
     }
+
     switch ($attribute_name) {
       case 'gredi_asset_id':
         return $media->get('gredi_asset_id')->value;
@@ -324,10 +348,10 @@ class GrediAsset extends Image {
           }
           $attr_id_and_lang = str_replace('custom:meta-field-', '', $attr_name_key);
           [$attr_id, $attr_lang_code] = explode('_', $attr_id_and_lang);
-          // API uses 'SE' lang code for Swedish, so we hardcode it here.
-            if ($attr_lang_code === 'se') {
-              $attr_lang_code = 'sv';
-            }
+          // API uses 'SE' lang code for Swedish, so we use this hardcoded mapping.
+          if (isset($this->langMappingsFix[$attr_lang_code])) {
+            $attr_lang_code = $this->langMappingsFix[$attr_lang_code];
+          }
           if ($attr_id != $attribute_name) {
             continue;
           }
@@ -337,10 +361,16 @@ class GrediAsset extends Image {
           if ($attr_lang_code != $lang_code) {
             continue;
           }
+
           return $value;
         }
 
-        return $fallbackValue;
+        // Currently we return translation fallback value for new media only.
+        if ($media->isNew()) {
+          return $fallbackValue;
+        }
+
+        return NULL;
     }
   }
 

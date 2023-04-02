@@ -167,7 +167,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
         $retry = FALSE;
       }
       catch (ClientException $e) {
-        if (!$login_retry && $e->getCode() == 401) {
+        if (!$login_retry && $e->getCode() === 401) {
           $login_retry = TRUE;
         }
         else {
@@ -175,7 +175,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
             '@error' => $e->getMessage(),
             '@url' => $url,
           ]));
-          throw new \Exception($e->getMessage());
+          throw new \Exception($e->getMessage(), $e->getCode());
         }
       }
       catch (GuzzleException $e) {
@@ -183,7 +183,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
           '@error' => $e->getMessage(),
           '@url' => $url,
         ]));
-        throw new \Exception($e->getMessage());
+        throw new \Exception($e->getMessage(), $e->getCode());
       }
     }
     return $response;
