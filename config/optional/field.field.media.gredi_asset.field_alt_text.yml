@@ -10,7 +10,7 @@ entity_type: media
 bundle: gredi_asset
 label: 'Alt text'
 description: ''
-required: true
+required: false
 translatable: true
 default_value: {  }
 default_value_callback: ''
