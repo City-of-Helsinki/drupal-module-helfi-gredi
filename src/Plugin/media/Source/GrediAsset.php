@@ -16,6 +16,7 @@ use Drupal\Core\StreamWrapper\StreamWrapperManager;
 use Drupal\file\FileInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\helfi_gredi\GrediClient;
+use Drupal\media\Entity\Media;
 use Drupal\media\MediaInterface;
 use Drupal\media\Plugin\media\Source\Image;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -471,6 +472,8 @@ class GrediAsset extends Image {
         if ($translation->get($source_field_name)
           ->getFieldDefinition()
           ->isTranslatable()) {
+          // TODO should we sync the name from description?
+          $translation->set('name', $media->getName());
           $translation->set($source_field_name, $media->get($source_field_name)->getValue());
         }
       }
@@ -482,8 +485,8 @@ class GrediAsset extends Image {
           continue;
         }
         $translation->set($field, NULL);
-        $translation->save();
       }
+      $translation->save();
     }
     $this->logger->notice($this->t('Synced metadata for Gredi asset id @id', ['@id' => $media->id()]));
   }

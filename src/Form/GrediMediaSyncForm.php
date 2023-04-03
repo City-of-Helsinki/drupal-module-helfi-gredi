@@ -205,54 +205,54 @@ class GrediMediaSyncForm extends FormBase {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public function syncAssetToGredi(array &$form, FormStateInterface $form_state) {
-      /** @var \Drupal\media\MediaInterface $media */
-      $media = Media::load($form_state->getStorage()['media_id']);
+    /** @var \Drupal\media\MediaInterface $media */
+    $media = Media::load($form_state->getStorage()['media_id']);
 
-      if ($media->get('gredi_removed')->value) {
-        $this->messenger()->addWarning(
-          'This asset no longer corresponds with any Gredi asset ID.
-          Please re-fetch the asset using media library.');
-        return;
+    if ($media->get('gredi_removed')->value) {
+      $this->messenger()->addWarning(
+        'This asset no longer corresponds with any Gredi asset ID.
+        Please re-fetch the asset using media library.');
+      return;
+    }
+
+    $bundle = $media->getEntityType()->getBundleEntityType();
+    $field_map = \Drupal::entityTypeManager()->getStorage($bundle)
+      ->load($media->getSource()->getPluginId())->getFieldMap();
+
+    $inputs = [];
+    $apiLanguages = $media->getSource()->getMetadata($media, 'lang_codes');
+    $currentLanguage = \Drupal::languageManager()->getCurrentLanguage()->getId();
+
+    foreach ($field_map as $key => $field) {
+      if ($key === 'original_file') {
+        continue;
       }
-
-      $bundle = $media->getEntityType()->getBundleEntityType();
-      $field_map = \Drupal::entityTypeManager()->getStorage($bundle)
-        ->load($media->getSource()->getPluginId())->getFieldMap();
-
-      $inputs = [];
-      $apiLanguages = $media->getSource()->getMetadata($media, 'lang_codes');
-      $currentLanguage = \Drupal::languageManager()->getCurrentLanguage()->getId();
-
-      foreach ($field_map as $key => $field) {
-        if ($key === 'original_file') {
+      foreach ($apiLanguages as $apiLanguage) {
+        if ($apiLanguage === 'se') {
+          $apiLanguage = 'sv';
+        }
+        if ($apiLanguage === $currentLanguage) {
+          $inputs[$apiLanguage][$field] = $media->get($field)->value;
           continue;
         }
-        foreach ($apiLanguages as $apiLanguage) {
-          if ($apiLanguage === 'se') {
-            $apiLanguage = 'sv';
-          }
-          if ($apiLanguage === $currentLanguage) {
-            $inputs[$apiLanguage][$field] = $media->get($field)->value;
-            continue;
-          }
-          if ($media->hasTranslation($apiLanguage)) {
-            $translated_media = $media->getTranslation($apiLanguage);
-            $inputs[$apiLanguage][$field] = $translated_media->get($field)->value;
-          }
+        if ($media->hasTranslation($apiLanguage)) {
+          $translated_media = $media->getTranslation($apiLanguage);
+          $inputs[$apiLanguage][$field] = $translated_media->get($field)->value;
         }
       }
-      try {
-        $fid = $media->get('field_media_image')->target_id;
-        $file = File::load($fid);
-        $this->grediClient->uploadImage($file, $inputs, $media, 'PUT', TRUE);
-        \Drupal::messenger()->addStatus(t('Asset successfully updated.'));
-      }
-      catch(\Exception $e) {
-        \Drupal::messenger()->addError(t('Asset was not updated. Check logs.'));
-        \Drupal::logger('helfi_gredi')->error(t('@error', [
-          '@error' => $e->getMessage(),
-        ]));
-      }
     }
+    try {
+      $fid = $media->get('field_media_image')->target_id;
+      $file = File::load($fid);
+      $this->grediClient->uploadImage($file, $inputs, $media, 'PUT', TRUE);
+      \Drupal::messenger()->addStatus(t('Asset successfully updated.'));
+    }
+    catch(\Exception $e) {
+      \Drupal::messenger()->addError(t('Asset was not updated. Check logs.'));
+      \Drupal::logger('helfi_gredi')->error(t('@error', [
+        '@error' => $e->getMessage(),
+      ]));
+    }
+  }
 
 }
