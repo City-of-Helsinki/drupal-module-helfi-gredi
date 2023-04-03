@@ -185,12 +185,15 @@ class GrediMediaSyncForm extends FormBase {
     $media_id = $form_state->get('media_id');
     try {
       $media = Media::load($media_id);
-      $media->getSource()->syncMediaFromGredi($media);
+      if ($media->getSource()->syncMediaFromGredi($media)) {
+        $this->messenger()->addStatus($this->t('All field translations were synced from Gredi.'));
+      }
     }
     catch(\Exception $e) {
       $this->loggerFactory->error(t('Error on syncing asset: @error', [
         '@error' => $e->getMessage(),
       ]));
+      $this->messenger()->addError($this->t('Failed to sync. Please check the logs.'));
     }
   }
 
@@ -221,12 +224,15 @@ class GrediMediaSyncForm extends FormBase {
 
     $inputs = [];
     $apiLanguages = $media->getSource()->getMetadata($media, 'lang_codes');
+    $langMappingsCorrection = $media->getSource()->langMappingsCorrection;
+    // TODO dep injection.
     $currentLanguage = \Drupal::languageManager()->getCurrentLanguage()->getId();
 
     foreach ($field_map as $key => $field) {
       if ($key === 'original_file') {
         continue;
       }
+      // TODO use $langMappingsCorrection for this language switch.
       foreach ($apiLanguages as $apiLanguage) {
         if ($apiLanguage === 'se') {
           $apiLanguage = 'sv';
@@ -242,12 +248,14 @@ class GrediMediaSyncForm extends FormBase {
       }
     }
     try {
+      // TODO get the field name field_media_image from source config.
       $fid = $media->get('field_media_image')->target_id;
       $file = File::load($fid);
       $this->grediClient->uploadImage($file, $inputs, $media, 'PUT', TRUE);
       \Drupal::messenger()->addStatus(t('Asset successfully updated.'));
     }
     catch(\Exception $e) {
+      // TODO dependency injection
       \Drupal::messenger()->addError(t('Asset was not updated. Check logs.'));
       \Drupal::logger('helfi_gredi')->error(t('@error', [
         '@error' => $e->getMessage(),

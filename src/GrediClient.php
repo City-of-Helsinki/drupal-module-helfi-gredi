@@ -302,8 +302,14 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
   /**
    * {@inheritdoc}
    */
-  public function uploadImage(File $image, array $inputs, MediaInterface $media, string $method, bool $is_sync): ?string {
-
+  public function uploadImage(File $image, array $inputs, MediaInterface $media, string $method, bool $is_update): ?string {
+    // TODO remove method, as is not needed
+    // TODO dow e need both $media and $image? I guess we could get the image from media in this method.
+    // TODO maybe put an uploadImage method in the source where we compule the metadata, file etc and use this method only for the actual api call, without  media object dependency.
+    $method = 'POST';
+    if ($is_update) {
+      $method = 'PUT';
+    }
     $mime = $image->getMimeType();
     $bundle = $media->getEntityType()->getBundleEntityType();
     $field_map = $this->typeManager->getStorage($bundle)
@@ -319,16 +325,16 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
     // The url is constructed based on the operation we do.
     // For syncing the url will be of type: apiUrl/files/{id}
     // For uploading an image will be of type: apiUrl/folders/{id}
-    $url = $is_sync ? sprintf("%s/%s", $this->apiUrl, $urlSync) :
+    $url = $is_update ? sprintf("%s/%s", $this->apiUrl, $urlSync) :
        sprintf("%s/%s", $this->apiUrl, $urlUpload);
 
     // If we create a new asset we give it the basename of the file,
     // Otherwise (when syncing) we want to send the name that the user inputs
     // In the name field of the asset (the Drupal value).
-    $asset_name = $is_sync ? $media->getName() : basename($image->getFileUri());
+    $asset_name = $is_update ? $media->getName() : basename($image->getFileUri());
 
     // When is not syncing we want to upload an asset.
-    if (!$is_sync) {
+    if (!$is_update) {
 
       $meta_fields = [];
       foreach ($field_map as $key => $field) {

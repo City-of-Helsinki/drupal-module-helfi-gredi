@@ -440,13 +440,13 @@ class GrediAsset extends Image {
     }
   }
 
-  public function syncMediaFromGredi(MediaInterface $media) {
+  public function syncMediaFromGredi(MediaInterface $media) : bool {
     // External asset modified timestamp.
     $external_field_modified = $media->getSource()->getMetadata($media, 'modified');
     if ($media->get('gredi_removed')->value) {
       $this->logger->warning($this->t('Gredi asset id @asset_id no longer found.', [
         '@asset_id' => $media->get('gredi_asset_id')->value]));
-      return;
+      return FALSE;
     }
     $bundle = $media->getEntityType()->getBundleEntityType();
 
@@ -489,6 +489,8 @@ class GrediAsset extends Image {
       $translation->save();
     }
     $this->logger->notice($this->t('Synced metadata for Gredi asset id @id', ['@id' => $media->id()]));
+
+    return TRUE;
   }
 
 }
