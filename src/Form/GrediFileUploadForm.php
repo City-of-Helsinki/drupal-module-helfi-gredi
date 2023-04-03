@@ -135,8 +135,6 @@ class GrediFileUploadForm extends FileUploadForm {
    * {@inheritdoc}
    */
   protected function validateMediaEntity(MediaInterface $media, array $form, FormStateInterface $form_state, $delta) {
-    $file_uri = $media->field_media_image->entity->getFileUri();
-    $file_entity = $this->fileRepository->loadByUri($file_uri);
 
     // Retrieve meta fields from config and input values.
     $bundle = $media->getEntityType()->getBundleEntityType();
@@ -160,7 +158,7 @@ class GrediFileUploadForm extends FileUploadForm {
 
     // Upload image to Gredi API.
     try {
-      $asset_id = $this->damClient->uploadImage($file_entity, $inputs, $media, 'POST', FALSE);
+      $asset_id = $this->damClient->uploadImage($inputs, $media, FALSE);
       $media->set('gredi_asset_id', $asset_id);
       $media->set('gredi_modified', $this->timeManager->getCurrentTime());
     }

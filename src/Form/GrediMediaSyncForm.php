@@ -5,7 +5,9 @@ namespace Drupal\helfi_gredi\Form;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Language\LanguageManager;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Messenger\Messenger;
 use Drupal\Core\Queue\QueueWorkerManager;
 use Drupal\file\Entity\File;
 use Drupal\helfi_gredi\GrediClient;
@@ -46,22 +48,42 @@ class GrediMediaSyncForm extends FormBase {
   protected $grediClient;
 
   /**
+   * The language manager service.
+   *
+   * @var \Drupal\Core\Language\LanguageManager
+   */
+  protected $languageManager;
+
+  /**
+   * The messenger service.
+   *
+   * @var \Drupal\Core\Messenger\Messenger
+   */
+  protected $messenger;
+
+  /**
    * GrediSyncForm constructor.
    *
    * @param \Drupal\Core\Queue\QueueWorkerManager $queueWorkerManager
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
    * @param \Drupal\helfi_gredi\GrediClient $grediClient
+   * @param \Drupal\Core\Language\LanguageManager $languageManager
+   * @param \Drupal\Core\Messenger\Messenger $messenger
    */
   public function __construct(
     QueueWorkerManager $queueWorkerManager,
     LoggerChannelFactoryInterface $loggerChannelFactory,
     EntityTypeManagerInterface $entityTypeManager,
-    GrediClient $grediClient
+    GrediClient $grediClient,
+    LanguageManager $languageManager,
+    Messenger $messenger
   ) {
     $this->queueWorkerManager = $queueWorkerManager;
     $this->loggerFactory = $loggerChannelFactory->get('helfi_gredi');
     $this->entityTypeManager = $entityTypeManager;
     $this->grediClient = $grediClient;
+    $this->languageManager = $languageManager;
+    $this->messenger = $messenger;
   }
 
   /**
@@ -72,7 +94,9 @@ class GrediMediaSyncForm extends FormBase {
       $container->get('plugin.manager.queue_worker'),
       $container->get('logger.factory'),
       $container->get('entity_type.manager'),
-      $container->get('helfi_gredi.dam_client')
+      $container->get('helfi_gredi.dam_client'),
+      $container->get('language_manager'),
+      $container->get('messenger')
     );
   }
 
@@ -225,17 +249,15 @@ class GrediMediaSyncForm extends FormBase {
     $inputs = [];
     $apiLanguages = $media->getSource()->getMetadata($media, 'lang_codes');
     $langMappingsCorrection = $media->getSource()->langMappingsCorrection;
-    // TODO dep injection.
-    $currentLanguage = \Drupal::languageManager()->getCurrentLanguage()->getId();
+    $currentLanguage = $this->languageManager->getCurrentLanguage()->getId();
 
     foreach ($field_map as $key => $field) {
       if ($key === 'original_file') {
         continue;
       }
-      // TODO use $langMappingsCorrection for this language switch.
       foreach ($apiLanguages as $apiLanguage) {
-        if ($apiLanguage === 'se') {
-          $apiLanguage = 'sv';
+        if (array_key_exists($apiLanguage, $langMappingsCorrection)) {
+          $apiLanguage = $langMappingsCorrection[$apiLanguage];
         }
         if ($apiLanguage === $currentLanguage) {
           $inputs[$apiLanguage][$field] = $media->get($field)->value;
@@ -248,16 +270,12 @@ class GrediMediaSyncForm extends FormBase {
       }
     }
     try {
-      // TODO get the field name field_media_image from source config.
-      $fid = $media->get('field_media_image')->target_id;
-      $file = File::load($fid);
-      $this->grediClient->uploadImage($file, $inputs, $media, 'PUT', TRUE);
-      \Drupal::messenger()->addStatus(t('Asset successfully updated.'));
+      $this->grediClient->uploadImage($inputs, $media, TRUE);
+      $this->messenger->addStatus(t('Asset successfully updated.'));
     }
     catch(\Exception $e) {
-      // TODO dependency injection
-      \Drupal::messenger()->addError(t('Asset was not updated. Check logs.'));
-      \Drupal::logger('helfi_gredi')->error(t('@error', [
+      $this->messenger->addError(t('Asset was not updated. Check logs.'));
+      $this->loggerFactory->error(t('@error', [
         '@error' => $e->getMessage(),
       ]));
     }

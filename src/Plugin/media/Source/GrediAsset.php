@@ -13,6 +13,7 @@ use Drupal\Core\Image\ImageFactory;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\Core\StreamWrapper\StreamWrapperManager;
+use Drupal\file\Entity\File;
 use Drupal\file\FileInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\helfi_gredi\GrediClient;
@@ -440,6 +441,16 @@ class GrediAsset extends Image {
     }
   }
 
+  /**
+   * Method for syncing assets from drupal with external gredi assets.
+   *
+   * @param \Drupal\media\MediaInterface $media
+   *
+   * @return bool
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   * @throws \Drupal\Core\Entity\EntityStorageException
+   */
   public function syncMediaFromGredi(MediaInterface $media) : bool {
     // External asset modified timestamp.
     $external_field_modified = $media->getSource()->getMetadata($media, 'modified');
@@ -491,6 +502,52 @@ class GrediAsset extends Image {
     $this->logger->notice($this->t('Synced metadata for Gredi asset id @id', ['@id' => $media->id()]));
 
     return TRUE;
+  }
+
+  /**
+   * Prepare meta fields values for upload/sync.
+   *
+   * @param bool $is_update
+   * @param \Drupal\media\MediaInterface $media
+   * @param $inputs
+   *
+   * @return array
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
+  public function prepareMetafieldsUpload(bool $is_update, MediaInterface $media, $inputs) {
+
+    $bundle = $media->getEntityType()->getBundleEntityType();
+    $field_map = $this->entityTypeManager->getStorage($bundle)
+      ->load($media->getSource()->getPluginId())->getFieldMap();
+
+    if ($is_update) {
+      $meta_fields = [];
+      foreach ($field_map as $key => $field) {
+        if (is_int($key)) {
+          foreach ($inputs as $lang_code => $value) {
+            // API uses 'SE' for 'SV' lang code.
+            if (array_key_exists($lang_code, $this->langMappingsCorrection))  {
+              $lang_code = $this->langMappingsCorrection[$lang_code];
+            }
+            $meta_fields += [
+              'custom:meta-field-' . $key . '_' . $lang_code => $value[$field]
+            ];
+          }
+        }
+      }
+    }
+    else {
+      $meta_fields = [];
+      foreach ($field_map as $key => $field) {
+        if (is_int($key)) {
+          $meta_fields += [
+            'custom:meta-field-' . $key . '_' . $inputs['langcode'] => $inputs[$field]
+          ];
+        }
+      }
+    }
+    return $meta_fields;
   }
 
 }

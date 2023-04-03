@@ -302,57 +302,29 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
   /**
    * {@inheritdoc}
    */
-  public function uploadImage(File $image, array $inputs, MediaInterface $media, string $method, bool $is_update): ?string {
-    // TODO remove method, as is not needed
-    // TODO dow e need both $media and $image? I guess we could get the image from media in this method.
-    // TODO maybe put an uploadImage method in the source where we compule the metadata, file etc and use this method only for the actual api call, without  media object dependency.
-    $method = 'POST';
-    if ($is_update) {
-      $method = 'PUT';
-    }
-    $mime = $image->getMimeType();
-    $bundle = $media->getEntityType()->getBundleEntityType();
-    $field_map = $this->typeManager->getStorage($bundle)
-      ->load($media->getSource()->getPluginId())->getFieldMap();
+  public function uploadImage(array $inputs, MediaInterface $media, bool $is_update): ?string {
 
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
-    // Create the upload URL.
-    $urlUpload = sprintf("folders/%s/files/", $this->authService->uploadFolder);
-    $urlSync = sprintf("files/%s",
-      $media->getSource()->getMetadata($media, 'gredi_asset_id'));
-    // The url is constructed based on the operation we do.
-    // For syncing the url will be of type: apiUrl/files/{id}
-    // For uploading an image will be of type: apiUrl/folders/{id}
-    $url = $is_update ? sprintf("%s/%s", $this->apiUrl, $urlSync) :
-       sprintf("%s/%s", $this->apiUrl, $urlUpload);
 
-    // If we create a new asset we give it the basename of the file,
-    // Otherwise (when syncing) we want to send the name that the user inputs
-    // In the name field of the asset (the Drupal value).
-    $asset_name = $is_update ? $media->getName() : basename($image->getFileUri());
+    // Process meta fields based on the action that we do (update asset or initial upload).
+    $meta_fields = $media->getSource()->prepareMetafieldsUpload($is_update, $media, $inputs);
 
-    // When is not syncing we want to upload an asset.
     if (!$is_update) {
+      // Get the mime type of the file.
+      $fid = $media->get($media->getSource()->getConfiguration()['source_field'])->target_id;
+      $file = File::load($fid);
+      $mime = $file->getMimeType();
 
-      $meta_fields = [];
-      foreach ($field_map as $key => $field) {
-        if (is_int($key)) {
-          $meta_fields += [
-            'custom:meta-field-' . $key . '_' . $inputs['langcode'] => $inputs[$field]
-          ];
-        }
-      }
       $fieldData = [
-        "name" => $asset_name,
+        "name" => basename($file->getFileUri()),
         "fileType" => "nt:file",
         "propertiesById" => [],
         "metaById" => $meta_fields
       ];
-
       $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
-      $base64EncodedFile = base64_encode(file_get_contents($image->getFileUri()));
+      $base64EncodedFile = base64_encode(file_get_contents($file->getFileUri()));
       // @todo check this instead of this hardcoded string.
       // https://docs.guzzlephp.org/en/stable/quickstart.html#sending-form-fields
 
@@ -374,8 +346,9 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
       $requestBody .= "--" . $boundary . "--\r\n";
       $requestBody .= "\r\n";
 
+      $urlUpload = sprintf("%s/folders/%s/files/", $this->apiUrl, $this->authService->uploadFolder);
       // Request made when uploading assets.
-      $response = $this->httpClient->request($method, $url, [
+      $response = $this->httpClient->request('POST', $urlUpload, [
         'cookies' => $this->authService->getCookieJar(),
         'headers' => [
           'Content-Type' => 'multipart/form-data;boundary=' . $boundary,
@@ -389,30 +362,16 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
       }
     // When it is syncing we want to update some values.
     else {
-
-      $meta_fields = [];
-      foreach ($field_map as $key => $field) {
-        if (is_int($key)) {
-          foreach ($inputs as $lang_code => $value) {
-            // API uses 'SE' for 'SV' lang code.
-            if ($lang_code === 'sv') {
-              $lang_code = 'se';
-            }
-            $meta_fields += [
-              'custom:meta-field-' . $key . '_' . $lang_code => $value[$field]
-            ];
-          }
-        }
-      }
-
       $fieldData = [
-        "name" => $asset_name,
+        "name" => $media->getName(),
         "propertiesById" => [],
         "metaById" => $meta_fields
       ];
       $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
+      $urlSync = sprintf("%s/files/%s", $this->apiUrl,
+        $media->getSource()->getMetadata($media, 'gredi_asset_id'));
       // Request made when syncing assets.
-        $response = $this->httpClient->request($method, $url, [
+        $response = $this->httpClient->request('PUT', $urlSync, [
           'cookies' => $this->authService->getCookieJar(),
           'headers' => [
             'Content-Type' => 'application/json',
@@ -421,8 +380,8 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
           'body' => $fieldString,
         ])->getBody()->getContents();
 
-        // Return file ID from API as string.
-        return json_decode($response, TRUE);
+        // Return empty array from API if successful, and we convert it to string
+        return implode('', json_decode($response, TRUE));
     }
 
   }

@@ -43,7 +43,7 @@ interface GrediClientInterface {
    * @return string|null
    *   ID of the newly created DAM asset.
    */
-  public function uploadImage(File $image, array $inputs, MediaInterface $media, string $method, bool $is_update): ?string;
+  public function uploadImage(array $inputs, MediaInterface $media, bool $is_update): ?string;
 
   /**
    * Retrieves metadata fields.

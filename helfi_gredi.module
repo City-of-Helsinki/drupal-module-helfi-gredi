@@ -53,14 +53,14 @@ function _helfi_gredi_media_save_validate(array &$form, FormStateInterface &$for
     return;
   }
 
-  $input = $form_state->getValue('field_media_image')[0]['fids'][0];
+  $source_field = $media->getSource()->getConfiguration()['source_field'];
+  $input = $form_state->getValue($source_field)[0]['fids'][0];
 
   if (!$input) {
-    $form_state->setError($form['field_media_image'], 'Upload error. Image already exists');
+    $form_state->setError($form[$source_field], 'Upload error. Image already exists');
     $form_state->setRebuild();
   }
 
-  $file_entity = File::load($input);
   // Retrieve meta fields from config and input values.
   $bundle = $media->getEntityType()->getBundleEntityType();
   $field_map = \Drupal::service('entity_type.manager')->getStorage($bundle)
@@ -83,12 +83,12 @@ function _helfi_gredi_media_save_validate(array &$form, FormStateInterface &$for
   try {
     /** @var \Drupal\helfi_gredi\GrediClient $grediClient */
     $grediClient = \Drupal::service('helfi_gredi.dam_client');
-    $asset_id = $grediClient->uploadImage($file_entity, $inputs, $media, 'POST', FALSE);
+    $asset_id = $grediClient->uploadImage($inputs, $media, FALSE);
     $media->set('gredi_asset_id', $asset_id);
     $media->set('gredi_modified', \Drupal::time()->getCurrentTime());
   }
   catch (\Exception $exception) {
-    $form_state->setError($form['field_media_image'], 'Upload error.');
+    $form_state->setError($form[$source_field], 'Upload error.');
     $form_state->setRebuild();
   }
 
