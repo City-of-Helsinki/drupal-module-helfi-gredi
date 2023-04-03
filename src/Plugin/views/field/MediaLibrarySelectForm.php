@@ -119,9 +119,6 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         $assetName = $source->getMetadata($entity, 'name');
         $entity->set('name', $assetName);
 
-        $modified = $source->getMetadata($entity, 'modified');
-        $entity->set('gredi_modified', $modified);
-
         /** @var \Drupal\file\FileInterface $file */
         $file = $source->getMetadata($entity, 'original_file');
         if (empty($file)) {
@@ -138,26 +135,8 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
 
         $entity->save();
 
-        $siteLanguages = array_keys(\Drupal::languageManager()->getLanguages());
-        $apiLanguages = $source->getMetadata($entity, 'lang_codes');
-        // API uses SE for Swedish, so we hardcode here the mapping.
-        foreach ($apiLanguages as $apiLangCode) {
-          if ($apiLangCode == 'se') {
-            $apiLangCode = 'sv';
-          }
-          if (!in_array($apiLangCode, $siteLanguages)) {
-            continue;
-          }
-          if ($currentLanguage == $apiLangCode) {
-            continue;
-          }
-          $translation = $entity->addTranslation($apiLangCode);
-          $translation->set('name', $assetName);
-          if (!empty($file) && $translation->get($source_field_name)->getFieldDefinition()->isTranslatable()) {
-            $translation->set($source_field_name, ['target_id' => $file->id()]);
-          }
-          $translation->save();
-        }
+        // Create all translations.
+        $entity->getSource()->syncMediaFromGredi($entity);
 
         $media_ids[] = $entity->id();
       }

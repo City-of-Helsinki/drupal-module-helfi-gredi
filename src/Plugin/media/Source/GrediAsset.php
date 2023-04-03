@@ -11,6 +11,7 @@ use Drupal\Core\Field\FieldTypePluginManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Image\ImageFactory;
 use Drupal\Core\Language\LanguageManagerInterface;
+use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\Core\StreamWrapper\StreamWrapperManager;
 use Drupal\file\FileInterface;
 use Drupal\file\FileRepositoryInterface;
@@ -101,7 +102,7 @@ class GrediAsset extends Image {
    *
    * @var string[]
    */
-  public $langMappingsFix = [
+  public $langMappingsCorrection = [
     'se' => 'sv',
   ];
 
@@ -125,7 +126,8 @@ class GrediAsset extends Image {
     TimeInterface $timeManager,
     DateFormatter $dateFormatter,
     FileRepositoryInterface $fileRepository,
-    StreamWrapperManager $streamWrapperManager) {
+    StreamWrapperManager $streamWrapperManager,
+    LoggerChannelFactory $loggerFactory) {
     parent::__construct(
       $configuration,
       $plugin_id,
@@ -135,7 +137,8 @@ class GrediAsset extends Image {
       $field_type_manager,
       $config_factory,
       $imageFactory,
-      $fileSystem
+      $fileSystem,
+      $loggerFactory
     );
 
     $this->grediClient = $grediClient;
@@ -144,6 +147,7 @@ class GrediAsset extends Image {
     $this->dateFormatter = $dateFormatter;
     $this->fileRepository = $fileRepository;
     $this->streamWrapperManager = $streamWrapperManager;
+    $this->logger = $loggerFactory->get('helfi_gredi');
   }
 
   /**
@@ -165,7 +169,8 @@ class GrediAsset extends Image {
       $container->get('datetime.time'),
       $container->get('date.formatter'),
       $container->get('file.repository'),
-      $container->get('stream_wrapper_manager')
+      $container->get('stream_wrapper_manager'),
+      $container->get('logger.factory')
     );
   }
 
@@ -324,6 +329,15 @@ class GrediAsset extends Image {
       case 'lang_codes':
         return array_keys($this->assetData['namesByLang']);
 
+      case 'lang_codes_corrected':
+        $lang_codes = array_keys($this->assetData['namesByLang']);
+        foreach ($lang_codes as $idx => $lang_code) {
+          if (isset($this->langMappingsCorrection[$lang_code])) {
+            $lang_codes[$idx] = $this->langMappingsCorrection[$lang_code];
+          }
+        }
+        return $lang_codes;
+
       default:
         $metaAttributes = $this->getMetadataAttributes();
         // If field is not found for current entity language,
@@ -349,8 +363,8 @@ class GrediAsset extends Image {
           $attr_id_and_lang = str_replace('custom:meta-field-', '', $attr_name_key);
           [$attr_id, $attr_lang_code] = explode('_', $attr_id_and_lang);
           // API uses 'SE' lang code for Swedish, so we use this hardcoded mapping.
-          if (isset($this->langMappingsFix[$attr_lang_code])) {
-            $attr_lang_code = $this->langMappingsFix[$attr_lang_code];
+          if (isset($this->langMappingsCorrection[$attr_lang_code])) {
+            $attr_lang_code = $this->langMappingsCorrection[$attr_lang_code];
           }
           if ($attr_id != $attribute_name) {
             continue;
@@ -363,11 +377,6 @@ class GrediAsset extends Image {
           }
 
           return $value;
-        }
-
-        // Currently we return translation fallback value for new media only.
-        if ($media->isNew()) {
-          return $fallbackValue;
         }
 
         return NULL;
@@ -428,6 +437,55 @@ class GrediAsset extends Image {
     catch (\Exception $e) {
       return NULL;
     }
+  }
+
+  public function syncMediaFromGredi(MediaInterface $media) {
+    // External asset modified timestamp.
+    $external_field_modified = $media->getSource()->getMetadata($media, 'modified');
+    if ($media->get('gredi_removed')->value) {
+      $this->logger->warning($this->t('Gredi asset id @asset_id no longer found.', [
+        '@asset_id' => $media->get('gredi_asset_id')->value]));
+      return;
+    }
+    $bundle = $media->getEntityType()->getBundleEntityType();
+
+    $field_map = \Drupal::entityTypeManager()->getStorage($bundle)
+      ->load($media->getSource()->getPluginId())->getFieldMap();
+
+    $media->set('gredi_modified', $external_field_modified);
+    $apiLanguages = $media->getSource()->getMetadata($media, 'lang_codes_corrected');
+    $siteLanguages = array_keys(\Drupal::languageManager()->getLanguages());
+
+    foreach ($apiLanguages as $apiLangCode) {
+      if (!in_array($apiLangCode, $siteLanguages)) {
+        continue;
+      }
+      try {
+        /** @var \Drupal\media\MediaInterface $translation */
+        $translation = $media->getTranslation($apiLangCode);
+      }
+      catch (\Exception $e) {
+        $translation = $media->addTranslation($apiLangCode);
+        $source_field_name = $media->getSource()
+          ->getConfiguration()['source_field'];
+        if ($translation->get($source_field_name)
+          ->getFieldDefinition()
+          ->isTranslatable()) {
+          $translation->set($source_field_name, $media->get($source_field_name)->getValue());
+        }
+      }
+      // Set fields that needs to be updated NULL to let Media::prepareSave()
+      // fill up the fields with the newest fetched data.
+      foreach ($field_map as $key => $field) {
+        // Skip the original_file field.
+        if ($key === 'original_file') {
+          continue;
+        }
+        $translation->set($field, NULL);
+        $translation->save();
+      }
+    }
+    $this->logger->notice($this->t('Synced metadata for Gredi asset id @id', ['@id' => $media->id()]));
   }
 
 }

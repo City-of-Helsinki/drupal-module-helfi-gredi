@@ -109,23 +109,24 @@ class GrediMediaSyncForm extends FormBase {
     $bundle = $media->getEntityType()->getBundleEntityType();
     $field_map = $this->entityTypeManager->getStorage($bundle)
       ->load($media->getSource()->getPluginId())->getFieldMap();
-    // TODO should we show all languages here, or leave as it is with current language?
-    // TODO depends on if we sync from gredi / to gredi all languages - now it seems that this is what we are doing
-    // TODO
 
-    $gredi_langs = $media->getSource()->getMetadata($media, 'lang_codes');
-    if (empty($gredi_langs)) {
+    $gredi_lang_codes = $media->getSource()->getMetadata($media, 'lang_codes_corrected');
+    if (empty($gredi_lang_codes)) {
       return $form;
     }
     $site_languages = \Drupal::languageManager()->getLanguages();
     foreach ($site_languages as $language) {
+      if (!in_array($language->getId(), $gredi_lang_codes)) {
+        continue;
+      }
       try {
         /** @var \Drupal\media\MediaInterface $mediaTrans */
         $mediaTrans = $media->getTranslation($language->getId());
+        $temporaryTrans = FALSE;
       }
       catch (\Exception $e) {
         $mediaTrans = $media->addTranslation($language->getId());
-        // Nothing, as it means translation doesn't exist.
+        $temporaryTrans = TRUE;
       }
 
       foreach ($field_map as $key => $field) {
@@ -141,6 +142,9 @@ class GrediMediaSyncForm extends FormBase {
           $mediaTrans->get($field)->getString(),
           $mediaTrans->getSource()->getMetadata($mediaTrans, $key),
         ];
+      }
+      if ($temporaryTrans) {
+        $media->removeTranslation($language->getId());
       }
     }
 
@@ -180,8 +184,8 @@ class GrediMediaSyncForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $media_id = $form_state->get('media_id');
     try {
-      $queue_worker = $this->queueWorkerManager->createInstance('gredi_asset_update');
-      $queue_worker->processItem($media_id);
+      $media = Media::load($media_id);
+      $media->getSource()->syncMediaFromGredi($media);
     }
     catch(\Exception $e) {
       $this->loggerFactory->error(t('Error on syncing asset: @error', [
@@ -205,7 +209,6 @@ class GrediMediaSyncForm extends FormBase {
       $media = Media::load($form_state->getStorage()['media_id']);
 
       if ($media->get('gredi_removed')->value) {
-        // TODO : disable the buttons for sync to gredi and from gredi.
         $this->messenger()->addWarning(
           'This asset no longer corresponds with any Gredi asset ID.
           Please re-fetch the asset using media library.');
