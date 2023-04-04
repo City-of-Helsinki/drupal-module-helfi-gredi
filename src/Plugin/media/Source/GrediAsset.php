@@ -547,7 +547,110 @@ class GrediAsset extends Image {
         }
       }
     }
+
     return $meta_fields;
   }
+
+  public function createMetaFieldsForSync(MediaInterface $media) {
+    $bundle = $media->getEntityType()->getBundleEntityType();
+    $field_map = \Drupal::entityTypeManager()->getStorage($bundle)
+      ->load($media->getSource()->getPluginId())->getFieldMap();
+
+    $inputs = [];
+    $apiLanguages = $media->getSource()->getMetadata($media, 'lang_codes');
+    $langMappingsCorrection = $media->getSource()->langMappingsCorrection;
+    $currentLanguage = $this->languageManager->getCurrentLanguage()->getId();
+
+    foreach ($field_map as $key => $field) {
+      if ($key === 'original_file') {
+        continue;
+      }
+      foreach ($apiLanguages as $apiLanguage) {
+        if (array_key_exists($apiLanguage, $langMappingsCorrection)) {
+          $apiLanguage = $langMappingsCorrection[$apiLanguage];
+        }
+        if ($apiLanguage === $currentLanguage) {
+          $inputs[$apiLanguage][$field] = $media->get($field)->value;
+          continue;
+        }
+        if ($media->hasTranslation($apiLanguage)) {
+          $translated_media = $media->getTranslation($apiLanguage);
+          $inputs[$apiLanguage][$field] = $translated_media->get($field)->value;
+        }
+      }
+    }
+
+    // An associative array containing field values by lang code keys.
+    return $inputs;
+  }
+
+  public function createRequestData(MediaInterface $media, array|NULL $inputs, bool $is_update) {
+
+    $requestData = [];
+
+    // This is the case of syncing an asset.
+    if ($is_update) {
+      // Create the array containing meta fields values by lang code.
+      $inputs = $media->getSource()->createMetaFieldsForSync($media);
+      // Process meta fields based on the action that we do (update asset or initial upload).
+      $meta_fields = $media->getSource()->prepareMetafieldsUpload($is_update, $media, $inputs);
+
+      $fieldData = [
+        "name" => $media->getName(),
+        "propertiesById" => [],
+        "metaById" => $meta_fields
+      ];
+
+      $requestData['requestBody'] = json_encode($fieldData, JSON_FORCE_OBJECT);
+      $requestData['url'] = sprintf("/files/%s",
+        $media->getSource()->getMetadata($media, 'gredi_asset_id'));
+
+      return $requestData;
+    }
+
+    // This is the case of initial upload.
+    // The inputs vary by the location from where the upload is being done.
+    $meta_fields = $inputs ? $media->getSource()->prepareMetafieldsUpload($is_update, $media, $inputs) : NULL;
+    // Get the mime type of the file.
+    $fid = $media->get($media->getSource()->getConfiguration()['source_field'])->target_id;
+//    $mime = $fid ? File::load($fid)->getMimeType() :
+    $a = $media->get($media->getSource()->getConfiguration()['source_field']);
+    $file = File::load($fid);
+    $mime = $file->getMimeType();
+
+    $fieldData = [
+      "name" => basename($file->getFileUri()),
+      "fileType" => "nt:file",
+      "propertiesById" => [],
+      "metaById" => $meta_fields
+    ];
+    $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
+    $base64EncodedFile = base64_encode(file_get_contents($file->getFileUri()));
+    // @todo check this instead of this hardcoded string.
+    // https://docs.guzzlephp.org/en/stable/quickstart.html#sending-form-fields
+
+    $boundary = "helfiboundary";
+    $requestBody = "";
+    $requestBody .= "\r\n";
+    $requestBody .= "\r\n";
+    $requestBody .= "--" . $boundary . "\r\n";
+    $requestBody .= "Content-Disposition: form-data; name=\"json\"\r\n";
+    $requestBody .= "Content-Type: application/json\r\n";
+    $requestBody .= "\r\n";
+    $requestBody .= $fieldString . "\r\n";
+    $requestBody .= "--" . $boundary . "\r\n";
+    $requestBody .= "Content-Disposition: form-data; name=\"file\"\r\n";
+    $requestBody .= "Content-Type: " . $mime . "\r\n";
+    $requestBody .= "Content-Transfer-Encoding: base64\r\n";
+    $requestBody .= "\r\n";
+    $requestBody .= $base64EncodedFile . "\r\n";
+    $requestBody .= "--" . $boundary . "--\r\n";
+    $requestBody .= "\r\n";
+
+    $requestData['requestBody'] = $requestBody;
+
+    return $requestData;
+  }
+
 
 }

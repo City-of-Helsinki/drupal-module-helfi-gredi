@@ -29,21 +29,15 @@ interface GrediClientInterface {
   /**
    * Upload image to DAM.
    *
-   * @param \Drupal\file\Entity\File $image
-   *   Image to upload.
-   * @param array $inputs
-   *   An array of fields values for upload.
-   * @param string $method
-   *   The request method.
+   * @param array $requestData
+   *   An array always containing the request body and optionally the url in case of syncing.
    * @param bool $is_update
    *   If the method is used for syncing assets or for uploading image.
    *
-   * @param \Drupal\media\MediaInterface
-   *
    * @return string|null
-   *   ID of the newly created DAM asset.
+   *   ID of the newly created DAM asset or empty string in case of syncing.
    */
-  public function uploadImage(array $inputs, MediaInterface $media, bool $is_update): ?string;
+  public function uploadImage(array $requestData, bool $is_update): ?string;
 
   /**
    * Retrieves metadata fields.

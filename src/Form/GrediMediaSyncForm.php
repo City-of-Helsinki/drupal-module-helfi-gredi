@@ -242,35 +242,10 @@ class GrediMediaSyncForm extends FormBase {
       return;
     }
 
-    $bundle = $media->getEntityType()->getBundleEntityType();
-    $field_map = \Drupal::entityTypeManager()->getStorage($bundle)
-      ->load($media->getSource()->getPluginId())->getFieldMap();
-
-    $inputs = [];
-    $apiLanguages = $media->getSource()->getMetadata($media, 'lang_codes');
-    $langMappingsCorrection = $media->getSource()->langMappingsCorrection;
-    $currentLanguage = $this->languageManager->getCurrentLanguage()->getId();
-
-    foreach ($field_map as $key => $field) {
-      if ($key === 'original_file') {
-        continue;
-      }
-      foreach ($apiLanguages as $apiLanguage) {
-        if (array_key_exists($apiLanguage, $langMappingsCorrection)) {
-          $apiLanguage = $langMappingsCorrection[$apiLanguage];
-        }
-        if ($apiLanguage === $currentLanguage) {
-          $inputs[$apiLanguage][$field] = $media->get($field)->value;
-          continue;
-        }
-        if ($media->hasTranslation($apiLanguage)) {
-          $translated_media = $media->getTranslation($apiLanguage);
-          $inputs[$apiLanguage][$field] = $translated_media->get($field)->value;
-        }
-      }
-    }
     try {
-      $this->grediClient->uploadImage($inputs, $media, TRUE);
+      // We send null inputs because for syncing they are handled in ::createMetafieldForSync method.
+      $requestData = $media->getSource()->createRequestData($media, NULL, TRUE);
+      $this->grediClient->uploadImage($requestData,TRUE);
       $this->messenger->addStatus(t('Asset successfully updated.'));
     }
     catch(\Exception $e) {

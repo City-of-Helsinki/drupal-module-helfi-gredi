@@ -302,59 +302,23 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
   /**
    * {@inheritdoc}
    */
-  public function uploadImage(array $inputs, MediaInterface $media, bool $is_update): ?string {
+  public function uploadImage(array $requestData, bool $is_update): ?string {
 
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
 
-    // Process meta fields based on the action that we do (update asset or initial upload).
-    $meta_fields = $media->getSource()->prepareMetafieldsUpload($is_update, $media, $inputs);
-
     if (!$is_update) {
-      // Get the mime type of the file.
-      $fid = $media->get($media->getSource()->getConfiguration()['source_field'])->target_id;
-      $file = File::load($fid);
-      $mime = $file->getMimeType();
-
-      $fieldData = [
-        "name" => basename($file->getFileUri()),
-        "fileType" => "nt:file",
-        "propertiesById" => [],
-        "metaById" => $meta_fields
-      ];
-      $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
-      $base64EncodedFile = base64_encode(file_get_contents($file->getFileUri()));
-      // @todo check this instead of this hardcoded string.
-      // https://docs.guzzlephp.org/en/stable/quickstart.html#sending-form-fields
-
-      $boundary = "helfiboundary";
-      $requestBody = "";
-      $requestBody .= "\r\n";
-      $requestBody .= "\r\n";
-      $requestBody .= "--" . $boundary . "\r\n";
-      $requestBody .= "Content-Disposition: form-data; name=\"json\"\r\n";
-      $requestBody .= "Content-Type: application/json\r\n";
-      $requestBody .= "\r\n";
-      $requestBody .= $fieldString . "\r\n";
-      $requestBody .= "--" . $boundary . "\r\n";
-      $requestBody .= "Content-Disposition: form-data; name=\"file\"\r\n";
-      $requestBody .= "Content-Type: " . $mime . "\r\n";
-      $requestBody .= "Content-Transfer-Encoding: base64\r\n";
-      $requestBody .= "\r\n";
-      $requestBody .= $base64EncodedFile . "\r\n";
-      $requestBody .= "--" . $boundary . "--\r\n";
-      $requestBody .= "\r\n";
 
       $urlUpload = sprintf("%s/folders/%s/files/", $this->apiUrl, $this->authService->uploadFolder);
       // Request made when uploading assets.
       $response = $this->httpClient->request('POST', $urlUpload, [
         'cookies' => $this->authService->getCookieJar(),
         'headers' => [
-          'Content-Type' => 'multipart/form-data;boundary=' . $boundary,
-          'Content-Length' => strlen($requestBody),
+          'Content-Type' => 'multipart/form-data;boundary=helfiboundary',
+          'Content-Length' => strlen($requestData['requestBody']),
         ],
-        'body' => $requestBody,
+        'body' => $requestData['requestBody'],
       ])->getBody()->getContents();
 
       // Return file ID from API as string.
@@ -362,26 +326,19 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
       }
     // When it is syncing we want to update some values.
     else {
-      $fieldData = [
-        "name" => $media->getName(),
-        "propertiesById" => [],
-        "metaById" => $meta_fields
-      ];
-      $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
-      $urlSync = sprintf("%s/files/%s", $this->apiUrl,
-        $media->getSource()->getMetadata($media, 'gredi_asset_id'));
+      $urlSync = sprintf("%s%s", $this->apiUrl, $requestData['url']);
       // Request made when syncing assets.
         $response = $this->httpClient->request('PUT', $urlSync, [
           'cookies' => $this->authService->getCookieJar(),
           'headers' => [
             'Content-Type' => 'application/json',
-            'Content-Length' => strlen($fieldString),
+            'Content-Length' => strlen($requestData['requestBody']),
           ],
-          'body' => $fieldString,
+          'body' => $requestData['requestBody'],
         ])->getBody()->getContents();
 
-        // Return empty array from API if successful, and we convert it to string
-        return implode('', json_decode($response, TRUE));
+      // Return empty array from API if successful, and we convert it to string
+      return implode('', json_decode($response, TRUE));
     }
 
   }

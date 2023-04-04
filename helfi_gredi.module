@@ -83,7 +83,15 @@ function _helfi_gredi_media_save_validate(array &$form, FormStateInterface &$for
   try {
     /** @var \Drupal\helfi_gredi\GrediClient $grediClient */
     $grediClient = \Drupal::service('helfi_gredi.dam_client');
-    $asset_id = $grediClient->uploadImage($inputs, $media, FALSE);
+
+    // We set here the file id to use it in createRequestData.
+    $source_field = $media->getSource()->getConfiguration()['source_field'];
+    $media->set($source_field, $form_state->getUserInput()[$source_field]['0']['fids']);
+
+    // We need to provide the inputs for the build up of requestData.
+    $requestData = $media->getSource()->createRequestData($media, $inputs, FALSE);
+    $asset_id = $grediClient->uploadImage($requestData, FALSE);
+
     $media->set('gredi_asset_id', $asset_id);
     $media->set('gredi_modified', \Drupal::time()->getCurrentTime());
   }
