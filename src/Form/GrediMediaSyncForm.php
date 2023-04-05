@@ -153,6 +153,7 @@ class GrediMediaSyncForm extends FormBase {
         $temporaryTrans = TRUE;
       }
 
+      $field_map['name'] = 'name';
       foreach ($field_map as $key => $field) {
         if ($key === 'original_file') {
           continue;

@@ -264,13 +264,15 @@ class GrediAsset extends Image {
         return $media->get('gredi_asset_id')->value;
 
       case 'name':
-      case 'default_name':
-        if (!$media->isNew()) {
-          return $media->getName();
-        }
         if (!empty($this->assetData['name'])) {
           return $this->assetData['name'];
         }
+        if (!$media->isNew()) {
+          return $media->label();
+        }
+        return parent::getMetadata($media, 'default_name');
+
+      case 'default_name':
         return parent::getMetadata($media, 'default_name');
 
       case 'thumbnail_uri':
@@ -483,11 +485,13 @@ class GrediAsset extends Image {
         if ($translation->get($source_field_name)
           ->getFieldDefinition()
           ->isTranslatable()) {
-          // TODO should we sync the name from description?
-          $translation->set('name', $media->getName());
           $translation->set($source_field_name, $media->get($source_field_name)->getValue());
         }
       }
+
+      $name = $media->getSource()->getMetadata($media, 'name');
+      // @todo if name changes, should we rename the file also?
+      $translation->set('name', $name);
       // Set fields that needs to be updated NULL to let Media::prepareSave()
       // fill up the fields with the newest fetched data.
       foreach ($field_map as $key => $field) {
