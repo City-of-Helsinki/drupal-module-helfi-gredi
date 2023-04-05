@@ -2,6 +2,7 @@
 
 namespace Drupal\helfi_gredi\Plugin\QueueWorker;
 
+use _PHPStan_4dd92cd93\Nette\Neon\Exception;
 use Drupal\Core\Logger\LoggerChannel;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -47,9 +48,25 @@ class MetaUpdate extends QueueWorkerBase implements ContainerFactoryPluginInterf
         '@asset_id' => $media->get('gredi_asset_id')->value]));
       return;
     }
+
+    if (is_null($external_field_modified)) {
+      throw new \Exception('Failed to retrieve asset data');
+    }
     // Stored asset modified timestamp.
     $internal_field_modified = $media->get('gredi_modified')->value;
-    if ($external_field_modified > $internal_field_modified) {
+    $isModified = $external_field_modified > $internal_field_modified;
+
+    $lang_codes = $media->getSource()->getMetadata($media, 'lang_codes_corrected');
+    $hasNewTranslation = FALSE;
+    foreach ($lang_codes as $lang_code) {
+
+      if (!$media->hasTranslation($lang_code)) {
+        $hasNewTranslation = TRUE;
+        break;
+      }
+    }
+
+    if ($hasNewTranslation || $isModified) {
       $media->getSource()->syncMediaFromGredi($media);
     }
 

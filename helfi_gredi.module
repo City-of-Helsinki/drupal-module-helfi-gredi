@@ -18,7 +18,6 @@ use Drupal\media\MediaInterface;
 use Drupal\helfi_gredi\Plugin\media\Source\GrediAsset;
 use Drupal\media_library\MediaLibraryState;
 use Drupal\helfi_gredi\Form\GrediFileUploadForm;
-use Drupal\file\Entity\File;
 use Drupal\views\Plugin\views\cache\CachePluginBase;
 use Drupal\views\ViewExecutable;
 
@@ -61,36 +60,20 @@ function _helfi_gredi_media_save_validate(array &$form, FormStateInterface &$for
     $form_state->setRebuild();
   }
 
-  // Retrieve meta fields from config and input values.
-  $bundle = $media->getEntityType()->getBundleEntityType();
-  $field_map = \Drupal::service('entity_type.manager')->getStorage($bundle)
-    ->load($media->getSource()->getPluginId())->getFieldMap();
+  $mediaCloned = clone $media;
 
-  $inputs = [];
-  foreach ($field_map as $key => $field) {
-    if (is_int($key)) {
-      foreach ($form_state->getValues() as $name => $properties) {
-        if ($name === $field) {
-          $inputs[$field] = $properties[0]['value'];
-          break;
-        }
-      }
+  $source_field = $mediaCloned->getSource()->getConfiguration()['source_field'];
+  $mediaCloned->set($source_field, $form_state->getUserInput()[$source_field][0]['fids']);
+
+  $field_map = $media->getSource()->getMetaFieldsMapping($media);
+  foreach ($field_map as $field) {
+    if (isset($form_state->getValues()[$field][0]['value'])) {
+      $mediaCloned->set($field, $form_state->getValues()[$field][0]['value']);
     }
   }
-  $inputs += [
-    'langcode' => $form_state->getValues()['langcode'][0]['value']
-  ];
+
   try {
-    /** @var \Drupal\helfi_gredi\GrediClient $grediClient */
-    $grediClient = \Drupal::service('helfi_gredi.dam_client');
-
-    // We set here the file id to use it in createRequestData.
-    $source_field = $media->getSource()->getConfiguration()['source_field'];
-    $media->set($source_field, $form_state->getUserInput()[$source_field]['0']['fids']);
-
-    // We need to provide the inputs for the build up of requestData.
-    $requestData = $media->getSource()->sendMetafieldsUpload($media, $inputs, FALSE);
-    $asset_id = $grediClient->uploadImage($requestData, FALSE);
+    $asset_id = $media->getSource()->sendAssetToGredi($mediaCloned, FALSE);
 
     $media->set('gredi_asset_id', $asset_id);
     $media->set('gredi_modified', \Drupal::time()->getCurrentTime());
@@ -99,7 +82,6 @@ function _helfi_gredi_media_save_validate(array &$form, FormStateInterface &$for
     $form_state->setError($form[$source_field], 'Upload error.');
     $form_state->setRebuild();
   }
-
 }
 
 /**
@@ -147,10 +129,13 @@ function helfi_gredi_entity_field_storage_info(EntityTypeInterface $entity_type)
       ->setName('gredi_removed')
       ->setLabel(new TranslatableMarkup('Asset exists on Gredi'))
       ->setTranslatable(FALSE)
-      ->setDisplayConfigurable('form', FALSE)
-      ->setDisplayConfigurable('view', FALSE)
+      ->setRevisionable(FALSE)
       ->setTargetEntityTypeId('media')
-      ->setRevisionable(FALSE);
+      ->setDefaultValue(FALSE)
+      ->setInitialValue(FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayConfigurable('form', FALSE);
+
 
   }
   return $definitions;

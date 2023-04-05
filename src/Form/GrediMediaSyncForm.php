@@ -130,14 +130,9 @@ class GrediMediaSyncForm extends FormBase {
     ];
     $table_rows = [];
 
-    $bundle = $media->getEntityType()->getBundleEntityType();
-    $field_map = $this->entityTypeManager->getStorage($bundle)
-      ->load($media->getSource()->getPluginId())->getFieldMap();
+    $field_map = $media->getSource()->getMetaFieldsMapping($media);
 
-    $gredi_lang_codes = $media->getSource()->getMetadata($media, 'lang_codes_corrected');
-    if (empty($gredi_lang_codes)) {
-      return $form;
-    }
+    $gredi_lang_codes = $media->getSource()->getMetadata($media, 'lang_codes_corrected') ?? [];
     $site_languages = \Drupal::languageManager()->getLanguages();
     foreach ($site_languages as $language) {
       if (!in_array($language->getId(), $gredi_lang_codes)) {
@@ -155,9 +150,6 @@ class GrediMediaSyncForm extends FormBase {
 
       $field_map['name'] = 'name';
       foreach ($field_map as $key => $field) {
-        if ($key === 'original_file') {
-          continue;
-        }
         if (!$media->hasField($field)) {
           continue;
         }
@@ -195,7 +187,7 @@ class GrediMediaSyncForm extends FormBase {
     if ($media->get('gredi_removed')->value) {
       \Drupal::messenger()->addWarning(t('Gredi remote asset no longer exists.'));
       $form['asset']['asset_pull']['#disabled'] = TRUE;
-      $form['asset']['asset_push']['#disabled'] = TRUE;
+      $form['asset']['asset_push']['#value'] = $this->t('Upload asset into Gredi');
     }
 
     $form_state->set('media_id', $media->id());
@@ -236,17 +228,16 @@ class GrediMediaSyncForm extends FormBase {
     /** @var \Drupal\media\MediaInterface $media */
     $media = Media::load($form_state->getStorage()['media_id']);
 
-    if ($media->get('gredi_removed')->value) {
-      $this->messenger()->addWarning(
-        'This asset no longer corresponds with any Gredi asset ID.
-        Please re-fetch the asset using media library.');
-      return;
-    }
-
+    $is_update = empty($media->get('gredi_removed')->value);
     try {
-      // We send null inputs because for syncing they are handled in ::createMetafieldForSync method.
-      $requestData = $media->getSource()->sendMetafieldsUpload($media, NULL, TRUE);
-      $this->grediClient->uploadImage($requestData,TRUE);
+      $assetId = $media->getSource()->sendAssetToGredi($media, $is_update);
+      if (!$is_update && $assetId) {
+        $media->set('gredi_asset_id', $assetId);
+        // @todo use time manager instead of time().
+        $media->set('gredi_modified', time());
+        $media->set('gredi_removed', FALSE);
+        $media->save();
+      }
       $this->messenger->addStatus(t('Asset successfully updated.'));
     }
     catch(\Exception $e) {

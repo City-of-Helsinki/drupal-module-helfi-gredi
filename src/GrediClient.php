@@ -309,7 +309,6 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
     }
 
     if (!$is_update) {
-
       // @todo check this instead of this hardcoded string.
       // https://docs.guzzlephp.org/en/stable/quickstart.html#sending-form-fields
       $boundary = "helfiboundary";
@@ -340,27 +339,22 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
         ],
         'body' => $requestBody,
       ])->getBody()->getContents();
-
-      // Return file ID from API as string.
-      return json_decode($response, TRUE)['id'];
-      }
-    // When it is syncing we want to update some values.
+    }
     else {
-      $urlSync = sprintf("%s%s", $this->apiUrl, $requestData['url']);
+      $urlSync = sprintf("%s/files/%s", $this->apiUrl, $requestData['assetId']);
       // Request made when syncing assets.
-        $response = $this->httpClient->request('PUT', $urlSync, [
-          'cookies' => $this->authService->getCookieJar(),
-          'headers' => [
-            'Content-Type' => 'application/json',
-            'Content-Length' => strlen($requestData['fieldData']),
-          ],
-          'body' => $requestData['fieldData'],
-        ])->getBody()->getContents();
-
-      // Return empty array from API if successful, and we convert it to string
-      return implode('', json_decode($response, TRUE));
+      $response = $this->httpClient->request('PUT', $urlSync, [
+        'cookies' => $this->authService->getCookieJar(),
+        'headers' => [
+          'Content-Type' => 'application/json',
+          'Content-Length' => strlen($requestData['fieldData']),
+        ],
+        'body' => $requestData['fieldData'],
+      ])->getBody()->getContents();
     }
 
+    // For upload we have the id, for update we have empty array response.
+    return json_decode($response, TRUE)['id'] ?? '';
   }
 
   /**

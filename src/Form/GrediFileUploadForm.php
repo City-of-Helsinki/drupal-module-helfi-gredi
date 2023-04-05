@@ -135,39 +135,22 @@ class GrediFileUploadForm extends FileUploadForm {
    * {@inheritdoc}
    */
   protected function validateMediaEntity(MediaInterface $media, array $form, FormStateInterface $form_state, $delta) {
-
-    // Retrieve meta fields from config and input values.
-    $bundle = $media->getEntityType()->getBundleEntityType();
-    $field_map = $this->entity_type_manager->getStorage($bundle)
-      ->load($media->getSource()->getPluginId())->getFieldMap();
-
-    $inputs = [];
-    foreach ($field_map as $key => $field) {
-      if (is_int($key)) {
-        foreach ($form_state->getValues()['media'][$delta]['fields'] as $name => $properties) {
-          if ($name === $field) {
-            $inputs[$field] = $properties[$delta]['value'];
-            break;
-          }
-        }
+    $mediaCloned = clone $media;
+    $field_map = $media->getSource()->getMetaFieldsMapping($media);
+    foreach ($field_map as $field) {
+      if (isset($form_state->getValues()['media'][$delta]['fields'][$field][0]['value'])) {
+        $mediaCloned->set($field, $form_state->getValues()['media'][$delta]['fields'][$field][0]['value']);
       }
     }
-    $inputs += [
-      'langcode' => $form_state->getValues()['media'][$delta]['fields']['langcode'][$delta]['value']
-    ];
 
-    // Upload image to Gredi API.
     try {
-      // We need to provide the inputs for the build up of requestData.
-      $requestData = $media->getSource()->sendMetafieldsUpload($media, $inputs, FALSE);
-      $asset_id = $this->damClient->uploadImage($requestData, FALSE);
+      $asset_id = $media->getSource()->sendAssetToGredi($mediaCloned, FALSE);
 
       $media->set('gredi_asset_id', $asset_id);
       $media->set('gredi_modified', $this->timeManager->getCurrentTime());
     }
     catch (\Exception $exception) {
-      \Drupal::messenger()->addError(t('Failed to upload image.'));
-      $form_state->setError($form['media'], 'Upload error');
+      $form_state->setError($form['media'], t('Failed to upload image. Please try again or check logs.'));
     }
     $form_display = EntityFormDisplay::collectRenderDisplay($media, 'media_library');
     $form_display->extractFormValues($media, $form['media'][$delta]['fields'], $form_state);

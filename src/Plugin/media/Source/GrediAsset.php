@@ -248,8 +248,8 @@ class GrediAsset extends Image {
         // The api return 400 Bad request instead of 404 when asset not found.
         if ($e->getCode() === 400) {
           if (empty($media->get('gredi_removed')->value)) {
-            // This might not be the best place to save.
-            $media->set('gredi_removed', FALSE);
+            // @todo This might not be the best place to save.
+            $media->set('gredi_removed', TRUE);
             $media->save();
           }
           return NULL;
@@ -331,7 +331,16 @@ class GrediAsset extends Image {
         return strtotime($this->assetData['created']) ?? NULL;
 
       case 'lang_codes':
-        return array_keys($this->assetData['namesByLang']);
+        $languages = $this->languageManager->getLanguages();
+        $site_lang_codes = array_keys($languages);
+        foreach ($site_lang_codes as $idx => $lang_code) {
+          $correct_key = array_search($lang_code, $this->langMappingsCorrection);
+          if ($correct_key !== FALSE) {
+            $site_lang_codes[$idx] = $correct_key;
+          }
+        }
+        $gredi_lang_codes = array_keys($this->assetData['namesByLang']);
+        return array_intersect($gredi_lang_codes, $site_lang_codes);
 
       case 'lang_codes_corrected':
         $lang_codes = array_keys($this->assetData['namesByLang']);
@@ -340,8 +349,11 @@ class GrediAsset extends Image {
             $lang_codes[$idx] = $this->langMappingsCorrection[$lang_code];
           }
         }
-        return $lang_codes;
+        $languages = $this->languageManager->getLanguages();
+        $site_lang_codes = array_keys($languages);
+        return array_intersect($lang_codes, $site_lang_codes);
 
+      // @todo should we get other fields like description?
       default:
         $metaAttributes = $this->getMetadataAttributes();
         // If field is not found for current entity language,
@@ -353,11 +365,12 @@ class GrediAsset extends Image {
         if (!isset($this->assetData['metaById'])) {
           return NULL;
         }
-        // TODO figure out a way that when creating a new translation in drupal
-        // TODO the Gredi value, from the table from Gredi Asset tab to display correct value
-        // TODO as it is now it follows the source values if the language is not avaialable in gredi
+        // @todo figure out a way that when creating a new translation in drupal
+        // the Gredi value, from the table from Gredi Asset tab to display correct value
+        // as it is now it follows the source values if the language is not avaialable in gredi.
         $lang_code = $media->language()->getId();
         $fallbackLangCode = $this->languageManager->getDefaultLanguage()->getId();
+
         // Trying to find the attr id in the metaById,
         // as they come as custom:meta-field-1285_fi.
         foreach ($this->assetData['metaById'] as $attr_name_key => $value) {
@@ -374,6 +387,7 @@ class GrediAsset extends Image {
             continue;
           }
           if ($attr_lang_code == $fallbackLangCode) {
+            // @todo decide if we want to return default lang value for empty translations.
             $fallbackValue = $value;
           }
           if ($attr_lang_code != $lang_code) {
@@ -383,6 +397,8 @@ class GrediAsset extends Image {
           return $value;
         }
 
+        // @todo decide if we want to return default lang value for empty translations.
+        // return $fallbackValue;
         return NULL;
     }
   }
@@ -405,6 +421,20 @@ class GrediAsset extends Image {
    */
   public function getAssetData() : array {
     return $this->assetData;
+  }
+
+  public function getMetaFieldsMapping(MediaInterface $media) {
+    $field_map = \Drupal::entityTypeManager()->getStorage('media_type')
+      ->load($media->getSource()->getPluginId())->getFieldMap();
+
+    $notMetaFields = ['original_file'];
+    foreach ($notMetaFields as $notMetaField) {
+      if (isset($field_map[$notMetaField])) {
+        unset($field_map[$notMetaField]);
+      }
+    }
+
+    return $field_map;
   }
 
   /**
@@ -461,10 +491,8 @@ class GrediAsset extends Image {
         '@asset_id' => $media->get('gredi_asset_id')->value]));
       return FALSE;
     }
-    $bundle = $media->getEntityType()->getBundleEntityType();
 
-    $field_map = \Drupal::entityTypeManager()->getStorage($bundle)
-      ->load($media->getSource()->getPluginId())->getFieldMap();
+    $field_map = $media->getSource()->getMetaFieldsMapping($media);
 
     $media->set('gredi_modified', $external_field_modified);
     $apiLanguages = $media->getSource()->getMetadata($media, 'lang_codes_corrected');
@@ -495,10 +523,6 @@ class GrediAsset extends Image {
       // Set fields that needs to be updated NULL to let Media::prepareSave()
       // fill up the fields with the newest fetched data.
       foreach ($field_map as $key => $field) {
-        // Skip the original_file field.
-        if ($key === 'original_file') {
-          continue;
-        }
         $translation->set($field, NULL);
       }
       $translation->save();
@@ -511,43 +535,37 @@ class GrediAsset extends Image {
   /**
    * Prepare meta fields values for upload/sync.
    *
-   * @param bool $is_update
    * @param \Drupal\media\MediaInterface $media
    * @param $inputs
+   * @param bool $is_update
    *
    * @return array
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
-  public function prepareMetafieldsUpload(bool $is_update, MediaInterface $media, $inputs) {
+  public function getMetafieldsForUpdate(MediaInterface $media, bool $is_update = false) {
+    $field_map = $media->getSource()->getMetaFieldsMapping($media);
 
-    $bundle = $media->getEntityType()->getBundleEntityType();
-    $field_map = $this->entityTypeManager->getStorage($bundle)
-      ->load($media->getSource()->getPluginId())->getFieldMap();
-
-    if ($is_update) {
-      $meta_fields = [];
-      foreach ($field_map as $key => $field) {
-        if (is_int($key)) {
-          foreach ($inputs as $lang_code => $value) {
-            // API uses 'SE' for 'SV' lang code.
-            if (array_key_exists($lang_code, $this->langMappingsCorrection))  {
-              $lang_code = $this->langMappingsCorrection[$lang_code];
-            }
-            $meta_fields += [
-              'custom:meta-field-' . $key . '_' . $lang_code => $value[$field]
-            ];
-          }
-        }
-      }
+    if ($media->isNew() || !$is_update) {
+      // We don't have asset data, so getMetadata lang_codes won't work.
+      $apiLanguages = [$media->language()->getId()];
     }
     else {
-      $meta_fields = [];
-      foreach ($field_map as $key => $field) {
-        if (is_int($key)) {
-          $meta_fields += [
-            'custom:meta-field-' . $key . '_' . $inputs['langcode'] => $inputs[$field]
-          ];
+      $apiLanguages = $media->getSource()->getMetadata($media, 'lang_codes');
+    }
+    $langMappingsCorrection = $media->getSource()->langMappingsCorrection;
+
+    $meta_fields = [];
+
+    foreach ($field_map as $key => $field) {
+      foreach ($apiLanguages as $apiLanguage) {
+        $drupalLanguage = $apiLanguage;
+        if (array_key_exists($apiLanguage, $langMappingsCorrection)) {
+          $drupalLanguage = $langMappingsCorrection[$apiLanguage];
+        }
+        if ($media->hasTranslation($drupalLanguage)) {
+          $translated_media = $media->getTranslation($drupalLanguage);
+          $meta_fields['custom:meta-field-' . $key . '_' . $apiLanguage] = $translated_media->get($field)->value;
         }
       }
     }
@@ -555,82 +573,37 @@ class GrediAsset extends Image {
     return $meta_fields;
   }
 
-  public function getMetaFieldsForGrediUpdate(MediaInterface $media) {
-    $bundle = $media->getEntityType()->getBundleEntityType();
-    $field_map = \Drupal::entityTypeManager()->getStorage($bundle)
-      ->load($media->getSource()->getPluginId())->getFieldMap();
-
-    $inputs = [];
-    $apiLanguages = $media->getSource()->getMetadata($media, 'lang_codes');
-    $langMappingsCorrection = $media->getSource()->langMappingsCorrection;
-    $currentLanguage = $this->languageManager->getCurrentLanguage()->getId();
-
-    foreach ($field_map as $key => $field) {
-      if ($key === 'original_file') {
-        continue;
-      }
-      foreach ($apiLanguages as $apiLanguage) {
-        if (array_key_exists($apiLanguage, $langMappingsCorrection)) {
-          $apiLanguage = $langMappingsCorrection[$apiLanguage];
-        }
-        if ($apiLanguage === $currentLanguage) {
-          $inputs[$apiLanguage][$field] = $media->get($field)->value;
-          continue;
-        }
-        if ($media->hasTranslation($apiLanguage)) {
-          $translated_media = $media->getTranslation($apiLanguage);
-          $inputs[$apiLanguage][$field] = $translated_media->get($field)->value;
-        }
-      }
-    }
-
-    // An associative array containing field values by lang code keys.
-    return $inputs;
-  }
-
-  public function sendMetafieldsUpload(MediaInterface $media, array|NULL $inputs, bool $is_update) {
-
+  public function sendAssetToGredi(MediaInterface $media, bool $is_update) {
     $requestData = [];
 
-    // This is the case of syncing an asset.
-    if ($is_update) {
-      // Create the array containing meta fields values by lang code.
-      $inputs = $media->getSource()->getMetaFieldsForGrediUpdate($media);
-      // Process meta fields based on the action that we do (update asset or initial upload).
-      $meta_fields = $media->getSource()->prepareMetafieldsUpload($is_update, $media, $inputs);
-
-      $fieldData = [
-        "name" => $media->getName(),
-        "propertiesById" => [],
-        "metaById" => $meta_fields
-      ];
-
-      $requestData['fieldData'] = json_encode($fieldData, JSON_FORCE_OBJECT);
-      $requestData['url'] = sprintf("/files/%s",
-        $media->getSource()->getMetadata($media, 'gredi_asset_id'));
-
-      return $requestData;
-    }
-
-    // This is the case of initial upload.
-    // The inputs vary by the location from where the upload is being done.
-    $meta_fields = $inputs ? $media->getSource()->prepareMetafieldsUpload($is_update, $media, $inputs) : NULL;
-    // Get the mime type of the file.
-    $fid = $media->get($media->getSource()->getConfiguration()['source_field'])->target_id;
-    $file = File::load($fid);
-
+    $meta_fields = $media->getSource()->getMetafieldsForUpdate($media, $is_update);
     $fieldData = [
-      "name" => basename($file->getFileUri()),
-      "fileType" => "nt:file",
+      "name" => $media->getName(),
       "propertiesById" => [],
       "metaById" => $meta_fields
     ];
 
-    $requestData['fieldData'] = json_encode($fieldData, JSON_FORCE_OBJECT);
-    $requestData['file'] = base64_encode(file_get_contents($file->getFileUri()));
-    $requestData['mime'] = $file->getMimeType();
+    // This is the case of syncing an asset.
+    if ($is_update) {
+      $requestData['assetId'] = $media->getSource()->getMetadata($media, 'gredi_asset_id');
+    }
+    else {
+      $fid = $media->get($media->getSource()->getConfiguration()['source_field'])->target_id;
+      $file = File::load($fid);
 
-    return $requestData;
+      $fieldData = [
+        "name" => basename($file->getFileUri()),
+        "fileType" => "nt:file",
+        "propertiesById" => [],
+        "metaById" => $meta_fields
+      ];
+      $requestData['file'] = base64_encode(file_get_contents($file->getFileUri()));
+      $requestData['mime'] = $file->getMimeType();
+    }
+
+    $requestData['fieldData'] = json_encode($fieldData, JSON_FORCE_OBJECT);
+
+    return $this->grediClient->uploadImage($requestData, $is_update);
   }
 
 
