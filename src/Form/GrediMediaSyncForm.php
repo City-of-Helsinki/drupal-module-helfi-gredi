@@ -244,7 +244,7 @@ class GrediMediaSyncForm extends FormBase {
 
     try {
       // We send null inputs because for syncing they are handled in ::createMetafieldForSync method.
-      $requestData = $media->getSource()->createRequestData($media, NULL, TRUE);
+      $requestData = $media->getSource()->sendMetafieldsUpload($media, NULL, TRUE);
       $this->grediClient->uploadImage($requestData,TRUE);
       $this->messenger->addStatus(t('Asset successfully updated.'));
     }

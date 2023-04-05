@@ -159,7 +159,7 @@ class GrediFileUploadForm extends FileUploadForm {
     // Upload image to Gredi API.
     try {
       // We need to provide the inputs for the build up of requestData.
-      $requestData = $media->getSource()->createRequestData($media, $inputs, FALSE);
+      $requestData = $media->getSource()->sendMetafieldsUpload($media, $inputs, FALSE);
       $asset_id = $this->damClient->uploadImage($requestData, FALSE);
 
       $media->set('gredi_asset_id', $asset_id);

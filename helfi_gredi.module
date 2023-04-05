@@ -89,7 +89,7 @@ function _helfi_gredi_media_save_validate(array &$form, FormStateInterface &$for
     $media->set($source_field, $form_state->getUserInput()[$source_field]['0']['fids']);
 
     // We need to provide the inputs for the build up of requestData.
-    $requestData = $media->getSource()->createRequestData($media, $inputs, FALSE);
+    $requestData = $media->getSource()->sendMetafieldsUpload($media, $inputs, FALSE);
     $asset_id = $grediClient->uploadImage($requestData, FALSE);
 
     $media->set('gredi_asset_id', $asset_id);

@@ -551,7 +551,7 @@ class GrediAsset extends Image {
     return $meta_fields;
   }
 
-  public function createMetaFieldsForSync(MediaInterface $media) {
+  public function getMetaFieldsForGrediUpdate(MediaInterface $media) {
     $bundle = $media->getEntityType()->getBundleEntityType();
     $field_map = \Drupal::entityTypeManager()->getStorage($bundle)
       ->load($media->getSource()->getPluginId())->getFieldMap();
@@ -584,14 +584,14 @@ class GrediAsset extends Image {
     return $inputs;
   }
 
-  public function createRequestData(MediaInterface $media, array|NULL $inputs, bool $is_update) {
+  public function sendMetafieldsUpload(MediaInterface $media, array|NULL $inputs, bool $is_update) {
 
     $requestData = [];
 
     // This is the case of syncing an asset.
     if ($is_update) {
       // Create the array containing meta fields values by lang code.
-      $inputs = $media->getSource()->createMetaFieldsForSync($media);
+      $inputs = $media->getSource()->getMetaFieldsForGrediUpdate($media);
       // Process meta fields based on the action that we do (update asset or initial upload).
       $meta_fields = $media->getSource()->prepareMetafieldsUpload($is_update, $media, $inputs);
 
@@ -601,7 +601,7 @@ class GrediAsset extends Image {
         "metaById" => $meta_fields
       ];
 
-      $requestData['requestBody'] = json_encode($fieldData, JSON_FORCE_OBJECT);
+      $requestData['fieldData'] = json_encode($fieldData, JSON_FORCE_OBJECT);
       $requestData['url'] = sprintf("/files/%s",
         $media->getSource()->getMetadata($media, 'gredi_asset_id'));
 
@@ -613,10 +613,7 @@ class GrediAsset extends Image {
     $meta_fields = $inputs ? $media->getSource()->prepareMetafieldsUpload($is_update, $media, $inputs) : NULL;
     // Get the mime type of the file.
     $fid = $media->get($media->getSource()->getConfiguration()['source_field'])->target_id;
-//    $mime = $fid ? File::load($fid)->getMimeType() :
-    $a = $media->get($media->getSource()->getConfiguration()['source_field']);
     $file = File::load($fid);
-    $mime = $file->getMimeType();
 
     $fieldData = [
       "name" => basename($file->getFileUri()),
@@ -624,30 +621,10 @@ class GrediAsset extends Image {
       "propertiesById" => [],
       "metaById" => $meta_fields
     ];
-    $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
-    $base64EncodedFile = base64_encode(file_get_contents($file->getFileUri()));
-    // @todo check this instead of this hardcoded string.
-    // https://docs.guzzlephp.org/en/stable/quickstart.html#sending-form-fields
 
-    $boundary = "helfiboundary";
-    $requestBody = "";
-    $requestBody .= "\r\n";
-    $requestBody .= "\r\n";
-    $requestBody .= "--" . $boundary . "\r\n";
-    $requestBody .= "Content-Disposition: form-data; name=\"json\"\r\n";
-    $requestBody .= "Content-Type: application/json\r\n";
-    $requestBody .= "\r\n";
-    $requestBody .= $fieldString . "\r\n";
-    $requestBody .= "--" . $boundary . "\r\n";
-    $requestBody .= "Content-Disposition: form-data; name=\"file\"\r\n";
-    $requestBody .= "Content-Type: " . $mime . "\r\n";
-    $requestBody .= "Content-Transfer-Encoding: base64\r\n";
-    $requestBody .= "\r\n";
-    $requestBody .= $base64EncodedFile . "\r\n";
-    $requestBody .= "--" . $boundary . "--\r\n";
-    $requestBody .= "\r\n";
-
-    $requestData['requestBody'] = $requestBody;
+    $requestData['fieldData'] = json_encode($fieldData, JSON_FORCE_OBJECT);
+    $requestData['file'] = base64_encode(file_get_contents($file->getFileUri()));
+    $requestData['mime'] = $file->getMimeType();
 
     return $requestData;
   }

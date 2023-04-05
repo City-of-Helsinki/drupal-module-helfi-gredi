@@ -310,15 +310,35 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
 
     if (!$is_update) {
 
+      // @todo check this instead of this hardcoded string.
+      // https://docs.guzzlephp.org/en/stable/quickstart.html#sending-form-fields
+      $boundary = "helfiboundary";
+      $requestBody = "";
+      $requestBody .= "\r\n";
+      $requestBody .= "\r\n";
+      $requestBody .= "--" . $boundary . "\r\n";
+      $requestBody .= "Content-Disposition: form-data; name=\"json\"\r\n";
+      $requestBody .= "Content-Type: application/json\r\n";
+      $requestBody .= "\r\n";
+      $requestBody .= $requestData['fieldData'] . "\r\n";
+      $requestBody .= "--" . $boundary . "\r\n";
+      $requestBody .= "Content-Disposition: form-data; name=\"file\"\r\n";
+      $requestBody .= "Content-Type: " . $requestData['mime'] . "\r\n";
+      $requestBody .= "Content-Transfer-Encoding: base64\r\n";
+      $requestBody .= "\r\n";
+      $requestBody .= $requestData['file'] . "\r\n";
+      $requestBody .= "--" . $boundary . "--\r\n";
+      $requestBody .= "\r\n";
+
       $urlUpload = sprintf("%s/folders/%s/files/", $this->apiUrl, $this->authService->uploadFolder);
       // Request made when uploading assets.
       $response = $this->httpClient->request('POST', $urlUpload, [
         'cookies' => $this->authService->getCookieJar(),
         'headers' => [
           'Content-Type' => 'multipart/form-data;boundary=helfiboundary',
-          'Content-Length' => strlen($requestData['requestBody']),
+          'Content-Length' => strlen($requestBody),
         ],
-        'body' => $requestData['requestBody'],
+        'body' => $requestBody,
       ])->getBody()->getContents();
 
       // Return file ID from API as string.
@@ -332,9 +352,9 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
           'cookies' => $this->authService->getCookieJar(),
           'headers' => [
             'Content-Type' => 'application/json',
-            'Content-Length' => strlen($requestData['requestBody']),
+            'Content-Length' => strlen($requestData['fieldData']),
           ],
-          'body' => $requestData['requestBody'],
+          'body' => $requestData['fieldData'],
         ])->getBody()->getContents();
 
       // Return empty array from API if successful, and we convert it to string
