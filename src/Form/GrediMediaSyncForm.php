@@ -2,6 +2,7 @@
 
 namespace Drupal\helfi_gredi\Form;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -62,6 +63,13 @@ class GrediMediaSyncForm extends FormBase {
   protected $messenger;
 
   /**
+   * The time service.
+   *
+   * @var \Drupal\Component\Datetime\TimeInterface
+   */
+  protected $timeManager;
+
+  /**
    * GrediSyncForm constructor.
    *
    * @param \Drupal\Core\Queue\QueueWorkerManager $queueWorkerManager
@@ -69,6 +77,7 @@ class GrediMediaSyncForm extends FormBase {
    * @param \Drupal\helfi_gredi\GrediClient $grediClient
    * @param \Drupal\Core\Language\LanguageManager $languageManager
    * @param \Drupal\Core\Messenger\Messenger $messenger
+   * @param \Drupal\Component\Datetime\TimeInterface $timeManager
    */
   public function __construct(
     QueueWorkerManager $queueWorkerManager,
@@ -76,7 +85,8 @@ class GrediMediaSyncForm extends FormBase {
     EntityTypeManagerInterface $entityTypeManager,
     GrediClient $grediClient,
     LanguageManager $languageManager,
-    Messenger $messenger
+    Messenger $messenger,
+    TimeInterface $timeManager
   ) {
     $this->queueWorkerManager = $queueWorkerManager;
     $this->loggerFactory = $loggerChannelFactory->get('helfi_gredi');
@@ -84,6 +94,7 @@ class GrediMediaSyncForm extends FormBase {
     $this->grediClient = $grediClient;
     $this->languageManager = $languageManager;
     $this->messenger = $messenger;
+    $this->timeManager = $timeManager;
   }
 
   /**
@@ -96,7 +107,8 @@ class GrediMediaSyncForm extends FormBase {
       $container->get('entity_type.manager'),
       $container->get('helfi_gredi.dam_client'),
       $container->get('language_manager'),
-      $container->get('messenger')
+      $container->get('messenger'),
+      $container->get('datetime.time')
     );
   }
 
@@ -185,7 +197,9 @@ class GrediMediaSyncForm extends FormBase {
     ];
 
     if ($media->get('gredi_removed')->value) {
-      \Drupal::messenger()->addWarning(t('Gredi remote asset no longer exists.'));
+      if (empty($form_state->getUserInput())) {
+        \Drupal::messenger()->addWarning(t('Gredi remote asset no longer exists.'));
+      }
       $form['asset']['asset_pull']['#disabled'] = TRUE;
       $form['asset']['asset_push']['#value'] = $this->t('Upload asset into Gredi');
     }
@@ -233,10 +247,10 @@ class GrediMediaSyncForm extends FormBase {
       $assetId = $media->getSource()->sendAssetToGredi($media, $is_update);
       if (!$is_update && $assetId) {
         $media->set('gredi_asset_id', $assetId);
-        // @todo use time manager instead of time().
-        $media->set('gredi_modified', time());
+        $media->set('gredi_modified', $this->timeManager->getRequestTime());
         $media->set('gredi_removed', FALSE);
         $media->save();
+        $this->messenger->addWarning('In order for all translations fields to be sent a new sync into Gredi is required.');
       }
       $this->messenger->addStatus(t('Asset successfully updated.'));
     }
