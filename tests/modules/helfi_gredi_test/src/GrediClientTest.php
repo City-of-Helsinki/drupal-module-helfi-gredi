@@ -27,7 +27,7 @@ class GrediClientTest extends GrediClient {
    * {@inheritdoc}
    */
   public function getAssetData(string $id): array | NULL {
-    return Json::decode(file_get_contents(__DIR__ . sprintf('/../../../fixtures/assetData_%s.json', 'all')));
+    return Json::decode(file_get_contents(__DIR__ . sprintf('/../../../fixtures/assetData_%s.json', '1')));
   }
 
   /**
@@ -60,4 +60,11 @@ class GrediClientTest extends GrediClient {
     return $result;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function uploadImage(array $requestData, bool $is_update): ?string {
+
+    return '12345';
+  }
 }
