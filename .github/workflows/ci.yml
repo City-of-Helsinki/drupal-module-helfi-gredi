@@ -80,7 +80,13 @@ jobs:
       - name: Run PHPUnit tests
         run: |
           cd $DRUPAL_ROOT
-          vendor/bin/phpunit -c $MODULE_FOLDER $MODULE_FOLDER
+          php -d pcov.directory=$MODULE_FOLDER \
+            vendor/bin/phpunit \
+            --bootstrap $DRUPAL_ROOT/core/tests/bootstrap.php \
+            -c $MODULE_FOLDER \
+            --coverage-clover=coverage.xml \
+            $MODULE_FOLDER
+          codecov
 
       - name: Create an artifact from test report
         uses: actions/upload-artifact@v2
