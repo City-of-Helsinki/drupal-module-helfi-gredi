@@ -136,7 +136,6 @@ function helfi_gredi_entity_field_storage_info(EntityTypeInterface $entity_type)
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayConfigurable('form', FALSE);
 
-
   }
   return $definitions;
 }
@@ -211,7 +210,7 @@ function helfi_gredi_cron() {
     /** @var \Drupal\Core\Entity\Query\QueryInterface $query */
     $query = \Drupal::entityQuery('media')
       ->condition('bundle', 'gredi_asset')
-      ->condition('gredi_autosync' ,1);
+      ->condition('gredi_autosync', 1);
     /** @var array $results */
     $results = $query->execute();
     $queue = \Drupal::queue('gredi_asset_update');
@@ -246,7 +245,7 @@ function helfi_gredi_entity_operation_alter(array &$operations, EntityInterface 
         'title' => t('Gredi Asset'),
         'url' => Url::fromRoute('helfi_gredi.sync', ['media' => $entity->id()]),
         'weight' => 60,
-      ]
+      ],
     ];
   }
 }
@@ -261,12 +260,6 @@ function helfi_gredi_form_media_gredi_asset_edit_form_alter(&$form, FormStateInt
 
 /**
  * Disables image edit on gredi assets.
- *
- * @param $element
- * @param \Drupal\Core\Form\FormStateInterface $form_state
- * @param $form
- *
- * @return array
  */
 function _helfi_gredi_edit_image_process($element, FormStateInterface $form_state, $form) {
   $element['remove_button']['#access'] = FALSE;
@@ -495,4 +488,3 @@ function helfi_gredi_preprocess_views_view_fields(&$variables) {
     }
   }
 }
-

@@ -9,6 +9,9 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Queue\QueueWorkerManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * Config form for syncing Gredi assets with Gredi API.
+ */
 class GrediSyncConfigForm extends ConfigFormBase {
 
   /**
@@ -21,13 +24,17 @@ class GrediSyncConfigForm extends ConfigFormBase {
   /**
    * Logger channel.
    *
-   * @var LoggerChannelFactoryInterface
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
    */
   protected $loggerFactory;
 
   /**
    * GrediSyncConfigForm constructor.
    *
+   * @param \Drupal\Core\Queue\QueueWorkerManager $queueWorkerManager
+   *   Queue worker service.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
+   *   Logger channel service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   Config factory service.
    */
@@ -52,16 +59,25 @@ class GrediSyncConfigForm extends ConfigFormBase {
     );
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function getEditableConfigNames() {
     return [
-      'helfi_gredi.settings'
+      'helfi_gredi.settings',
     ];
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getFormId() {
     return 'gredi_sync_config';
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('helfi_gredi.settings');
 
@@ -94,7 +110,7 @@ class GrediSyncConfigForm extends ConfigFormBase {
     $form['sync']['sync_button'] = [
       '#type' => 'submit',
       '#value' => $this->t('Sync All Gredi Assets'),
-      '#submit' => ['::syncGrediAssets']
+      '#submit' => ['::syncGrediAssets'],
     ];
 
     return $form;
@@ -114,7 +130,7 @@ class GrediSyncConfigForm extends ConfigFormBase {
   }
 
   /**
-   * @return void
+   * Submit function for syncing multiple gredi assets.
    */
   public function syncGrediAssets() {
 
@@ -130,12 +146,14 @@ class GrediSyncConfigForm extends ConfigFormBase {
         $count++;
         $queue_worker->processItem($value);
       }
-      \Drupal::messenger()->addStatus(t('Successfully synced ' . $count . ' assets'));
+      \Drupal::messenger()->addStatus($this->t('Successfully synced @count assets'), [
+        '@count' => $count,
+      ]);
 
       // Store the last sync time to use it at cron.
       \Drupal::state()->set('helfi_gredi.last_run', \Drupal::time()->getCurrentTime());
     }
-    catch(\Exception $e) {
+    catch (\Exception $e) {
       $this->loggerFactory->error(t('Error on syncing asset: @error', [
         '@error' => $e->getMessage(),
       ]));

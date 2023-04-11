@@ -10,7 +10,6 @@ use Drupal\Core\Language\LanguageManager;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\Messenger;
 use Drupal\Core\Queue\QueueWorkerManager;
-use Drupal\file\Entity\File;
 use Drupal\helfi_gredi\GrediClient;
 use Drupal\media\Entity\Media;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -70,14 +69,22 @@ class GrediMediaSyncForm extends FormBase {
   protected $timeManager;
 
   /**
-   * GrediSyncForm constructor.
+   * GrediMediaSyncForm constructor.
    *
    * @param \Drupal\Core\Queue\QueueWorkerManager $queueWorkerManager
+   *   Queue worker service.
    * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerChannelFactory
+   *   Logger service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   Entity type manager service.
    * @param \Drupal\helfi_gredi\GrediClient $grediClient
+   *   Gredi client service.
    * @param \Drupal\Core\Language\LanguageManager $languageManager
+   *   Language service.
    * @param \Drupal\Core\Messenger\Messenger $messenger
+   *   Messenger service.
    * @param \Drupal\Component\Datetime\TimeInterface $timeManager
+   *   Time manager service.
    */
   public function __construct(
     QueueWorkerManager $queueWorkerManager,
@@ -123,7 +130,7 @@ class GrediMediaSyncForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $media = NULL) {
-    /** @var $media \Drupal\media\MediaInterface */
+    /** @var \Drupal\media\MediaInterface $media */
     $form['asset'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Gredi Asset'),
@@ -135,10 +142,10 @@ class GrediMediaSyncForm extends FormBase {
     ];
 
     $table_header = [
-        $this->t('Field'),
-        $this->t('Language'),
-        $this->t('Drupal value'),
-        $this->t('Gredi value')
+      $this->t('Field'),
+      $this->t('Language'),
+      $this->t('Drupal value'),
+      $this->t('Gredi value'),
     ];
     $table_rows = [];
 
@@ -176,7 +183,6 @@ class GrediMediaSyncForm extends FormBase {
         $media->removeTranslation($language->getId());
       }
     }
-
 
     $form['asset']['fields'] = [
       '#theme' => 'table',
@@ -220,7 +226,7 @@ class GrediMediaSyncForm extends FormBase {
         $this->messenger()->addStatus($this->t('All field translations were synced from Gredi.'));
       }
     }
-    catch(\Exception $e) {
+    catch (\Exception $e) {
       $this->loggerFactory->error(t('Error on syncing asset: @error', [
         '@error' => $e->getMessage(),
       ]));
@@ -232,9 +238,10 @@ class GrediMediaSyncForm extends FormBase {
    * Sending updated information of an asset to Gredi API.
    *
    * @param array $form
+   *   The form render array.
    * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
    *
-   * @return void
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
@@ -254,7 +261,7 @@ class GrediMediaSyncForm extends FormBase {
       }
       $this->messenger->addStatus(t('Asset successfully updated.'));
     }
-    catch(\Exception $e) {
+    catch (\Exception $e) {
       $this->messenger->addError(t('Asset was not updated. Check logs.'));
       $this->loggerFactory->error(t('@error', [
         '@error' => $e->getMessage(),

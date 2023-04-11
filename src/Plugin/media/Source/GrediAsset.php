@@ -17,7 +17,6 @@ use Drupal\file\Entity\File;
 use Drupal\file\FileInterface;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\helfi_gredi\GrediClient;
-use Drupal\media\Entity\Media;
 use Drupal\media\MediaInterface;
 use Drupal\media\Plugin\media\Source\Image;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -100,6 +99,7 @@ class GrediAsset extends Image {
 
   /**
    * Lang codes mismatch between api and site.
+   *
    * Key is code lang in Gredi and value is code lang in Drupal.
    *
    * @var string[]
@@ -140,7 +140,6 @@ class GrediAsset extends Image {
       $config_factory,
       $imageFactory,
       $fileSystem,
-      $loggerFactory
     );
 
     $this->grediClient = $grediClient;
@@ -366,8 +365,10 @@ class GrediAsset extends Image {
           return NULL;
         }
         // @todo figure out a way that when creating a new translation in drupal
-        // the Gredi value, from the table from Gredi Asset tab to display correct value
-        // as it is now it follows the source values if the language is not avaialable in gredi.
+        // the Gredi value, from the table from
+        // Gredi Asset tab to display correct value
+        // as it is now it follows the source values
+        // if the language is not avaialable in gredi.
         $lang_code = $media->language()->getId();
         $fallbackLangCode = $this->languageManager->getDefaultLanguage()->getId();
 
@@ -379,7 +380,8 @@ class GrediAsset extends Image {
           }
           $attr_id_and_lang = str_replace('custom:meta-field-', '', $attr_name_key);
           [$attr_id, $attr_lang_code] = explode('_', $attr_id_and_lang);
-          // API uses 'SE' lang code for Swedish, so we use this hardcoded mapping.
+          // API uses 'SE' lang code for Swedish,
+          // so we use this hardcoded mapping.
           if (isset($this->langMappingsCorrection[$attr_lang_code])) {
             $attr_lang_code = $this->langMappingsCorrection[$attr_lang_code];
           }
@@ -423,6 +425,18 @@ class GrediAsset extends Image {
     return $this->assetData;
   }
 
+  /**
+   * Retrieves the mapping of the Gredi meta fields.
+   *
+   * @param \Drupal\media\MediaInterface $media
+   *   The media entity.
+   *
+   * @return mixed
+   *   Returns the mapping of the Gredi meta fields.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   */
   public function getMetaFieldsMapping(MediaInterface $media) {
     $field_map = \Drupal::entityTypeManager()->getStorage('media_type')
       ->load($media->getSource()->getPluginId())->getFieldMap();
@@ -477,8 +491,11 @@ class GrediAsset extends Image {
    * Method for syncing assets from drupal with external gredi assets.
    *
    * @param \Drupal\media\MediaInterface $media
+   *   The media entity.
    *
    * @return bool
+   *   Returns true if the asset exists on gredi, false otherwise.
+   *
    * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    * @throws \Drupal\Core\Entity\EntityStorageException
@@ -488,7 +505,8 @@ class GrediAsset extends Image {
     $external_field_modified = $media->getSource()->getMetadata($media, 'modified');
     if ($media->get('gredi_removed')->value) {
       $this->logger->warning($this->t('Gredi asset id @asset_id no longer found.', [
-        '@asset_id' => $media->get('gredi_asset_id')->value]));
+        '@asset_id' => $media->get('gredi_asset_id')->value,
+      ]));
       return FALSE;
     }
 
@@ -533,17 +551,17 @@ class GrediAsset extends Image {
   }
 
   /**
-   * Prepare meta fields values for upload/sync.
+   * Creates the structure accepted by the API for sending meta fields.
    *
    * @param \Drupal\media\MediaInterface $media
-   * @param $inputs
+   *   The media entity.
    * @param bool $is_update
+   *   The operation being done. Initial upload or update asset.
    *
    * @return array
-   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
-   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
+   *   The meta fields array.
    */
-  public function getMetafieldsForUpdate(MediaInterface $media, bool $is_update = false) {
+  public function getMetafieldsForUpdate(MediaInterface $media, bool $is_update = FALSE) {
     $field_map = $media->getSource()->getMetaFieldsMapping($media);
 
     if ($media->isNew() || !$is_update) {
@@ -573,6 +591,18 @@ class GrediAsset extends Image {
     return $meta_fields;
   }
 
+  /**
+   * Sends assets to Gredi API.
+   *
+   * @param \Drupal\media\MediaInterface $media
+   *   The media entity.
+   * @param bool $is_update
+   *   The operation being done. Initial upload or update asset.
+   *
+   * @return string|null
+   *   External Gredi asset id for initial upload
+   *   Null in case of update existing asset.
+   */
   public function sendAssetToGredi(MediaInterface $media, bool $is_update) {
     $requestData = [];
 
@@ -580,7 +610,7 @@ class GrediAsset extends Image {
     $fieldData = [
       "name" => $media->getName(),
       "propertiesById" => [],
-      "metaById" => $meta_fields
+      "metaById" => $meta_fields,
     ];
 
     // This is the case of syncing an asset.
@@ -595,7 +625,7 @@ class GrediAsset extends Image {
         "name" => basename($file->getFileUri()),
         "fileType" => "nt:file",
         "propertiesById" => [],
-        "metaById" => $meta_fields
+        "metaById" => $meta_fields,
       ];
       $requestData['file'] = base64_encode(file_get_contents($file->getFileUri()));
       $requestData['mime'] = $file->getMimeType();
@@ -605,6 +635,5 @@ class GrediAsset extends Image {
 
     return $this->grediClient->uploadImage($requestData, $is_update);
   }
-
 
 }

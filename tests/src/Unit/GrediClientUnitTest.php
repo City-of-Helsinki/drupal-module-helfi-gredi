@@ -53,7 +53,6 @@ final class GrediClientUnitTest extends UnitTestCase {
       $this->typeManagerMock
     );
 
-
     // Act.
     $remote_data = $grediClient->getAssetData('1');
 

@@ -91,7 +91,6 @@ trait GrediClientTestTrait {
       ->willReturn(TRUE);
   }
 
-
   /**
    * Creates an API response.
    *

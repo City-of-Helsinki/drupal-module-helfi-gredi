@@ -123,7 +123,7 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
       'view media',
       'create media',
       'administer node form display',
-      'administer media'
+      'administer media',
     ]);
 
     $this->drupalLogin($user);

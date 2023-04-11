@@ -10,8 +10,6 @@ use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
-use Drupal\file\Entity\File;
-use Drupal\media\MediaInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
@@ -89,7 +87,6 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
    */
   protected $typeManager;
 
-
   /**
    * GrediClient constructor.
    *
@@ -105,7 +102,6 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
    *   The Drupal CacheBackendInterface service.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $typeManager
    *   The Drupal EntityTypeManager service.
-   *
    */
   public function __construct(
     ClientInterface $guzzleClient,

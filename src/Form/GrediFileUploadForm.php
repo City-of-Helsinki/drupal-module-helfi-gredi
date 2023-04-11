@@ -80,7 +80,7 @@ class GrediFileUploadForm extends FileUploadForm {
    *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected $entity_type_manager;
+  protected $typeManager;
 
   /**
    * GrediFileUploadForm constructor.
@@ -108,7 +108,7 @@ class GrediFileUploadForm extends FileUploadForm {
    */
   public function __construct(EntityTypeManagerInterface $entity_type_manager, MediaLibraryUiBuilder $library_ui_builder, ElementInfoManagerInterface $element_info, RendererInterface $renderer, FileSystemInterface $file_system, OpenerResolverInterface $opener_resolver, FileUsageInterface $file_usage, FileRepositoryInterface $file_repository = NULL, GrediClient $damClient, TimeInterface $timeManager) {
     parent::__construct($entity_type_manager, $library_ui_builder, $element_info, $renderer, $file_system, $opener_resolver, $file_usage, $file_repository);
-    $this->entity_type_manager = $entity_type_manager;
+    $this->typeManager = $entity_type_manager;
     $this->damClient = $damClient;
     $this->timeManager = $timeManager;
   }

@@ -2,7 +2,6 @@
 
 namespace Drupal\helfi_gredi\Plugin\QueueWorker;
 
-use _PHPStan_4dd92cd93\Nette\Neon\Exception;
 use Drupal\Core\Logger\LoggerChannel;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -22,6 +21,11 @@ use Drupal\media\Entity\Media;
 class MetaUpdate extends QueueWorkerBase implements ContainerFactoryPluginInterface {
   use StringTranslationTrait;
 
+  /**
+   * Logger channel service.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannel
+   */
   public LoggerChannel $logger;
 
   /**
@@ -45,7 +49,8 @@ class MetaUpdate extends QueueWorkerBase implements ContainerFactoryPluginInterf
     $external_field_modified = $media->getSource()->getMetadata($media, 'modified');
     if ($media->get('gredi_removed')->value) {
       $this->logger->warning($this->t('Gredi asset id @asset_id no longer found.', [
-        '@asset_id' => $media->get('gredi_asset_id')->value]));
+        '@asset_id' => $media->get('gredi_asset_id')->value,
+      ]));
       return;
     }
 
@@ -69,6 +74,6 @@ class MetaUpdate extends QueueWorkerBase implements ContainerFactoryPluginInterf
     if ($hasNewTranslation || $isModified) {
       $media->getSource()->syncMediaFromGredi($media);
     }
-
   }
+
 }

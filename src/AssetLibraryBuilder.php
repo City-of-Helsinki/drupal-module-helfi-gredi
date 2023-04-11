@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\helfi_gredi;
 
-use Drupal\Core\Form\FormState;
 use Drupal\helfi_gredi\Plugin\media\Source\GrediAsset;
 use Drupal\media\MediaTypeInterface;
 use Drupal\media_library\MediaLibraryState;

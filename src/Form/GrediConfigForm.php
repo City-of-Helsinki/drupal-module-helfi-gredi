@@ -86,8 +86,8 @@ class GrediConfigForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Base URL'),
       '#default_value' => $config->get('api_url'),
-      '#description' =>
-        $this->t('The base URL for the API v1. ex: https://api4.domain.net/api/v1 . Can be defined with env var GREDI_API_URL.'),
+      '#description' => $this->t('The base URL for the API v1. ex: https://api4.domain.net/api/v1 .
+      Can be defined with env var GREDI_API_URL.'),
       '#required' => TRUE,
     ];
 

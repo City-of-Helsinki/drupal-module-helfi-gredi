@@ -67,4 +67,5 @@ class GrediClientTest extends GrediClient {
 
     return '12345';
   }
+
 }
