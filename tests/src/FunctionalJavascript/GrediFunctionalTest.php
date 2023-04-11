@@ -155,15 +155,10 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
     $this->assertSession()->pageTextContains('test2.png');
 
     $this->drupalGet('/media/1/edit');
-    // Usable with olivero theme.
-//    $this->click('a[href="/media/1/edit"]');
-
     $this->assertSession()->waitForElement('css', 'media-gredi-asset-edit-form');
     $this->assertSession()->pageTextContains('Gredi Autosync');
 
     $this->drupalGet('/media/1/gredi');
-    // Usable with olivero theme.
-//    $this->click('a[href="/media/1/gredi"]');
     $this->assertSession()->waitForElement('css', 'gredi-sync');
     $this->assertSession()->pageTextContains('Gredi asset ID');
 
