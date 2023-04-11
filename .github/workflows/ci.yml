@@ -80,9 +80,7 @@ jobs:
       - name: Run PHPUnit tests
         run: |
           cd $DRUPAL_ROOT
-            vendor/bin/phpunit \
-            -c $MODULE_FOLDER/phpunit.xml \
-          codecov
+          /vendor/bin/phpunit -c $MODULE_FOLDER $MODULE_FOLDER
 
       - name: Create an artifact from test report
         uses: actions/upload-artifact@v2
