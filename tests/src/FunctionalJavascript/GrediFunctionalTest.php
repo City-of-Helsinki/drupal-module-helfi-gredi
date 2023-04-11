@@ -25,7 +25,7 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
   /**
    * {@inheritdoc}
    */
-  protected $defaultTheme = 'olivero';
+  protected $defaultTheme = 'stark';
 
   /**
    * {@inheritdoc}
@@ -154,12 +154,16 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
     $this->drupalGet('/admin/content/media');
     $this->assertSession()->pageTextContains('test2.png');
 
-    $this->click('a[href="/media/1/edit"]');
+    $this->drupalGet('/media/1/edit');
+    // Usable with olivero theme.
+//    $this->click('a[href="/media/1/edit"]');
 
     $this->assertSession()->waitForElement('css', 'media-gredi-asset-edit-form');
     $this->assertSession()->pageTextContains('Gredi Autosync');
 
-    $this->click('a[href="/media/1/gredi"]');
+    $this->drupalGet('/media/1/gredi');
+    // Usable with olivero theme.
+//    $this->click('a[href="/media/1/gredi"]');
     $this->assertSession()->waitForElement('css', 'gredi-sync');
     $this->assertSession()->pageTextContains('Gredi asset ID');
 
