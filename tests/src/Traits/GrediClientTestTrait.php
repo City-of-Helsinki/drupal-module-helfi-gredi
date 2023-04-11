@@ -104,14 +104,14 @@ trait GrediClientTestTrait {
       $mock_data = $this->getAssetFixture($response_data);
       $this->guzzleClientMock
         ->expects($this->any())
-        ->method('get')
+        ->method('__call')
         ->willReturn(new Response(200, ['Content-Type' => 'application/json'], $mock_data));
     }
     else {
       $mock_data = Json::encode($response_data);
       $this->guzzleClientMock
         ->expects($this->any())
-        ->method('get')
+        ->method('__call')
         ->willReturn(new Response(200, ['Content-Type' => 'application/json'], $mock_data));
     }
 
