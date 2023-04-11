@@ -25,7 +25,7 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
   /**
    * {@inheritdoc}
    */
-  protected $defaultTheme = 'stark';
+  protected $defaultTheme = 'olivero';
 
   /**
    * {@inheritdoc}
