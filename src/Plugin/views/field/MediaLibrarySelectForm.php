@@ -93,7 +93,6 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
       if (!empty($existing_ids)) {
         // We should not have more than 1 with same gredi id.
         $mediaId = end($existing_ids);
-        // @todo should we check if modified since our copy and resave it?
         $media_ids[] = $mediaId;
       }
       else {
@@ -103,13 +102,14 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         $media_type = $entityTypeManager->getStorage('media_type')
           ->load('gredi_asset');
 
-        $currentLanguage = \Drupal::languageManager()->getCurrentLanguage()->getId();
+        $currentLanguage = \Drupal::languageManager()->getDefaultLanguage()->getId();
         $entity = Media::create([
           'bundle' => $media_type->id(),
           'uid' => \Drupal::currentUser()->id(),
-          'langcode' => \Drupal::languageManager()->getCurrentLanguage()->getId(),
+          'langcode' => $currentLanguage,
           'status' => 1,
           'gredi_asset_id' => $id,
+          'gredi_removed' => FALSE,
         ]);
         /** @var \Drupal\helfi_gredi\Plugin\media\Source\GrediAsset $source */
         $source = $entity->getSource();
@@ -118,9 +118,6 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
 
         $assetName = $source->getMetadata($entity, 'name');
         $entity->set('name', $assetName);
-
-        $modified = $source->getMetadata($entity, 'modified');
-        $entity->set('gredi_modified', $modified);
 
         /** @var \Drupal\file\FileInterface $file */
         $file = $source->getMetadata($entity, 'original_file');
@@ -138,26 +135,8 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
 
         $entity->save();
 
-        $siteLanguages = array_keys(\Drupal::languageManager()->getLanguages());
-        $apiLanguages = $source->getMetadata($entity, 'lang_codes');
-        // @todo the api lang code for Swedish is SE, but in Drupal is SV.
-        // @todo How to handle this?
-        // @todo langcode SE in Drupal stands for Northern Sami.
-        // @todo Is this the dialect we want?
-        foreach ($apiLanguages as $apiLangCode) {
-          if (!in_array($apiLangCode, $siteLanguages)) {
-            continue;
-          }
-          if ($currentLanguage == $apiLangCode) {
-            continue;
-          }
-          $translation = $entity->addTranslation($apiLangCode);
-          $translation->set('name', $assetName);
-          if (!empty($file) && $translation->get($source_field_name)->getFieldDefinition()->isTranslatable()) {
-            $translation->set($source_field_name, ['target_id' => $file->id()]);
-          }
-          $translation->save();
-        }
+        // Create all translations.
+        $entity->getSource()->syncMediaFromGredi($entity);
 
         $media_ids[] = $entity->id();
       }

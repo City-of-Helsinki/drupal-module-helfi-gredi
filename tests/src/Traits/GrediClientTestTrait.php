@@ -7,6 +7,7 @@ namespace Drupal\Tests\helfi_gredi\Traits;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactory;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannel;
 use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\helfi_gredi\GrediAuthService;
@@ -54,17 +55,26 @@ trait GrediClientTestTrait {
   protected $cacheBin;
 
   /**
+   * Type manager interface service.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $typeManagerMock;
+
+  /**
    * Mocks the constructor services.
    */
   public function createServiceMocks() {
 
     $url = 'https://api4.materialbank.net/api/v1/';
+
     // Mocking the constructor services.
     $this->authServiceMock = $this->createMock(GrediAuthService::class);
     $this->guzzleClientMock = $this->createMock(Client::class);
     $this->configFactoryMock = $this->createMock(ConfigFactory::class);
     $this->loggerChannelFactoryMock = $this->createMock(LoggerChannelFactory::class);
     $this->cacheBin = $this->createMock(CacheBackendInterface::class);
+    $this->typeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
 
     $this->loggerChannelFactoryMock->method('get')->willReturn(new LoggerChannel('helfi_gredi'));
 

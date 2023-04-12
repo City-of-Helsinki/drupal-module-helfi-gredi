@@ -7,9 +7,9 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelInterface;
-use Drupal\file\Entity\File;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
@@ -81,6 +81,13 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
   private $metafields;
 
   /**
+   * Entity type manager object.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $typeManager;
+
+  /**
    * GrediClient constructor.
    *
    * @param \GuzzleHttp\ClientInterface $guzzleClient
@@ -93,13 +100,16 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
    *   The Drupal LoggerChannelFactory service.
    * @param \Drupal\Core\Cache\CacheBackendInterface $cacheBin
    *   The Drupal CacheBackendInterface service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $typeManager
+   *   The Drupal EntityTypeManager service.
    */
   public function __construct(
     ClientInterface $guzzleClient,
     ConfigFactoryInterface $config,
     GrediAuthService $grediAuthService,
     LoggerChannelFactoryInterface $loggerChannelFactory,
-    CacheBackendInterface $cacheBin
+    CacheBackendInterface $cacheBin,
+    EntityTypeManagerInterface $typeManager
   ) {
     $this->httpClient = $guzzleClient;
     $this->config = $config;
@@ -107,6 +117,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
     $this->loggerChannel = $loggerChannelFactory->get('helfi_gredi');
     $this->apiUrl = $this->authService->apiUrl;
     $this->cacheBin = $cacheBin;
+    $this->typeManager = $typeManager;
   }
 
   /**
@@ -118,7 +129,8 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
       $container->get('config.factory'),
       $container->get('helfi_gredi.auth_service'),
       $container->get('logger.factory'),
-      $container->get('cache.default')
+      $container->get('cache.default'),
+      $container->get('entity_type.manager')
     );
   }
 
@@ -151,7 +163,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
         $retry = FALSE;
       }
       catch (ClientException $e) {
-        if (!$login_retry && $e->getCode() == 401) {
+        if (!$login_retry && $e->getCode() === 401) {
           $login_retry = TRUE;
         }
         else {
@@ -159,7 +171,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
             '@error' => $e->getMessage(),
             '@url' => $url,
           ]));
-          throw new \Exception($e->getMessage());
+          throw new \Exception($e->getMessage(), $e->getCode());
         }
       }
       catch (GuzzleException $e) {
@@ -167,7 +179,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
           '@error' => $e->getMessage(),
           '@url' => $url,
         ]));
-        throw new \Exception($e->getMessage());
+        throw new \Exception($e->getMessage(), $e->getCode());
       }
     }
     return $response;
@@ -286,56 +298,59 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
   /**
    * {@inheritdoc}
    */
-  public function uploadImage(File $image): ?string {
-
-    $mime = $image->getMimeType();
+  public function uploadImage(array $requestData, bool $is_update): ?string {
 
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
-    // Create the upload URL.
-    $urlUpload = sprintf("folders/%s/files/", $this->authService->uploadFolder);
-    $url = sprintf("%s/%s", $this->apiUrl, $urlUpload);
 
-    $fieldData = [
-      "name" => basename($image->getFileUri()),
-      "fileType" => "nt:file",
-      "propertiesById" => [],
-      "metaById" => [],
-    ];
-    $fieldString = json_encode($fieldData, JSON_FORCE_OBJECT);
-    $base64EncodedFile = base64_encode(file_get_contents($image->getFileUri()));
-    // @todo check this instead of this hardcoded string.
-    // https://docs.guzzlephp.org/en/stable/quickstart.html#sending-form-fields
-    $boundary = "helfiboundary";
-    $requestBody = "";
-    $requestBody .= "\r\n";
-    $requestBody .= "\r\n";
-    $requestBody .= "--" . $boundary . "\r\n";
-    $requestBody .= "Content-Disposition: form-data; name=\"json\"\r\n";
-    $requestBody .= "Content-Type: application/json\r\n";
-    $requestBody .= "\r\n";
-    $requestBody .= $fieldString . "\r\n";
-    $requestBody .= "--" . $boundary . "\r\n";
-    $requestBody .= "Content-Disposition: form-data; name=\"file\"\r\n";
-    $requestBody .= "Content-Type: " . $mime . "\r\n";
-    $requestBody .= "Content-Transfer-Encoding: base64\r\n";
-    $requestBody .= "\r\n";
-    $requestBody .= $base64EncodedFile . "\r\n";
-    $requestBody .= "--" . $boundary . "--\r\n";
-    $requestBody .= "\r\n";
+    if (!$is_update) {
+      // @todo check this instead of this hardcoded string.
+      // https://docs.guzzlephp.org/en/stable/quickstart.html#sending-form-fields
+      $boundary = "helfiboundary";
+      $requestBody = "";
+      $requestBody .= "\r\n";
+      $requestBody .= "\r\n";
+      $requestBody .= "--" . $boundary . "\r\n";
+      $requestBody .= "Content-Disposition: form-data; name=\"json\"\r\n";
+      $requestBody .= "Content-Type: application/json\r\n";
+      $requestBody .= "\r\n";
+      $requestBody .= $requestData['fieldData'] . "\r\n";
+      $requestBody .= "--" . $boundary . "\r\n";
+      $requestBody .= "Content-Disposition: form-data; name=\"file\"\r\n";
+      $requestBody .= "Content-Type: " . $requestData['mime'] . "\r\n";
+      $requestBody .= "Content-Transfer-Encoding: base64\r\n";
+      $requestBody .= "\r\n";
+      $requestBody .= $requestData['file'] . "\r\n";
+      $requestBody .= "--" . $boundary . "--\r\n";
+      $requestBody .= "\r\n";
 
-    $response = $this->httpClient->request('POST', $url, [
-      'cookies' => $this->authService->getCookieJar(),
-      'headers' => [
-        'Content-Type' => 'multipart/form-data;boundary=' . $boundary,
-        'Content-Length' => strlen($requestBody),
-      ],
-      'body' => $requestBody,
-    ])->getBody()->getContents();
+      $urlUpload = sprintf("%s/folders/%s/files/", $this->apiUrl, $this->authService->uploadFolder);
+      // Request made when uploading assets.
+      $response = $this->httpClient->request('POST', $urlUpload, [
+        'cookies' => $this->authService->getCookieJar(),
+        'headers' => [
+          'Content-Type' => 'multipart/form-data;boundary=helfiboundary',
+          'Content-Length' => strlen($requestBody),
+        ],
+        'body' => $requestBody,
+      ])->getBody()->getContents();
+    }
+    else {
+      $urlSync = sprintf("%s/files/%s", $this->apiUrl, $requestData['assetId']);
+      // Request made when syncing assets.
+      $response = $this->httpClient->request('PUT', $urlSync, [
+        'cookies' => $this->authService->getCookieJar(),
+        'headers' => [
+          'Content-Type' => 'application/json',
+          'Content-Length' => strlen($requestData['fieldData']),
+        ],
+        'body' => $requestData['fieldData'],
+      ])->getBody()->getContents();
+    }
 
-    // Return file ID from API as string.
-    return json_decode($response, TRUE)['id'];
+    // For upload we have the id, for update we have empty array response.
+    return json_decode($response, TRUE)['id'] ?? '';
   }
 
   /**
@@ -346,7 +361,6 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
       return $this->metafields;
     }
     $cache = $this->cacheBin->get('helfi_gredi_metafields');
-
     if (!empty($cache->data)) {
       $this->metafields = $cache->data;
       return $this->metafields;

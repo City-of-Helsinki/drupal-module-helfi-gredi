@@ -49,7 +49,8 @@ final class GrediClientUnitTest extends UnitTestCase {
       $this->configFactoryMock,
       $this->authServiceMock,
       $this->loggerChannelFactoryMock,
-      $this->cacheBin
+      $this->cacheBin,
+      $this->typeManagerMock
     );
 
     // Act.
@@ -99,7 +100,8 @@ final class GrediClientUnitTest extends UnitTestCase {
       $this->configFactoryMock,
       $this->authServiceMock,
       $this->loggerChannelFactoryMock,
-      $this->cacheBin
+      $this->cacheBin,
+      $this->typeManagerMock
     );
 
     // Assert when apiPreviewLink is found.
@@ -128,7 +130,8 @@ final class GrediClientUnitTest extends UnitTestCase {
       $this->configFactoryMock,
       $this->authServiceMock,
       $this->loggerChannelFactoryMock,
-      $this->cacheBin
+      $this->cacheBin,
+      $this->typeManagerMock
     );
 
     // Mock cached data.
@@ -157,7 +160,8 @@ final class GrediClientUnitTest extends UnitTestCase {
       $this->configFactoryMock,
       $this->authServiceMock,
       $this->loggerChannelFactoryMock,
-      $this->cacheBin
+      $this->cacheBin,
+      $this->typeManagerMock
     );
 
     // Set the guzzleClient response in order to not make an actual API call.
@@ -189,7 +193,8 @@ final class GrediClientUnitTest extends UnitTestCase {
       $this->configFactoryMock,
       $this->authServiceMock,
       $this->loggerChannelFactoryMock,
-      $this->cacheBin
+      $this->cacheBin,
+      $this->typeManagerMock
     );
 
     $expected_result = $this->getSearchFixture('test');

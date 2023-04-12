@@ -2,7 +2,6 @@
 
 namespace Drupal\helfi_gredi;
 
-use Drupal\file\Entity\File;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -28,13 +27,15 @@ interface GrediClientInterface {
   /**
    * Upload image to DAM.
    *
-   * @param \Drupal\file\Entity\File $image
-   *   Image to upload.
+   * @param array $requestData
+   *   Request body and optionally the url in case of syncing.
+   * @param bool $is_update
+   *   If the method is used for syncing assets or for uploading image.
    *
    * @return string|null
-   *   ID of the newly created DAM asset.
+   *   ID of the newly created DAM asset or empty string in case of syncing.
    */
-  public function uploadImage(File $image): ?string;
+  public function uploadImage(array $requestData, bool $is_update): ?string;
 
   /**
    * Retrieves metadata fields.

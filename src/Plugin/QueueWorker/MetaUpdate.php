@@ -2,6 +2,10 @@
 
 namespace Drupal\helfi_gredi\Plugin\QueueWorker;
 
+use Drupal\Core\Logger\LoggerChannel;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
 use Drupal\media\Entity\Media;
 
@@ -14,33 +18,61 @@ use Drupal\media\Entity\Media;
  *   cron = {"time" = 90}
  * )
  */
-class MetaUpdate extends QueueWorkerBase {
+class MetaUpdate extends QueueWorkerBase implements ContainerFactoryPluginInterface {
+  use StringTranslationTrait;
+
+  /**
+   * Logger channel service.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannel
+   */
+  public LoggerChannel $logger;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) : self {
+    $instance = new self($configuration, $plugin_id, $plugin_definition);
+    $instance->logger = $container->get('logger.factory')->get('helfi_gredi');
+    return $instance;
+  }
 
   /**
    * {@inheritdoc}
    */
   public function processItem($media_id) {
-    if ($media_id) {
-      $media = Media::load($media_id);
-      // Stored asset id.
-      $asset_id = $media->gredi_asset_id->value;
-      /** @var \Drupal\helfi_gredi\GrediClient $grediClient */
-      $grediClient = \Drupal::service('helfi_gredi.dam_client');
-      $asset_data = $grediClient->getAssetData($asset_id);
-      // External asset modified timestamp.
-      $external_field_modified = strtotime($asset_data['modified']);
-      // Stored asset modified timestamp.
-      $internal_field_modified = $media->gredi_modified->value;
-      // Set fields that needs to be updated NULL to let Media::prepareSave()
-      // fill up the fields with the newest fetched data.
-      if ($external_field_modified > $internal_field_modified) {
-        $media->set('field_alt_text', NULL);
-        $media->set('field_keywords', NULL);
-        $media->save();
-      }
+    $media = Media::load($media_id);
+    if (empty($media)) {
+      return;
+    }
+    // External asset modified timestamp.
+    $external_field_modified = $media->getSource()->getMetadata($media, 'modified');
+    if ($media->get('gredi_removed')->value) {
+      $this->logger->warning($this->t('Gredi asset id @asset_id no longer found.', [
+        '@asset_id' => $media->get('gredi_asset_id')->value,
+      ]));
+      return;
+    }
 
-      \Drupal::logger('helfi_gredi')
-        ->notice('Metadata for Gredi asset with id ' . $media_id);
+    if (is_null($external_field_modified)) {
+      throw new \Exception('Failed to retrieve asset data');
+    }
+    // Stored asset modified timestamp.
+    $internal_field_modified = $media->get('gredi_modified')->value;
+    $isModified = $external_field_modified > $internal_field_modified;
+
+    $lang_codes = $media->getSource()->getMetadata($media, 'lang_codes_corrected');
+    $hasNewTranslation = FALSE;
+    foreach ($lang_codes as $lang_code) {
+
+      if (!$media->hasTranslation($lang_code)) {
+        $hasNewTranslation = TRUE;
+        break;
+      }
+    }
+
+    if ($hasNewTranslation || $isModified) {
+      $media->getSource()->syncMediaFromGredi($media);
     }
   }
 

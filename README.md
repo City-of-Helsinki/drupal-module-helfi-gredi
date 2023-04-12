@@ -37,6 +37,6 @@ The frequency of the sync is set for 24h.
 
 ## Contact
 
-Slack: #helfi-drupal (http://helsinkicity.slack.com/)
+Slack: #helfi_ibm | #platta (http://helsinkicity.slack.com/)
 
 

@@ -1,0 +1,9 @@
+api_url: ''
+username: ''
+password: ''
+customer: ''
+upload_folder_id: ''
+customer_id: null
+sync:
+  cron_interval: 86400
+  enabled: 1

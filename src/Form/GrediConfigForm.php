@@ -14,8 +14,6 @@ use GuzzleHttp\ClientInterface;
  */
 class GrediConfigForm extends ConfigFormBase {
 
-  const NUM_ASSETS_PER_PAGE = 12;
-
   /**
    * Client interface.
    *
@@ -88,20 +86,23 @@ class GrediConfigForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Base URL'),
       '#default_value' => $config->get('api_url'),
-      '#description' => $this->t('The base URL for the API v1. ex: https://api4.domain.net/api/v1'),
+      '#description' => $this->t('The base URL for the API v1. ex: https://api4.domain.net/api/v1 .
+      Can be defined with env var GREDI_API_URL.'),
       '#required' => TRUE,
     ];
 
     $form['auth']['username'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Username'),
+      '#description' => $this->t('Can be defined with env var GREDI_USERNAME.'),
       '#default_value' => $config->get('username'),
       '#required' => TRUE,
     ];
 
     $form['auth']['password'] = [
-      '#type' => 'textfield',
+      '#type' => 'password',
       '#title' => $this->t('Password'),
+      '#description' => $this->t('Can be defined with env var GREDI_PASSWORD.'),
       '#default_value' => $config->get('password'),
       '#required' => TRUE,
     ];
@@ -110,7 +111,7 @@ class GrediConfigForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Customer path'),
       '#default_value' => $config->get('customer'),
-      '#description' => $this->t('Customer path based on which customer id is fetched.'),
+      '#description' => $this->t('Customer path based on which customer id is fetched. Can be defined with env var GREDI_CUSTOMER.'),
       '#required' => TRUE,
     ];
 
@@ -118,7 +119,7 @@ class GrediConfigForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Customer ID'),
       '#default_value' => $config->get('customer_id'),
-      '#description' => $this->t('This will be fetched upon submission.'),
+      '#description' => $this->t('This will be fetched upon submission. Can be defined with env var GREDI_CUSTOMER_ID.'),
       '#disabled' => TRUE,
     ];
 
@@ -126,27 +127,7 @@ class GrediConfigForm extends ConfigFormBase {
       '#type' => 'textfield',
       '#title' => $this->t('Upload folder ID'),
       '#default_value' => $config->get('upload_folder_id'),
-      '#description' => $this->t('The Gredi folder ID on which files will be uploaded.'),
-      '#required' => TRUE,
-    ];
-
-    $form['entity_browser'] = [
-      '#type' => 'fieldset',
-      '#title' => $this->t('Gredi DAM entity browser settings'),
-      '#collapsible' => TRUE,
-      '#collapsed' => FALSE,
-    ];
-
-    $form['entity_browser']['num_assets_per_page'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Assets per page'),
-      '#default_value' => $config->get('num_assets_per_page') ?? self::NUM_ASSETS_PER_PAGE,
-      '#description' => $this->t(
-        'The number of assets to be shown per page in the entity browser can be set using this field. Default is set to @num_assets_per_page assets.',
-        [
-          '@num_assets_per_page' => self::NUM_ASSETS_PER_PAGE,
-        ]
-      ),
+      '#description' => $this->t('The Gredi folder ID on which files will be uploaded. Can be defined with env var GREDI_UPLOAD_FOLDER_ID.'),
       '#required' => TRUE,
     ];
 
@@ -211,19 +192,17 @@ class GrediConfigForm extends ConfigFormBase {
    *   Form state.
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $config = $this->config('helfi_gredi.settings');
     $customerId = $form_state->get('customerId');
 
-    $this->config('helfi_gredi.settings')->setData(
-      [
-        'api_url' => $form_state->getValue('api_url'),
-        'username' => $form_state->getValue('username'),
-        'password' => $form_state->getValue('password'),
-        'customer' => $form_state->getValue('customer'),
-        'upload_folder_id' => $form_state->getValue('upload_folder_id'),
-        'customer_id' => $customerId,
-        'num_assets_per_page' => $form_state->getValue('num_assets_per_page'),
-      ]
-    )->save();
+    $config->set('api_url', $form_state->getValue('api_url'));
+    $config->set('username', $form_state->getValue('username'));
+    $config->set('password', $form_state->getValue('password'));
+    $config->set('customer', $form_state->getValue('customer'));
+    $config->set('upload_folder_id', $form_state->getValue('upload_folder_id'));
+    $config->set('customer_id', $customerId);
+    $config->save();
+
     parent::submitForm($form, $form_state);
   }
 

@@ -43,7 +43,7 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
     'field_ui',
     'block',
     // Install dblog to assist with debugging.
-    'dblog',
+    'filelog',
     'views_remote_data',
     'helfi_gredi',
     'helfi_gredi_test',
@@ -123,6 +123,7 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
       'view media',
       'create media',
       'administer node form display',
+      'administer media',
     ]);
 
     $this->drupalLogin($user);
@@ -143,6 +144,7 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
     $this->click('input[type="checkbox"][name="media_library_select_form[1]"]');
     $this->assertSession()->checkboxChecked('media_library_select_form[1]');
     $this->assertSession()->elementExists('css', '.ui-dialog-buttonpane')->pressButton('Insert selected');
+    $this->assertSelectedMediaCount('1 item selected');
 
     // Assert the media was selected.
     $this->assertSession()->waitForElement('css', 'media-library-item__preview-wrapper');
@@ -151,6 +153,22 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
     // Assert the media was created.
     $this->drupalGet('/admin/content/media');
     $this->assertSession()->pageTextContains('test2.png');
+
+    $this->drupalGet('/media/1/edit');
+    $this->assertSession()->waitForElement('css', 'media-gredi-asset-edit-form');
+    $this->assertSession()->pageTextContains('Gredi Autosync');
+
+    $this->drupalGet('/media/1/gredi');
+    $this->assertSession()->waitForElement('css', 'gredi-sync');
+    $this->assertSession()->pageTextContains('Gredi asset ID');
+
+    $this->click('input[type="submit"][id="edit-asset-pull"]');
+    $this->assertSession()->waitForElement('css', 'gredi-sync');
+    $this->assertSession()->pageTextContains('All field translations were synced from Gredi.');
+
+    $this->click('input[type="submit"][id="edit-asset-push"]');
+    $this->assertSession()->waitForElement('css', 'gredi-sync');
+    $this->assertSession()->pageTextContains('Asset successfully updated.');
 
   }
 

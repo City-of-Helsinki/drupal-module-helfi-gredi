@@ -6,16 +6,18 @@
  */
 
 use Drupal\Component\Utility\UrlHelper;
+use Drupal\Core\Cache\RefinableCacheableDependencyInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Url;
 use Drupal\media\MediaTypeInterface;
+use Drupal\media\MediaInterface;
 use Drupal\helfi_gredi\Plugin\media\Source\GrediAsset;
 use Drupal\media_library\MediaLibraryState;
 use Drupal\helfi_gredi\Form\GrediFileUploadForm;
-use Drupal\file\Entity\File;
 use Drupal\views\Plugin\views\cache\CachePluginBase;
 use Drupal\views\ViewExecutable;
 
@@ -50,26 +52,36 @@ function _helfi_gredi_media_save_validate(array &$form, FormStateInterface &$for
     return;
   }
 
-  $input = $form_state->getValue('field_media_image')[0]['fids'][0];
+  $source_field = $media->getSource()->getConfiguration()['source_field'];
+  $input = $form_state->getValue($source_field)[0]['fids'][0];
 
   if (!$input) {
-    $form_state->setError($form['field_media_image'], 'Upload error. Image already exists');
+    $form_state->setError($form[$source_field], 'Upload error. Image already exists');
     $form_state->setRebuild();
   }
 
-  $file_entity = File::load($input);
+  $mediaCloned = clone $media;
+
+  $source_field = $mediaCloned->getSource()->getConfiguration()['source_field'];
+  $mediaCloned->set($source_field, $form_state->getUserInput()[$source_field][0]['fids']);
+
+  $field_map = $media->getSource()->getMetaFieldsMapping($media);
+  foreach ($field_map as $field) {
+    if (isset($form_state->getValues()[$field][0]['value'])) {
+      $mediaCloned->set($field, $form_state->getValues()[$field][0]['value']);
+    }
+  }
+
   try {
-    /** @var \Drupal\helfi_gredi\GrediClient $grediClient */
-    $grediClient = \Drupal::service('helfi_gredi.dam_client');
-    $asset_id = $grediClient->uploadImage($file_entity);
+    $asset_id = $media->getSource()->sendAssetToGredi($mediaCloned, FALSE);
+
     $media->set('gredi_asset_id', $asset_id);
     $media->set('gredi_modified', \Drupal::time()->getCurrentTime());
   }
   catch (\Exception $exception) {
-    $form_state->setError($form['field_media_image'], 'Upload error.');
+    $form_state->setError($form[$source_field], 'Upload error.');
     $form_state->setRebuild();
   }
-
 }
 
 /**
@@ -95,6 +107,35 @@ function helfi_gredi_entity_field_storage_info(EntityTypeInterface $entity_type)
       ->setTargetEntityTypeId('media')
       ->setDisplayConfigurable('view', FALSE)
       ->setDisplayConfigurable('form', FALSE);
+
+    $definitions['gredi_autosync'] = BaseFieldDefinition::create('boolean')
+      ->setName('gredi_autosync')
+      ->setLabel(new TranslatableMarkup('Gredi Autosync'))
+      ->setDescription(new TranslatableMarkup('Autosync with Gredi on cron run.'))
+      ->setDefaultValue(FALSE)
+      ->setTranslatable(FALSE)
+      ->setDisplayOptions('form', [
+        'type' => 'checkbox',
+      ])
+      ->setDisplayOptions('view', [
+        'type' => 'hidden',
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setTargetEntityTypeId('media')
+      ->setRevisionable(FALSE);
+
+    $definitions['gredi_removed'] = BaseFieldDefinition::create('boolean')
+      ->setName('gredi_removed')
+      ->setLabel(new TranslatableMarkup('Asset exists on Gredi'))
+      ->setTranslatable(FALSE)
+      ->setRevisionable(FALSE)
+      ->setTargetEntityTypeId('media')
+      ->setDefaultValue(FALSE)
+      ->setInitialValue(FALSE)
+      ->setDisplayConfigurable('view', FALSE)
+      ->setDisplayConfigurable('form', FALSE);
+
   }
   return $definitions;
 }
@@ -122,6 +163,28 @@ function helfi_gredi_entity_bundle_field_info(EntityTypeInterface $entity_type, 
         ->setLabel(new TranslatableMarkup('Gredi Asset Modified'))
         ->setTranslatable(FALSE)
         ->setRevisionable(FALSE);
+
+      $definitions['gredi_autosync'] = BaseFieldDefinition::create('boolean')
+        ->setName('gredi_autosync')
+        ->setLabel(new TranslatableMarkup('Gredi Autosync'))
+        ->setTranslatable(FALSE)
+        ->setRevisionable(FALSE)
+        ->setDisplayOptions('form', [
+          'type' => 'checkbox',
+        ])
+        ->setDescription(new TranslatableMarkup('Autosync this asset with Gredi API on cron run.'))
+        ->setDefaultValue(FALSE)
+        ->setDisplayConfigurable('form', TRUE)
+        ->setDisplayConfigurable('view', FALSE);
+
+      $definitions['gredi_removed'] = BaseFieldDefinition::create('boolean')
+        ->setName('gredi_removed')
+        ->setLabel(new TranslatableMarkup('Asset no longer in Gredi'))
+        ->setTranslatable(FALSE)
+        ->setDisplayConfigurable('form', FALSE)
+        ->setDisplayConfigurable('view', FALSE)
+        ->setTargetEntityTypeId('media')
+        ->setRevisionable(FALSE);
     }
   }
   return $definitions;
@@ -131,15 +194,23 @@ function helfi_gredi_entity_bundle_field_info(EntityTypeInterface $entity_type, 
  * Implements hook_cron().
  */
 function helfi_gredi_cron() {
+  /** @var \Drupal\Core\Config\ConfigFactory $config_factory */
+  $config_factory = \Drupal::service('config.factory');
+  $config = $config_factory->get('helfi_gredi.settings');
+  if (empty($config->get('sync.enabled'))) {
+    return;
+  }
+
   /** @var int $last_run */
   $last_run = \Drupal::state()->get('helfi_gredi.last_run', 0);
   /** @var int $request_time */
   $request_time = \Drupal::time()->getRequestTime();
-
-  if (($request_time - $last_run) > 60 * 60 * 24) {
+  $cron_interval = $config->get('sync.cron_interval') ?? 86400;
+  if (($request_time - $last_run) > $cron_interval) {
     /** @var \Drupal\Core\Entity\Query\QueryInterface $query */
     $query = \Drupal::entityQuery('media')
-      ->condition('bundle', 'gredi_asset');
+      ->condition('bundle', 'gredi_asset')
+      ->condition('gredi_autosync', 1);
     /** @var array $results */
     $results = $query->execute();
     $queue = \Drupal::queue('gredi_asset_update');
@@ -152,19 +223,48 @@ function helfi_gredi_cron() {
 }
 
 /**
- * Implements hook_form_id_alter().
+ * Implements hook_menu_local_tasks_alter().
  */
-function helfi_gredi_form_media_gredi_asset_edit_form_alter(&$form, FormStateInterface $form_state) {
-  $form['actions']['submit']['#access'] = FALSE;
-  $form['actions']['delete']['#access'] = FALSE;
-  \Drupal::messenger()->addWarning('Gredi Image cannot be edited after it was fetched.');
+function helfi_gredi_menu_local_tasks_alter(&$data, $route_name, RefinableCacheableDependencyInterface &$cacheability) {
+  if ($route_name === 'entity.media.canonical') {
+    /** @var \Drupal\media\Entity\Media $media */
+    $media = \Drupal::routeMatch()->getParameter('media');
+    if ($media->bundle() !== 'gredi_asset') {
+      $data['tabs'][0]['helfi_gredi.sync_tab']['#access'] = FALSE;
+    }
+  }
 }
 
 /**
- * Implements hook_form_FORM_ID_alter().
+ * Implements hook_entity_operation_alter().
  */
-function helfi_gredi_form_user_form_alter(&$form, FormStateInterface $form_state) {
-  $form['field_gredi_password']['widget'][0]['value']['#type'] = 'password';
+function helfi_gredi_entity_operation_alter(array &$operations, EntityInterface $entity) {
+  if ($entity instanceof MediaInterface && $entity->getSource() instanceof GrediAsset) {
+    $operations += [
+      'gredi_asset' => [
+        'title' => t('Gredi Asset'),
+        'url' => Url::fromRoute('helfi_gredi.sync', ['media' => $entity->id()]),
+        'weight' => 60,
+      ],
+    ];
+  }
+}
+
+/**
+ * Implements hook_form_id_alter().
+ */
+function helfi_gredi_form_media_gredi_asset_edit_form_alter(&$form, FormStateInterface $form_state) {
+  $form['field_media_image']['widget'][0]['#description'] = t('The image must not be changed.');
+  $form['field_media_image']['widget'][0]['#process'][] = '_helfi_gredi_edit_image_process';
+}
+
+/**
+ * Disables image edit on gredi assets.
+ */
+function _helfi_gredi_edit_image_process($element, FormStateInterface $form_state, $form) {
+  $element['remove_button']['#access'] = FALSE;
+
+  return $element;
 }
 
 /**
@@ -343,7 +443,7 @@ function helfi_gredi_views_pre_render(ViewExecutable $view) {
  * Implements hook_preprocess_image().
  */
 function helfi_gredi_preprocess_image(&$variables) {
-  if (!empty($variables['attributes']['data-media-alt'])) {
+  if (isset($variables['attributes']['data-media-alt'])) {
     $variables['alt'] = $variables['attributes']['data-media-alt'];
     $variables['attributes']['alt'] = $variables['attributes']['data-media-alt'];
     unset($variables['attributes']['data-media-alt']);
@@ -359,12 +459,12 @@ function helfi_gredi_preprocess_field(&$variables) {
     && $variables['element']['#field_type'] == 'image') {
     /** @var \Drupal\media\MediaInterface $media */
     $media = $variables['element']['#object'];
-    if (!empty($media->get('field_alt_text')->value)) {
+    if ($media->hasField('field_alt_text')) {
       if ($variables['items'][0]['content']['#theme'] == 'image') {
-        $variables['items'][0]['content']['#attributes']['data-media-alt'] = $media->get('field_alt_text')->value;
+        $variables['items'][0]['content']['#attributes']['data-media-alt'] = $media->get('field_alt_text')->value ?? '';
       }
       if ($variables['items'][0]['content']['#theme'] == 'image_formatter') {
-        $variables['items'][0]['content']['#item_attributes']['data-media-alt'] = $media->get('field_alt_text')->value;
+        $variables['items'][0]['content']['#item_attributes']['data-media-alt'] = $media->get('field_alt_text')->value ?? '';
       }
       // @todo cover more theme hooks?
     }
