@@ -352,6 +352,24 @@ class GrediAsset extends Image {
         $site_lang_codes = array_keys($languages);
         return array_intersect($lang_codes, $site_lang_codes);
 
+      case 'translation_field_values':
+        $metaFields= $this->getMetaFieldsMapping($media);
+        $meta_translations_langcodes = [];
+        foreach($this->assetData['metaById'] as $meta_name => $meta_value) {
+          foreach($metaFields as $field_id => $field_name) {
+            $parts = [];
+            if (str_contains($meta_name, $field_id)) {
+              $parts = explode('_', $meta_name);
+              $lang_code = end($parts);
+              if (isset($this->langMappingsCorrection[$lang_code])) {
+                $lang_code = $this->langMappingsCorrection[$lang_code];
+              }
+              $meta_translations_langcodes[] = $lang_code;
+            }
+          }
+        }
+        return $meta_translations_langcodes;
+
       // @todo should we get other fields like description?
       default:
         $metaAttributes = $this->getMetadataAttributes();
@@ -525,13 +543,18 @@ class GrediAsset extends Image {
         $translation = $media->getTranslation($apiLangCode);
       }
       catch (\Exception $e) {
-        $translation = $media->addTranslation($apiLangCode);
-        $source_field_name = $media->getSource()
-          ->getConfiguration()['source_field'];
-        if ($translation->get($source_field_name)
-          ->getFieldDefinition()
-          ->isTranslatable()) {
-          $translation->set($source_field_name, $media->get($source_field_name)->getValue());
+        // We check if alt text field has translations values.
+        // If so, we create translations for the media.
+        $translations_values_langcode = $media->getSource()->getMetadata($media, 'translation_field_values');
+        if (in_array($apiLangCode, $translations_values_langcode)) {
+          $translation = $media->addTranslation($apiLangCode);
+          $source_field_name = $media->getSource()
+            ->getConfiguration()['source_field'];
+          if ($translation->get($source_field_name)
+            ->getFieldDefinition()
+            ->isTranslatable()) {
+            $translation->set($source_field_name, $media->get($source_field_name)->getValue());
+          }
         }
       }
 
