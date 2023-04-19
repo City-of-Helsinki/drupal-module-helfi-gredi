@@ -352,7 +352,7 @@ class GrediAsset extends Image {
         $site_lang_codes = array_keys($languages);
         return array_intersect($lang_codes, $site_lang_codes);
 
-      case 'translation_field_values':
+      case 'translated_lang_codes':
         $metaFields= $this->getMetaFieldsMapping($media);
         $meta_translations_langcodes = [];
         foreach($this->assetData['metaById'] as $meta_name => $meta_value) {
@@ -545,7 +545,7 @@ class GrediAsset extends Image {
       catch (\Exception $e) {
         // We check if alt text field has translations values.
         // If so, we create translations for the media.
-        $translations_values_langcode = $media->getSource()->getMetadata($media, 'translation_field_values');
+        $translations_values_langcode = $media->getSource()->getMetadata($media, 'translated_lang_codes');
         if (in_array($apiLangCode, $translations_values_langcode)) {
           $translation = $media->addTranslation($apiLangCode);
           $source_field_name = $media->getSource()
