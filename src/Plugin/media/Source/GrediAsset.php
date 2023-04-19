@@ -560,13 +560,15 @@ class GrediAsset extends Image {
 
       $name = $media->getSource()->getMetadata($media, 'name');
       // @todo if name changes, should we rename the file also?
-      $translation->set('name', $name);
-      // Set fields that needs to be updated NULL to let Media::prepareSave()
-      // fill up the fields with the newest fetched data.
-      foreach ($field_map as $key => $field) {
-        $translation->set($field, NULL);
+      if ($translation) {
+        $translation->set('name', $name);
+        // Set fields that needs to be updated NULL to let Media::prepareSave()
+        // fill up the fields with the newest fetched data.
+        foreach ($field_map as $key => $field) {
+          $translation->set($field, NULL);
+        }
+        $translation->save();
       }
-      $translation->save();
     }
     $this->logger->notice($this->t('Synced metadata for Gredi asset id @id', ['@id' => $media->id()]));
 
