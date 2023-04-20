@@ -199,6 +199,7 @@ function helfi_gredi_views_pre_view(ViewExecutable $view, $display_id, array &$a
     $media_storage = \Drupal::entityTypeManager()->getStorage('media');
     $query = $media_storage->getQuery();
     $query->condition('bundle', 'gredi_asset');
+    $query->condition('gredi_removed', 0);
     $media_ids = $query->execute();
 
     // Check if asset still exists in Gredi.
@@ -229,7 +230,7 @@ function helfi_gredi_cron() {
     /** @var \Drupal\Core\Entity\Query\QueryInterface $query */
     $query = \Drupal::entityQuery('media')
       ->condition('bundle', 'gredi_asset')
-      ->condition('gredi_autosync', 1);
+      ->condition('gredi_removed', 0);
     /** @var array $results */
     $results = $query->execute();
     $queue = \Drupal::queue('gredi_asset_update');
