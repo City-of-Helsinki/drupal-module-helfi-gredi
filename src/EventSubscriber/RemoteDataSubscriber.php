@@ -124,6 +124,7 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
           'gredi_asset_id' => [
             'value' => $result->id,
           ],
+          // @todo this might now work in future.
           'gredi_folder' => $result->folder,
         ]);
         /** @var \Drupal\helfi_gredi\Plugin\media\Source\GrediAsset $source */

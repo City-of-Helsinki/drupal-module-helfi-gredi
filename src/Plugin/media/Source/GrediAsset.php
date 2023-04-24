@@ -251,6 +251,7 @@ class GrediAsset extends Image {
             return parent::getMetadata($media, $attribute_name);
           }
 
+          // @todo return a folder icon from the module maybe? instead of media default thumnail.
           $default_thumbnail_filename = $this->pluginDefinition['default_thumbnail_filename'];
           $fallback = $this->configFactory->get('media.settings')
               ->get('icon_base_uri') . '/' . $default_thumbnail_filename;

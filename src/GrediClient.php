@@ -306,6 +306,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
     $url = sprintf("folders/%d/files", $folderId);
     $queryParams = [
       'include' => $this->includes,
+      // @todo allow only folders and images.
       'sort' => $sortOrder . $sortBy,
       'limit' => $limit,
       'offset' => $offset,

@@ -8,7 +8,7 @@ dependencies:
     - user
     - views_remote_data
 _core:
-  default_config_hash: fN7Y1KR4aCn7Rm_sTQzdQ1a2cKzWlx-By2_Ff4EKdKY
+  default_config_hash: YVVO-YtNSPg0GGdHku9B4jNgwVpn9AGaAgWnIE8c9ro
 id: gredi_asset_library
 label: 'Gredi DAM Asset Library'
 module: views
@@ -211,7 +211,7 @@ display:
           expose:
             operator_id: property_op
             label: Search
-            description: ''
+            description: 'Search trough all assets (in folder search is not supported)'
             use_operator: false
             operator: property_op
             operator_limit_selection: false
@@ -240,6 +240,51 @@ display:
             default_group_multiple: {  }
             group_items: {  }
           property_path: search
+        property_1:
+          id: property_1
+          table: gredi_asset
+          field: property
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: media
+          plugin_id: views_remote_data_property
+          operator: '='
+          value: ''
+          group: 1
+          exposed: true
+          expose:
+            operator_id: property_1_op
+            label: Folder
+            description: ''
+            use_operator: false
+            operator: property_1_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: gredi_folder_id_hidden
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+              anonymous: '0'
+              read_only: '0'
+              content_producer: '0'
+              editor: '0'
+              admin: '0'
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+          property_path: gredi_folder_id_hidden
       filter_groups:
         operator: AND
         groups:
@@ -270,15 +315,12 @@ display:
         - 'config:core.entity_view_display.media.file.media_library'
         - 'config:core.entity_view_display.media.gredi_asset.default'
         - 'config:core.entity_view_display.media.gredi_asset.media_library'
-        - 'config:core.entity_view_display.media.hel_map.default'
-        - 'config:core.entity_view_display.media.hel_map.media_library'
         - 'config:core.entity_view_display.media.helfi_chart.default'
         - 'config:core.entity_view_display.media.helfi_chart.media_library'
         - 'config:core.entity_view_display.media.image.content_card'
         - 'config:core.entity_view_display.media.image.default'
         - 'config:core.entity_view_display.media.image.hero'
         - 'config:core.entity_view_display.media.image.image'
-        - 'config:core.entity_view_display.media.image.image_content_area'
         - 'config:core.entity_view_display.media.image.list_of_links'
         - 'config:core.entity_view_display.media.image.media_library'
         - 'config:core.entity_view_display.media.remote_video.default'
@@ -312,15 +354,12 @@ display:
         - 'config:core.entity_view_display.media.file.media_library'
         - 'config:core.entity_view_display.media.gredi_asset.default'
         - 'config:core.entity_view_display.media.gredi_asset.media_library'
-        - 'config:core.entity_view_display.media.hel_map.default'
-        - 'config:core.entity_view_display.media.hel_map.media_library'
         - 'config:core.entity_view_display.media.helfi_chart.default'
         - 'config:core.entity_view_display.media.helfi_chart.media_library'
         - 'config:core.entity_view_display.media.image.content_card'
         - 'config:core.entity_view_display.media.image.default'
         - 'config:core.entity_view_display.media.image.hero'
         - 'config:core.entity_view_display.media.image.image'
-        - 'config:core.entity_view_display.media.image.image_content_area'
         - 'config:core.entity_view_display.media.image.list_of_links'
         - 'config:core.entity_view_display.media.image.media_library'
         - 'config:core.entity_view_display.media.remote_video.default'
