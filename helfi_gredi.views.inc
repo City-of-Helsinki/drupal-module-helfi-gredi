@@ -27,6 +27,14 @@ function helfi_gredi_views_data(): array {
       'id' => 'gredi_media_library_select_form',
     ],
   ];
+  $data['gredi_asset']['folder_id'] = [
+    'title' => t('Folder id filter'),
+    'help' => t('Used for folder id filter'),
+    'real field' => 'id',
+    'filter' => [
+      'id' => 'numeric',
+    ],
+  ];
 
   return $data;
 

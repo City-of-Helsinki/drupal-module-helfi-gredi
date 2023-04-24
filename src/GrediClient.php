@@ -295,6 +295,34 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
     return $result;
   }
 
+  public function getFolderContent($folderId = NULL, $sortBy = '', $sortOrder = '', $limit = 10, $offset = 0): array {
+    if (!$this->authService->isAuthenticated()) {
+      $this->authService->authenticate();
+    }
+    if (empty($folderId)) {
+      // @todo make this folder root id configurable or find a way to determine it trough api ?
+      $folderId = 5170629;
+    }
+    $url = sprintf("folders/%d/files", $folderId);
+    $queryParams = [
+      'include' => $this->includes,
+      'sort' => $sortOrder . $sortBy,
+      'limit' => $limit,
+      'offset' => $offset,
+    ];
+    $queryParams = array_filter($queryParams);
+    $response = $this->apiCallGet($url, $queryParams);
+
+    $items = Json::decode($response->getBody()->getContents());
+    $result = [];
+    foreach ($items as $item) {
+      $asset = (array) $item;
+      $result[] = $asset;
+    }
+
+    return $result;
+  }
+
   /**
    * {@inheritdoc}
    */

@@ -1,0 +1,4 @@
+media_library_selection:
+#  version: 1.x
+  js:
+    js/media-library-selection.js: {}

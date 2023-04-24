@@ -65,21 +65,35 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
       if (current($sorts)['field'][0] == 'modified') {
         $sortBy = current($sorts)['field'][0];
       }
+      if (empty($sortBy)) {
+        $sortOrder = '';
+      }
     }
 
     // Only condition field supported now is 'search'.
     $search_value = '';
+    $folderId = NULL;
     foreach ($condition_groups as $condition_group) {
       foreach ($condition_group['conditions'] as $condition) {
-        if (!isset($condition['field'][0])
-          || $condition['field'][0] != 'search') {
+        if (!isset($condition['field'][0])) {
           continue;
         }
-        $search_value = $condition['value'];
+        if ($condition['field'][0] == 'search') {
+          $search_value = $condition['value'];
+        }
+        if ($condition['field'][0] == 'gredi_folder_id_hidden') {
+          $folderId = $condition['value'];
+        }
+
       }
     }
     try {
-      $remote_data = $this->client->searchAssets($search_value, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
+      if (empty($search_value)) {
+        $remote_data = $this->client->getFolderContent($folderId, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
+      }
+      else {
+        $remote_data = $this->client->searchAssets($search_value, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
+      }
     }
     catch (\Exception $e) {
       \Drupal::logger('helfi_gredi')->error($e->getMessage());
@@ -110,6 +124,7 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
           'gredi_asset_id' => [
             'value' => $result->id,
           ],
+          'gredi_folder' => $result->folder,
         ]);
         /** @var \Drupal\helfi_gredi\Plugin\media\Source\GrediAsset $source */
         $source = $result->_entity->getSource();
@@ -117,7 +132,10 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
           $source->setAssetData($result->object);
         }
         else {
-          $source->setAssetData([]);
+          // In folder search there's no object property returned, even if we request it
+          // so we do this hack :( to convert to array the initial result.
+          $array = json_decode(json_encode($result), true);
+          $source->setAssetData($array);
         }
       }
     }

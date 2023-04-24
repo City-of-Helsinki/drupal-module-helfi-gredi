@@ -10,6 +10,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\media\Entity\Media;
 use Drupal\media_library\MediaLibraryState;
 use Drupal\media_library\Plugin\views\field\MediaLibrarySelectForm as MediaEntityMediaLibrarySelectForm;
+use Drupal\views\ResultRow;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -73,6 +74,8 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
 
     // We rely on details coming from API to be in form_state.
     $assetsData = $form_state->get('assetsData');
+
+    $form['#attached']['library'][] = 'helfi_gredi/media_library_selection';
 
     $media_ids = [];
     foreach ($selected_ids as $id) {
@@ -162,6 +165,8 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
   public function viewsForm(array &$form, FormStateInterface $form_state) {
     parent::viewsForm($form, $form_state);
 
+    $form['#attached']['library'][] = 'helfi_gredi/media_library_selection';
+
     $assetsData = [];
     foreach ($this->view->result as $row_index => $row) {
       $entity = $this->getEntity($row);
@@ -170,10 +175,29 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
       /** @var \Drupal\helfi_gredi\Plugin\media\Source\GrediAsset $source */
       $source = $entity->getSource();
       $assetsData[$externalId] = $source->getAssetData();
+
+      if (!empty($row->folder)) {
+        $form[$this->options['id']][$row_index]['#type'] = 'hidden';
+        $form[$this->options['id']][$row_index]['#value'] = $form[$this->options['id']][$row_index]['#return_value'];
+        $form[$this->options['id']][$row_index]['#attributes']['class'][] = 'gredi-folder-id-input-selection';
+      }
+
     }
     // Setting the api result so that we don't have to
     // call again the API for details in updateWdiget.
     $form_state->set('assetsData', $assetsData);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function viewsFormValidate(array &$form, FormStateInterface $form_state) {
+    parent::viewsFormValidate($form, $form_state);
+    // @todo validate so that not a folder is selected.
+    $selected = array_filter($form_state->getValue($this->options['id']));
+    if (empty($selected)) {
+      $form_state->setErrorByName('', $this->t('No items selected.'));
+    }
   }
 
   /**
