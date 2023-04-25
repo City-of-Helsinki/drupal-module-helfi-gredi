@@ -32,7 +32,7 @@ function helfi_gredi_views_data(): array {
     'help' => t('Used for folder id filter'),
     'real field' => 'id',
     'filter' => [
-      'id' => 'numeric',
+      'id' => 'gredi_folder_filter_select',
     ],
   ];
 

@@ -10,7 +10,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\media\Entity\Media;
 use Drupal\media_library\MediaLibraryState;
 use Drupal\media_library\Plugin\views\field\MediaLibrarySelectForm as MediaEntityMediaLibrarySelectForm;
-use Drupal\views\ResultRow;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -193,10 +192,12 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
    */
   public function viewsFormValidate(array &$form, FormStateInterface $form_state) {
     parent::viewsFormValidate($form, $form_state);
-    // @todo validate so that not a folder is selected.
     $selected = array_filter($form_state->getValue($this->options['id']));
     if (empty($selected)) {
       $form_state->setErrorByName('', $this->t('No items selected.'));
+    }
+    if (count($selected) > 1) {
+      $form_state->setErrorByName('', $this->t('Inserting entire folder is not allowed.'));
     }
   }
 

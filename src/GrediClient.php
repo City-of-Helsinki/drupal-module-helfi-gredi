@@ -73,6 +73,8 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
    */
   public $includes = 'object,meta,attachments';
 
+  private $folderTree = [];
+
   /**
    * Metafields array.
    *
@@ -416,4 +418,50 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
     return $this->metafields;
   }
 
+  /**
+   * Retrieves folder structure from the API.
+   *
+   * @return array
+   * @throws GuzzleException
+   */
+  public function getFolderTree() {
+    if ($this->folderTree) {
+      return $this->folderTree;
+    }
+
+    if (!$this->authService->isAuthenticated()) {
+      $this->authService->authenticate();
+    }
+
+    $customerId = $this->authService->getCustomerId();
+    $url = sprintf("customers/%d/contents", $customerId);
+    $queryParams = [
+      'materialType' => 'folder',
+      ];
+    $queryParams = array_filter($queryParams);
+    $response = $this->apiCallGet($url, $queryParams);
+    $this->folderTree = Json::decode($response->getBody()->getContents());
+
+    // @todo figure out a way to find the root folder id.
+    return $this->createFolderTree('5170629', $this->folderTree);
+
+  }
+
+  public function createFolderTree($parentId, $folders) {
+    $folderTree = [];
+    foreach ($folders as $folder) {
+      if ($folder['parentId'] == $parentId) {
+        $subFolders = $this->createFolderTree($folder['id'], $folders);
+
+        $folderTree[$folder['id']] = [
+          'name' => $folder['name'],
+          'subfolders' => $subFolders
+        ];
+      }
+    }
+    return $folderTree;
+  }
+
 }
+
+

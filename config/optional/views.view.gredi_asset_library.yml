@@ -1,3 +1,4 @@
+uuid: c4e0cd55-7710-4bae-954e-c6a100d5048e
 langcode: en
 status: true
 dependencies:
@@ -8,7 +9,7 @@ dependencies:
     - user
     - views_remote_data
 _core:
-  default_config_hash: YVVO-YtNSPg0GGdHku9B4jNgwVpn9AGaAgWnIE8c9ro
+  default_config_hash: 3bl-SiyG2ECFvRtBRZBuXtbIDi8nSHv7Jxp8l8PxOpw
 id: gredi_asset_library
 label: 'Gredi DAM Asset Library'
 module: views
@@ -240,28 +241,28 @@ display:
             default_group_multiple: {  }
             group_items: {  }
           property_path: search
-        property_1:
-          id: property_1
+        folder_id:
+          id: folder_id
           table: gredi_asset
-          field: property
+          field: folder_id
           relationship: none
           group_type: group
           admin_label: ''
           entity_type: media
-          plugin_id: views_remote_data_property
+          plugin_id: gredi_folder_filter_select
           operator: '='
-          value: ''
+          value: option1
           group: 1
           exposed: true
           expose:
-            operator_id: property_1_op
+            operator_id: folder_id_op
             label: Folder
             description: ''
             use_operator: false
-            operator: property_1_op
+            operator: folder_id_op
             operator_limit_selection: false
             operator_list: {  }
-            identifier: gredi_folder_id_hidden
+            identifier: folder_id
             required: false
             remember: false
             multiple: false
@@ -272,6 +273,7 @@ display:
               content_producer: '0'
               editor: '0'
               admin: '0'
+            placeholder: ''
           is_grouped: false
           group_info:
             label: ''
@@ -284,7 +286,6 @@ display:
             default_group: All
             default_group_multiple: {  }
             group_items: {  }
-          property_path: gredi_folder_id_hidden
       filter_groups:
         operator: AND
         groups:
@@ -315,18 +316,19 @@ display:
         - 'config:core.entity_view_display.media.file.media_library'
         - 'config:core.entity_view_display.media.gredi_asset.default'
         - 'config:core.entity_view_display.media.gredi_asset.media_library'
+        - 'config:core.entity_view_display.media.hel_map.default'
+        - 'config:core.entity_view_display.media.hel_map.media_library'
         - 'config:core.entity_view_display.media.helfi_chart.default'
         - 'config:core.entity_view_display.media.helfi_chart.media_library'
         - 'config:core.entity_view_display.media.image.content_card'
         - 'config:core.entity_view_display.media.image.default'
         - 'config:core.entity_view_display.media.image.hero'
         - 'config:core.entity_view_display.media.image.image'
+        - 'config:core.entity_view_display.media.image.image_content_area'
         - 'config:core.entity_view_display.media.image.list_of_links'
         - 'config:core.entity_view_display.media.image.media_library'
         - 'config:core.entity_view_display.media.remote_video.default'
         - 'config:core.entity_view_display.media.remote_video.media_library'
-        - 'config:core.entity_view_display.media.soundcloud.default'
-        - 'config:core.entity_view_display.media.soundcloud.media_library'
         - views_remote_data
   widget:
     id: widget
@@ -354,16 +356,17 @@ display:
         - 'config:core.entity_view_display.media.file.media_library'
         - 'config:core.entity_view_display.media.gredi_asset.default'
         - 'config:core.entity_view_display.media.gredi_asset.media_library'
+        - 'config:core.entity_view_display.media.hel_map.default'
+        - 'config:core.entity_view_display.media.hel_map.media_library'
         - 'config:core.entity_view_display.media.helfi_chart.default'
         - 'config:core.entity_view_display.media.helfi_chart.media_library'
         - 'config:core.entity_view_display.media.image.content_card'
         - 'config:core.entity_view_display.media.image.default'
         - 'config:core.entity_view_display.media.image.hero'
         - 'config:core.entity_view_display.media.image.image'
+        - 'config:core.entity_view_display.media.image.image_content_area'
         - 'config:core.entity_view_display.media.image.list_of_links'
         - 'config:core.entity_view_display.media.image.media_library'
         - 'config:core.entity_view_display.media.remote_video.default'
         - 'config:core.entity_view_display.media.remote_video.media_library'
-        - 'config:core.entity_view_display.media.soundcloud.default'
-        - 'config:core.entity_view_display.media.soundcloud.media_library'
         - views_remote_data

@@ -84,7 +84,9 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
         if ($condition['field'][0] == 'gredi_folder_id_hidden') {
           $folderId = $condition['value'];
         }
-
+        if ($condition['field'][1] == 'id') {
+          $folderId = $condition['value'];
+        }
       }
     }
     try {

@@ -252,10 +252,10 @@ class GrediAsset extends Image {
           }
 
           // @todo return a folder icon from the module maybe? instead of media default thumnail.
-          $default_thumbnail_filename = $this->pluginDefinition['default_thumbnail_filename'];
-          $fallback = $this->configFactory->get('media.settings')
-              ->get('icon_base_uri') . '/' . $default_thumbnail_filename;
-          return $fallback;
+          $icons_path = \Drupal::service('module_handler')->getModule('helfi_gredi')->getPath();
+          $default_thumbnail_filename = $icons_path . '/icons/folder_icon.png';
+
+          return $default_thumbnail_filename;
       }
       return NULL;
     }
