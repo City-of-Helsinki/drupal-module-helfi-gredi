@@ -250,7 +250,6 @@ display:
           entity_type: media
           plugin_id: gredi_folder_filter_select
           operator: '='
-          value: option1
           group: 1
           exposed: true
           expose:

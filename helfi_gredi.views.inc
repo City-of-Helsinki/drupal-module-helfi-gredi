@@ -30,9 +30,18 @@ function helfi_gredi_views_data(): array {
   $data['gredi_asset']['folder_id'] = [
     'title' => t('Folder id filter'),
     'help' => t('Used for folder id filter'),
-    'real field' => 'id',
+    'real field' => 'folder_id',
     'filter' => [
       'id' => 'gredi_folder_filter_select',
+    ],
+  ];
+
+  $data['gredi_asset']['back_button'] = [
+    'title' => t('Go back button filter'),
+    'help' => t('Used for navigating back'),
+    'real field' => 'back_button',
+    'filter' => [
+      'id' => 'gredi_button_filter_back',
     ],
   ];
 

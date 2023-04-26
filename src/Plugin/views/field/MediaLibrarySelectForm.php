@@ -171,6 +171,9 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
       $entity = $this->getEntity($row);
       $externalId = $entity->get('gredi_asset_id')->value;
       $form[$this->options['id']][$row_index]['#return_value'] = $externalId;
+      $asset_data = $entity->getSource()->getAssetData();
+      $parentId = $asset_data['parentId'];
+      $form[$this->options['id']][$row_index]['#parent_id'] = $parentId;
       /** @var \Drupal\helfi_gredi\Plugin\media\Source\GrediAsset $source */
       $source = $entity->getSource();
       $assetsData[$externalId] = $source->getAssetData();
@@ -179,6 +182,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         $form[$this->options['id']][$row_index]['#type'] = 'hidden';
         $form[$this->options['id']][$row_index]['#value'] = $form[$this->options['id']][$row_index]['#return_value'];
         $form[$this->options['id']][$row_index]['#attributes']['class'][] = 'gredi-folder-id-input-selection';
+        $form[$this->options['id']][$row_index]['#attributes']['data']['parent_id'] = $form[$this->options['id']][$row_index]['#parent_id'];
       }
 
     }

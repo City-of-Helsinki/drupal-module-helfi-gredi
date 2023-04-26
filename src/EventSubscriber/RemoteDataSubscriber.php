@@ -81,10 +81,7 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
         if ($condition['field'][0] == 'search') {
           $search_value = $condition['value'];
         }
-        if ($condition['field'][0] == 'gredi_folder_id_hidden') {
-          $folderId = $condition['value'];
-        }
-        if ($condition['field'][1] == 'id') {
+        if (isset($condition['field'][1]) &&  $condition['field'][1] == 'folder_id') {
           $folderId = $condition['value'];
         }
       }
@@ -135,9 +132,10 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
           $source->setAssetData($result->object);
         }
         else {
-          // In folder search there's no object property returned, even if we request it
+          // In folder search there's no object property returned,
+          // even if we request it
           // so we do this hack :( to convert to array the initial result.
-          $array = json_decode(json_encode($result), true);
+          $array = json_decode(json_encode($result), TRUE);
           $source->setAssetData($array);
         }
       }

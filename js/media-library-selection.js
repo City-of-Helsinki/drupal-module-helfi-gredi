@@ -8,9 +8,11 @@
             let input = event.currentTarget.querySelector('input.gredi-folder-id-input-selection');
             let mediaLibrary = event.currentTarget.closest('.media-library-view');
             let folderId = input.value;
+            let parentId = input.getAttribute('data');
             // @todo disable insert selected button when folder is clicked.
-            let formInput = mediaLibrary.querySelector('select[name="folder_id"]');
+            let formInput = mediaLibrary.querySelector('input[name="folder_id"]');
             formInput.value = folderId;
+            formInput.setAttribute('parent_id', parentId);
             let formSubmit = mediaLibrary.querySelector('.views-exposed-form input.form-submit');
             formSubmit.click();
           });

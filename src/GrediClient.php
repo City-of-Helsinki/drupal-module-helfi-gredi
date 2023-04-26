@@ -442,13 +442,15 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
     $response = $this->apiCallGet($url, $queryParams);
     $this->folderTree = Json::decode($response->getBody()->getContents());
 
+    $this->folderTree = $this->createFolderTree('5170629', $this->folderTree);
     // @todo figure out a way to find the root folder id.
-    return $this->createFolderTree('5170629', $this->folderTree);
+    return $this->folderTree;
 
   }
 
   public function createFolderTree($parentId, $folders) {
-    $folderTree = [];
+    // @todo figure out a way to find the root folder id.
+    $folderTree['5170629'] = [];
     foreach ($folders as $folder) {
       if ($folder['parentId'] == $parentId) {
         $subFolders = $this->createFolderTree($folder['id'], $folders);
@@ -459,6 +461,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
         ];
       }
     }
+
     return $folderTree;
   }
 

@@ -2,23 +2,21 @@
 
 namespace Drupal\helfi_gredi\Plugin\views\filter;
 
-use Drupal\Core\Cache\Cache;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Extension\ModuleHandler;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\helfi_gredi\GrediClient;
+use Drupal\views\Plugin\views\filter\FilterPluginBase;
 use Drupal\views\Plugin\views\filter\StringFilter;
-use Drupal\Core\Database\Connection;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-
 /**
- * Defines a select filter for a custom field.
+ * Defines a filter for a custom field.
  *
- * @ViewsFilter("gredi_folder_filter_select")
+ * @ViewsFilter("gredi_button_filter_back")
  */
-final class MediaFilterSelectForm extends StringFilter
+class MediaFilterBackButtonForm extends FilterPluginBase
 {
-
   /**
    * The client.
    *
@@ -80,51 +78,20 @@ final class MediaFilterSelectForm extends StringFilter
    */
   public function valueForm(&$form, $form_state) {
 
-    $form['value']['#type'] = 'hidden';
-    $form['value']['#attributes']['parent_id'] = '';
+    $form['value']['#type'] = 'button';
+    $form['value']['#value'] = 'Back';
 
     $input = $form_state->getUserInput();
-    if (array_key_exists('folder_id', $input)) {
-      if ($input['folder_id']) {
-        $form['value']['#value'] = $input['folder_id'];
-        // @todo figure out a way to retrieve and store parentId
+    if (isset($input['op']) && $input['op'] === 'Back') {
+      if (isset($input['folder_id'])) {
+        // @todo Do request for parent id folder.
+        $parentId = $input['folder_id']['#attributes']['parent_id'];
+      }
+      else {
+        $form['value']['#disabled'] = TRUE;
       }
     }
-
   }
 
-
-  /**
-   * Returns the select options for the filter.
-   *
-   * @return array
-   *   An array of options for the select element.
-   */
-  protected function getSelectOptions() {
-    $folderTree = $this->client->getFolderTree();
-
-    return $this->getNestedOptions($folderTree);
-  }
-
-  /**
-   * @param $folders
-   * @param $prefix
-   * @return array
-   */
-  public function getNestedOptions($folders, $prefix = '') {
-    $options = [];
-    foreach ($folders as $id => $folder) {
-      $name = $folder['name'];
-      if (!empty($prefix)) {
-        $name = $prefix . ' / ' . $name;
-      }
-      $options[$id] = $name;
-      if (!empty($folder['subfolders'])) {
-        $suboptions = self::getNestedOptions($folder['subfolders'], $name);
-        $options += $suboptions;
-      }
-    }
-    return $options;
-  }
 
 }
