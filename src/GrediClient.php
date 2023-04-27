@@ -73,8 +73,6 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
    */
   public $includes = 'object,meta,attachments';
 
-  private $folderTree = [];
-
   /**
    * Metafields array.
    *
@@ -302,8 +300,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
       $this->authService->authenticate();
     }
     if (empty($folderId)) {
-      // @todo make this folder root id configurable or find a way to determine it trough api ?
-      $folderId = 5170629;
+      $folderId = $this->config->get('helfi_gredi.settings')->get('root_folder_id');
     }
     $url = sprintf("folders/%d/files", $folderId);
     $queryParams = [
@@ -416,53 +413,6 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
     $this->cacheBin->set('helfi_gredi_metafields', $this->metafields, Cache::PERMANENT, $cache_tags);
 
     return $this->metafields;
-  }
-
-  /**
-   * Retrieves folder structure from the API.
-   *
-   * @return array
-   * @throws GuzzleException
-   */
-  public function getFolderTree() {
-    if ($this->folderTree) {
-      return $this->folderTree;
-    }
-
-    if (!$this->authService->isAuthenticated()) {
-      $this->authService->authenticate();
-    }
-
-    $customerId = $this->authService->getCustomerId();
-    $url = sprintf("customers/%d/contents", $customerId);
-    $queryParams = [
-      'materialType' => 'folder',
-      ];
-    $queryParams = array_filter($queryParams);
-    $response = $this->apiCallGet($url, $queryParams);
-    $this->folderTree = Json::decode($response->getBody()->getContents());
-
-    $this->folderTree = $this->createFolderTree('5170629', $this->folderTree);
-    // @todo figure out a way to find the root folder id.
-    return $this->folderTree;
-
-  }
-
-  public function createFolderTree($parentId, $folders) {
-    // @todo figure out a way to find the root folder id.
-    $folderTree['5170629'] = [];
-    foreach ($folders as $folder) {
-      if ($folder['parentId'] == $parentId) {
-        $subFolders = $this->createFolderTree($folder['id'], $folders);
-
-        $folderTree[$folder['id']] = [
-          'name' => $folder['name'],
-          'subfolders' => $subFolders
-        ];
-      }
-    }
-
-    return $folderTree;
   }
 
 }
