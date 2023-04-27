@@ -8,7 +8,7 @@ dependencies:
     - user
     - views_remote_data
 _core:
-  default_config_hash: 3bl-SiyG2ECFvRtBRZBuXtbIDi8nSHv7Jxp8l8PxOpw
+  default_config_hash: 8wYtL5jZx_fxpR8IwtbHKODAJ4Kc_RKIwwdo5qz0OeE
 id: gredi_asset_library
 label: 'Gredi DAM Asset Library'
 module: views
@@ -240,27 +240,73 @@ display:
             default_group_multiple: {  }
             group_items: {  }
           property_path: search
-        folder_id:
-          id: folder_id
+        gredi_folder_id:
+          id: gredi_folder_id
           table: gredi_asset
-          field: folder_id
+          field: gredi_folder_id
           relationship: none
           group_type: group
           admin_label: ''
           entity_type: media
-          plugin_id: gredi_folder_filter_select
+          plugin_id: gredi_folder_id
           operator: '='
+          value: ''
           group: 1
           exposed: true
           expose:
-            operator_id: folder_id_op
-            label: Folder
+            operator_id: gredi_folder_id_op
+            label: 'Folder id filter'
             description: ''
             use_operator: false
-            operator: folder_id_op
+            operator: gredi_folder_id_op
             operator_limit_selection: false
             operator_list: {  }
-            identifier: folder_id
+            identifier: gredi_folder_id
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+              anonymous: '0'
+              read_only: '0'
+              content_producer: '0'
+              editor: '0'
+              admin: '0'
+            placeholder: ''
+          is_grouped: false
+          group_info:
+            label: ''
+            description: ''
+            identifier: ''
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items: {  }
+        gredi_parent_ids:
+          id: gredi_parent_ids
+          table: gredi_asset
+          field: gredi_parent_ids
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: media
+          plugin_id: gredi_folder_id
+          operator: '='
+          value: ''
+          group: 1
+          exposed: true
+          expose:
+            operator_id: gredi_parent_ids_op
+            label: 'Parent ids navigation history'
+            description: ''
+            use_operator: false
+            operator: gredi_parent_ids_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: gredi_parent_ids
             required: false
             remember: false
             multiple: false
@@ -314,19 +360,18 @@ display:
         - 'config:core.entity_view_display.media.file.media_library'
         - 'config:core.entity_view_display.media.gredi_asset.default'
         - 'config:core.entity_view_display.media.gredi_asset.media_library'
-        - 'config:core.entity_view_display.media.hel_map.default'
-        - 'config:core.entity_view_display.media.hel_map.media_library'
         - 'config:core.entity_view_display.media.helfi_chart.default'
         - 'config:core.entity_view_display.media.helfi_chart.media_library'
         - 'config:core.entity_view_display.media.image.content_card'
         - 'config:core.entity_view_display.media.image.default'
         - 'config:core.entity_view_display.media.image.hero'
         - 'config:core.entity_view_display.media.image.image'
-        - 'config:core.entity_view_display.media.image.image_content_area'
         - 'config:core.entity_view_display.media.image.list_of_links'
         - 'config:core.entity_view_display.media.image.media_library'
         - 'config:core.entity_view_display.media.remote_video.default'
         - 'config:core.entity_view_display.media.remote_video.media_library'
+        - 'config:core.entity_view_display.media.soundcloud.default'
+        - 'config:core.entity_view_display.media.soundcloud.media_library'
         - views_remote_data
   widget:
     id: widget
@@ -339,7 +384,7 @@ display:
         metatag_display_extender:
           metatags: {  }
           tokenize: false
-      path: gredi-asset-library
+      path: admin/content/widget-gredi-image
     cache_metadata:
       max-age: -1
       contexts:
@@ -354,17 +399,16 @@ display:
         - 'config:core.entity_view_display.media.file.media_library'
         - 'config:core.entity_view_display.media.gredi_asset.default'
         - 'config:core.entity_view_display.media.gredi_asset.media_library'
-        - 'config:core.entity_view_display.media.hel_map.default'
-        - 'config:core.entity_view_display.media.hel_map.media_library'
         - 'config:core.entity_view_display.media.helfi_chart.default'
         - 'config:core.entity_view_display.media.helfi_chart.media_library'
         - 'config:core.entity_view_display.media.image.content_card'
         - 'config:core.entity_view_display.media.image.default'
         - 'config:core.entity_view_display.media.image.hero'
         - 'config:core.entity_view_display.media.image.image'
-        - 'config:core.entity_view_display.media.image.image_content_area'
         - 'config:core.entity_view_display.media.image.list_of_links'
         - 'config:core.entity_view_display.media.image.media_library'
         - 'config:core.entity_view_display.media.remote_video.default'
         - 'config:core.entity_view_display.media.remote_video.media_library'
+        - 'config:core.entity_view_display.media.soundcloud.default'
+        - 'config:core.entity_view_display.media.soundcloud.media_library'
         - views_remote_data

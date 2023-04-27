@@ -27,21 +27,21 @@ function helfi_gredi_views_data(): array {
       'id' => 'gredi_media_library_select_form',
     ],
   ];
-  $data['gredi_asset']['folder_id'] = [
+  $data['gredi_asset']['gredi_folder_id'] = [
     'title' => t('Folder id filter'),
     'help' => t('Used for folder id filter'),
-    'real field' => 'folder_id',
+    'real field' => 'gredi_folder_id',
     'filter' => [
-      'id' => 'gredi_folder_filter_select',
+      'id' => 'gredi_folder_id',
     ],
   ];
 
-  $data['gredi_asset']['back_button'] = [
-    'title' => t('Go back button filter'),
-    'help' => t('Used for navigating back'),
-    'real field' => 'back_button',
+  $data['gredi_asset']['gredi_parent_ids'] = [
+    'title' => t('Parent ids navigation history'),
+    'help' => t('Used for parent folder id navigation'),
+    'real field' => 'gredi_parent_ids',
     'filter' => [
-      'id' => 'gredi_button_filter_back',
+      'id' => 'gredi_folder_id',
     ],
   ];
 

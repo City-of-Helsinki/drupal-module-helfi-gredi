@@ -14,9 +14,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Defines a select filter for a custom field.
  *
- * @ViewsFilter("gredi_folder_filter_select")
+ * @ViewsFilter("gredi_folder_id")
  */
-final class MediaFilterSelectForm extends StringFilter
+final class FolderId extends StringFilter
 {
 
   /**
@@ -79,17 +79,15 @@ final class MediaFilterSelectForm extends StringFilter
    * Provides a select element for the filter value.
    */
   public function valueForm(&$form, $form_state) {
-
     $form['value']['#type'] = 'hidden';
-    $form['value']['#attributes']['parent_id'] = '';
 
-    $input = $form_state->getUserInput();
-    if (array_key_exists('folder_id', $input)) {
-      if ($input['folder_id']) {
-        $form['value']['#value'] = $input['folder_id'];
-        // @todo figure out a way to retrieve and store parentId
-      }
-    }
+//    $input = $form_state->getUserInput();
+//    if (array_key_exists('folder_id', $input)) {
+//      if ($input['folder_id']) {
+//        $form['value']['#value'] = $input['folder_id'];
+//        // @todo figure out a way to retrieve and store parentId
+//      }
+//    }
 
   }
 

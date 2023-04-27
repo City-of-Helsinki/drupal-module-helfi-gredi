@@ -75,18 +75,29 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
     $folderId = NULL;
     foreach ($condition_groups as $condition_group) {
       foreach ($condition_group['conditions'] as $condition) {
-        if (!isset($condition['field'][0])) {
+        $field_name = NULL;
+        if (!empty($condition['field'][0])) {
+          $field_name = $condition['field'][0];
+        }
+        else if (!empty($condition['field'][1])) {
+          $field_name = $condition['field'][1];
+        }
+        if (empty($field_name)) {
           continue;
         }
-        if ($condition['field'][0] == 'search') {
-          $search_value = $condition['value'];
-        }
-        if (isset($condition['field'][1]) &&  $condition['field'][1] == 'folder_id') {
-          $folderId = $condition['value'];
+        switch ($field_name) {
+          case 'search':
+            $search_value = $condition['value'];
+            break;
+
+          case 'gredi_folder_id':
+            $folderId = $condition['value'];
+            break;
         }
       }
     }
     try {
+      // @todo use search asset with folder if filter.
       if (empty($search_value)) {
         $remote_data = $this->client->getFolderContent($folderId, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
       }
@@ -96,7 +107,7 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
     }
     catch (\Exception $e) {
       \Drupal::logger('helfi_gredi')->error($e->getMessage());
-      \Drupal::messenger()->addError(t('Failed to retrieve asset list'));
+      \Drupal::messenger()->addError(t('Failed to retrieve asset list. You may hit Apply filters to try again.'));
       $remote_data = [];
     }
 
