@@ -14,11 +14,12 @@
             let formInputParentIds = mediaLibrary.querySelector('input[name="gredi_parent_ids"]');
             let parentIds = formInputParentIds.value.split('|');
             // @todo when searching, we might get results from deeper subfolders,
-            //  so if parentId of clicked folder != current folder than when back navigating, we might jump folders from the tree.
-            // so should we leave it like this? or reset completly the parent ids and than user should press reset button?
+            // @todo so if parentId of clicked folder != current folder than when back navigating, we might jump folders from the tree.
+            // @todo so should we leave it like this? or reset completly the parent ids and than user should press reset button??
             parentIds.push(parentId);
             formInputParentIds.value = parentIds.join('|');
             formInputFolderId.value = folderId;
+            // @todo should we clear the search when navigating the folder??
             let formSubmit = mediaLibrary.querySelector('.views-exposed-form input.form-submit, .view-filters input.form-submit');
             formSubmit.click();
           });

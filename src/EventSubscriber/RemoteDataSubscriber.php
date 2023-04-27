@@ -108,9 +108,13 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
     catch (\Exception $e) {
       \Drupal::logger('helfi_gredi')->error($e->getMessage());
       \Drupal::messenger()->addError(t('Failed to retrieve asset list. You may hit Apply filters to try again.'));
-      $remote_data = [];
+      return;
     }
 
+    if (empty($remote_data)) {
+      \Drupal::messenger()->addWarning(t('No results found.'));
+      return;
+    }
     foreach ($remote_data as $item) {
       $event->addResult(new ResultRow($item));
     }
