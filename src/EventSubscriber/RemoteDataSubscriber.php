@@ -61,10 +61,8 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
     $sortOrder = '';
     $sortBy = '';
     if (!empty($sorts)) {
-      $sortOrder = current($sorts)['order'] == 'DESC' ? '-' : '+';
-      if (current($sorts)['field'][0] == 'modified') {
-        $sortBy = current($sorts)['field'][0];
-      }
+      $sortOrder = current($sorts)['order'] == 'DESC' ? '-' : '';
+      $sortBy = (current($sorts)['field'][0] == 'orderByName') ? 'name' : 'modified';
       if (empty($sortBy)) {
         $sortOrder = '';
       }
@@ -102,6 +100,7 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
         $remote_data = $this->client->getFolderContent($folderId, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
       }
       else {
+        $sortBy = (current($sorts)['field'][0] == 'orderByName') ? 'orderByName' : 'orderByLastUsed';
         $remote_data = $this->client->searchAssets($search_value, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
       }
     }
