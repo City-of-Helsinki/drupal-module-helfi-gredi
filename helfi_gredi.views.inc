@@ -49,7 +49,7 @@ function helfi_gredi_views_data(): array {
     'title' => t('Asset exists in Gredi'),
     'help' => t('Whether or not the asset still exists in the Gredi API.'),
     'field' => [
-      'id' => 'boolean'
+      'id' => 'boolean',
     ],
   ];
 
