@@ -47,7 +47,7 @@ class GrediClientTest extends GrediClient {
   /**
    * {@inheritdoc}
    */
-  public function searchAssets($search = '', $folderId = null, $sortBy = '', $sortOrder = '', $limit = 10, $offset = 0): array {
+  public function searchAssets($search = '', $folderId = NULL, $sortBy = '', $sortOrder = '', $limit = 10, $offset = 0): array {
     $items = Json::decode(
       file_get_contents(__DIR__ . sprintf('/../../../fixtures/assetData_%s.json', 'all'))
     );
