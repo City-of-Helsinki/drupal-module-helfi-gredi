@@ -408,13 +408,7 @@ class GrediAsset extends Image {
         if (!isset($this->assetData['metaById'])) {
           return NULL;
         }
-        // @todo figure out a way that when creating a new translation in drupal
-        // the Gredi value, from the table from
-        // Gredi Asset tab to display correct value
-        // as it is now it follows the source values
-        // if the language is not avaialable in gredi.
         $lang_code = $media->language()->getId();
-        $fallbackLangCode = $this->languageManager->getDefaultLanguage()->getId();
 
         // Trying to find the attr id in the metaById,
         // as they come as custom:meta-field-1285_fi.
@@ -432,19 +426,12 @@ class GrediAsset extends Image {
           if ($attr_id != $attribute_name) {
             continue;
           }
-          if ($attr_lang_code == $fallbackLangCode) {
-            // @todo decide if we want to return default lang value for empty translations.
-            $fallbackValue = $value;
-          }
           if ($attr_lang_code != $lang_code) {
             continue;
           }
 
           return $value;
         }
-
-        // @todo decide if we want to return default lang value for empty translations.
-        // return $fallbackValue;
         return NULL;
     }
   }

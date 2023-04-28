@@ -101,7 +101,6 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
       $remote_data = $this->client->searchAssets($search_value, $folderId, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
     }
     catch (\Exception $e) {
-      // @todo we should rebuild form here or display browser message.
       \Drupal::logger('helfi_gredi')->error($e->getMessage());
       \Drupal::messenger()->addError(t('Failed to retrieve asset list. You may hit Apply filters to try again.'));
       return;

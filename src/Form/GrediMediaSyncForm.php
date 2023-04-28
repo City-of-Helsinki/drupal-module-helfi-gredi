@@ -192,15 +192,18 @@ class GrediMediaSyncForm extends FormBase {
       '#rows' => $table_rows,
     ];
 
+    $user = \Drupal::currentUser();
     $form['asset']['asset_pull'] = [
       '#type' => 'submit',
       '#value' => $this->t('Sync asset from Gredi'),
+      '#access' => $user->hasPermission('sync from gredi'),
     ];
 
     $form['asset']['asset_push'] = [
       '#type' => 'submit',
       '#value' => $this->t('Sync asset into Gredi'),
       '#submit' => ['::syncAssetToGredi'],
+      '#access' => $user->hasPermission('sync to gredi'),
     ];
 
     if ($media->get('gredi_removed')->value) {
@@ -220,10 +223,6 @@ class GrediMediaSyncForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $user = \Drupal::currentUser();
-    if (!$user->hasPermission('sync from gredi')) {
-      throw new AccessDeniedHttpException();
-    }
     $media_id = $form_state->get('media_id');
     try {
       $media = Media::load($media_id);
@@ -252,12 +251,6 @@ class GrediMediaSyncForm extends FormBase {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public function syncAssetToGredi(array &$form, FormStateInterface $form_state) {
-
-    $user = \Drupal::currentUser();
-    if (!$user->hasPermission('sync to gredi')) {
-      throw new AccessDeniedHttpException();
-    }
-
     /** @var \Drupal\media\MediaInterface $media */
     $media = Media::load($form_state->getStorage()['media_id']);
 

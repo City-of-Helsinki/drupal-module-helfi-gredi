@@ -177,6 +177,13 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
 
     $form['#attached']['library'][] = 'helfi_gredi/media_library_selection';
 
+    // We have observed that error messages are not displayed when form comes back from ajax, so doing it here, but it's not the nice way to do it.
+    $form['messages'] = [
+      '#theme' => 'status_messages',
+      '#message_list' => \Drupal::messenger()->all(),
+      '#weight' => -1,
+    ];
+
     $assetsData = [];
     foreach ($this->view->result as $row_index => $row) {
       $entity = $this->getEntity($row);

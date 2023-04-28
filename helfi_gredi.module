@@ -26,6 +26,12 @@ use Drupal\views\ViewExecutable;
  * Implements hook_form_FORM_ID_alter().
  */
 function helfi_gredi_form_media_gredi_asset_add_form_alter(&$form, FormStateInterface $form_state) {
+  $user = \Drupal::currentUser();
+  if (!$user->hasPermission('upload to gredi')) {
+    \Drupal::messenger()->addWarning(t('You do not have permission to upload to Gredi'));
+    $form['actions']['submit']['#access'] = FALSE;
+  }
+
   $form['actions']['submit']['#validate'][] = '_helfi_gredi_media_save_validate';
 }
 
@@ -313,7 +319,6 @@ function helfi_gredi_form_alter(array &$form, FormStateInterface $form_state, $f
     $form['#after_build'][] = '_media_library_views_form_media_library_after_build';
 
     if (!empty($form_state->getUserInput()['gredi_parent_ids'])) {
-      // @todo should we add a reset button to clear form elements?
       $form['gredi_actions'] = [
         '#type' => 'container',
         '#attributes' => [
@@ -331,11 +336,12 @@ function helfi_gredi_form_alter(array &$form, FormStateInterface $form_state, $f
         ],
         '#weight' => 1,
       ];
+      // Reset button will not reset pager - see https://www.drupal.org/project/drupal/issues/3308719
       $form['gredi_actions']['gredi_reset'] = [
         '#type' => 'link',
         '#title' => t('Search in root folder'),
         '#url' => Url::fromRoute('<front>'),
-        '#prefix' => '| ',
+        '#prefix' => ' | ',
         '#attributes' => [
           'class' => ['gredi-reset-link'],
         ],
