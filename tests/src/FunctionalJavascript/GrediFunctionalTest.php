@@ -124,6 +124,11 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
       'create media',
       'administer node form display',
       'administer media',
+      'sync from gredi',
+      'sync to gredi',
+      'upload to gredi',
+      'configure gredi sync',
+      'configure gredi api',
     ]);
 
     $this->drupalLogin($user);
@@ -145,9 +150,9 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
     $this->assertSession()->checkboxChecked('media_library_select_form[1]');
     $this->assertSession()->elementExists('css', '.ui-dialog-buttonpane')->pressButton('Insert selected');
     $this->assertSelectedMediaCount('1 item selected');
-
     // Assert the media was selected.
     $this->assertSession()->waitForElement('css', 'media-library-item__preview-wrapper');
+
     $this->assertSession()->pageTextContains('test2.png');
 
     // Assert the media was created.
@@ -165,7 +170,6 @@ class GrediFunctionalTest extends MediaLibraryTestBase {
     $this->click('input[type="submit"][id="edit-asset-pull"]');
     $this->assertSession()->waitForElement('css', 'gredi-sync');
     $this->assertSession()->pageTextContains('All field translations were synced from Gredi.');
-
     $this->click('input[type="submit"][id="edit-asset-push"]');
     $this->assertSession()->waitForElement('css', 'gredi-sync');
     $this->assertSession()->pageTextContains('Asset successfully updated.');
