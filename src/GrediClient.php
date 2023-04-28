@@ -268,7 +268,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
   /**
    * {@inheritdoc}
    */
-  public function searchAssets($search = '', $sortBy = '', $sortOrder = '', $limit = 10, $offset = 0): array {
+  public function searchAssets($search = '', $folderId = NULL, $sortBy = '', $sortOrder = '', $limit = 10, $offset = 0): array {
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
@@ -276,12 +276,17 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
     $url = sprintf("customers/%d/contents", $customerId);
     $queryParams = [
       'include' => $this->includes,
-      'mimeGroups' => 'picture',
       'search' => $search,
       'sort' => $sortOrder . $sortBy,
       'limit' => $limit,
       'offset' => $offset,
     ];
+    if (!empty($folderId)) {
+      $queryParams['tags'] = 'parent_id_ss===' . $folderId;
+    }
+//    if (!empty($search)) {
+//      $queryParams['mimeGroups'] = 'picture';
+//    }
     $queryParams = array_filter($queryParams);
     $response = $this->apiCallGet($url, $queryParams);
 
@@ -295,13 +300,15 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
     return $result;
   }
 
+  public function getRootFolderId() {
+    return $this->config->get('helfi_gredi.settings')->get('root_folder_id');
+  }
+
   public function getFolderContent($folderId = NULL, $sortBy = '', $sortOrder = '', $limit = 10, $offset = 0): array {
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
     }
-    if (empty($folderId)) {
-      $folderId = $this->config->get('helfi_gredi.settings')->get('root_folder_id');
-    }
+    $folderId = $folderId ?? $this->getRootFolderId();
     $url = sprintf("folders/%d/files", $folderId);
     $queryParams = [
       'include' => $this->includes,

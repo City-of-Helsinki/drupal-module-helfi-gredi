@@ -62,7 +62,7 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
     $sortBy = '';
     if (!empty($sorts)) {
       $sortOrder = current($sorts)['order'] == 'DESC' ? '-' : '';
-      $sortBy = (current($sorts)['field'][0] == 'orderByName') ? 'name' : 'modified';
+      $sortBy = (current($sorts)['field'][0] == 'orderByName') ? 'orderByName' : 'orderByLastUsed';
       if (empty($sortBy)) {
         $sortOrder = '';
       }
@@ -95,14 +95,10 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
       }
     }
     try {
-      // @todo use search asset with folder if filter.
-      if (empty($search_value)) {
-        $remote_data = $this->client->getFolderContent($folderId, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
+      if (empty($search_value) && empty($folderId)) {
+        $folderId = $this->client->getRootFolderId();
       }
-      else {
-        $sortBy = (current($sorts)['field'][0] == 'orderByName') ? 'orderByName' : 'orderByLastUsed';
-        $remote_data = $this->client->searchAssets($search_value, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
-      }
+      $remote_data = $this->client->searchAssets($search_value, $folderId, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
     }
     catch (\Exception $e) {
       \Drupal::logger('helfi_gredi')->error($e->getMessage());

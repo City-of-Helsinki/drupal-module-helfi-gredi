@@ -9,13 +9,9 @@
             let mediaLibrary = event.currentTarget.closest('.media-library-view');
             let folderId = input.value;
             let parentId = input.getAttribute('data-gredi-parent-id');
-            // @todo disable insert selected button when folder is clicked.
             let formInputFolderId = mediaLibrary.querySelector('input[name="gredi_folder_id"]');
             let formInputParentIds = mediaLibrary.querySelector('input[name="gredi_parent_ids"]');
             let parentIds = formInputParentIds.value.split('|');
-            // @todo when searching, we might get results from deeper subfolders,
-            // @todo so if parentId of clicked folder != current folder than when back navigating, we might jump folders from the tree.
-            // @todo so should we leave it like this? or reset completly the parent ids and than user should press reset button??
             parentIds.push(parentId);
             formInputParentIds.value = parentIds.join('|');
             formInputFolderId.value = folderId;
@@ -41,6 +37,22 @@
           formSubmit.click();
         });
       });
+
+      once('grediResetLink', '.gredi-reset-link', context).forEach(function (element) {
+        element.addEventListener('click', function(event) {
+          event.preventDefault();
+          let mediaLibrary = event.currentTarget.closest('.media-library-view');
+          let formWrapper = mediaLibrary.querySelector('.views-exposed-form, .view-filters');
+          let formInputFolderId = mediaLibrary.querySelector('input[name="gredi_folder_id"]');
+          let formInputParentIds = mediaLibrary.querySelector('input[name="gredi_parent_ids"]');
+          formInputParentIds.value = '';
+          formInputFolderId.value = '';
+          let formSubmit = formWrapper.querySelector('input.form-submit');
+          formSubmit.click();
+        });
+      });
+
+
     }
   };
 })(jQuery, Drupal, once);

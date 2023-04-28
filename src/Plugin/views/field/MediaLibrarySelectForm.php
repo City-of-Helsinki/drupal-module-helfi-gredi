@@ -83,6 +83,12 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         continue;
       }
 
+      $is_folder = $assetsData[$id]['folder'];
+      $is_image = isset($assetsData[$id]['mimeGroup']) && $assetsData[$id]['mimeGroup'] == 'picture';
+      if (!$is_image || $is_folder) {
+        continue;
+      }
+
       /** @var \Drupal\Core\Entity\EntityTypeManager $entityTypeManager */
       $entityTypeManager = \Drupal::service('entity_type.manager');
       $existing_ids = $entityTypeManager
@@ -174,10 +180,16 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
       /** @var \Drupal\helfi_gredi\Plugin\media\Source\GrediAsset $source */
       $source = $entity->getSource();
       $assetsData[$externalId] = $source->getAssetData();
+      $is_image = isset($row->mimeGroup) && $row->mimeGroup == 'picture';
+      $is_folder = !empty($row->folder);
 
-      if (!empty($row->folder)) {
+      // Make the checkbox hidden for non images
+      if (!$is_image || $is_folder) {
         $form[$this->options['id']][$row_index]['#type'] = 'hidden';
+        $form[$this->options['id']][$row_index]['#disabled'] = TRUE;
         $form[$this->options['id']][$row_index]['#value'] = $form[$this->options['id']][$row_index]['#return_value'];
+      }
+      if ($is_folder) {
         $form[$this->options['id']][$row_index]['#attributes']['class'][] = 'gredi-folder-id-input-selection';
         $form[$this->options['id']][$row_index]['#attributes']['data-gredi-parent-id'] = $assetsData[$externalId]['parentId'];
       }
@@ -192,13 +204,9 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
    * {@inheritdoc}
    */
   public function viewsFormValidate(array &$form, FormStateInterface $form_state) {
-    parent::viewsFormValidate($form, $form_state);
-    $selected = array_filter($form_state->getValue($this->options['id']));
-    if (empty($selected)) {
+    $selected = $form_state->getValue($this->options['id']);
+    if (empty($selected) || count(array_filter($selected)) == 0) {
       $form_state->setErrorByName('', $this->t('No items selected.'));
-    }
-    if (count($selected) > 1) {
-      $form_state->setErrorByName('', $this->t('Inserting entire folder is not allowed.'));
     }
   }
 

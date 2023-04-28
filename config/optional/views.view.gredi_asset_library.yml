@@ -220,7 +220,7 @@ display:
           expose:
             operator_id: property_op
             label: Search
-            description: 'Search trough all assets (in folder search is not supported)'
+            description: 'When navigating into folders, search applies only within the first level of current folder. When in root folder, it searches through all library.'
             use_operator: false
             operator: property_op
             operator_limit_selection: false
