@@ -284,9 +284,7 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
     if (!empty($folderId)) {
       $queryParams['tags'] = 'parent_id_ss===' . $folderId;
     }
-//    if (!empty($search)) {
-//      $queryParams['mimeGroups'] = 'picture';
-//    }
+
     $queryParams = array_filter($queryParams);
     $response = $this->apiCallGet($url, $queryParams);
 
@@ -300,10 +298,33 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
     return $result;
   }
 
+  /**
+   * Retrieves the id of the root folder.
+   *
+   * @return array|mixed|null
+   *   Return root folder id.
+   */
   public function getRootFolderId() {
     return $this->config->get('helfi_gredi.settings')->get('root_folder_id');
   }
 
+  /**
+   * Retrieves the content of a folder.
+   *
+   * @param string $folderId
+   *   The folder id.
+   * @param string $sortBy
+   *   The sort parameter.
+   * @param string $sortOrder
+   *   The sort order.
+   * @param string $limit
+   *   Limit.
+   * @param string $offset
+   *   Offset.
+   *
+   * @return array
+   *   Returns content of a folder.
+   */
   public function getFolderContent($folderId = NULL, $sortBy = '', $sortOrder = '', $limit = 10, $offset = 0): array {
     if (!$this->authService->isAuthenticated()) {
       $this->authService->authenticate();
@@ -423,5 +444,3 @@ class GrediClient implements ContainerInjectionInterface, GrediClientInterface {
   }
 
 }
-
-

@@ -4,14 +4,13 @@ namespace Drupal\helfi_gredi\Plugin\views\filter;
 
 use Drupal\views\Plugin\views\filter\StringFilter;
 
-
 /**
  * Defines a select filter for a custom field.
  *
  * @ViewsFilter("gredi_folder_id")
  */
-final class FolderId extends StringFilter
-{
+final class FolderId extends StringFilter {
+
   /**
    * Overrides \Drupal\views\Plugin\views\filter\StringFilter::valueForm().
    *

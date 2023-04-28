@@ -77,7 +77,7 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
         if (!empty($condition['field'][0])) {
           $field_name = $condition['field'][0];
         }
-        else if (!empty($condition['field'][1])) {
+        elseif (!empty($condition['field'][1])) {
           $field_name = $condition['field'][1];
         }
         if (empty($field_name)) {

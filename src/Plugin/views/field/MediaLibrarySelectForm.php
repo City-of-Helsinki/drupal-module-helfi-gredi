@@ -183,7 +183,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
       $is_image = isset($row->mimeGroup) && $row->mimeGroup == 'picture';
       $is_folder = !empty($row->folder);
 
-      // Make the checkbox hidden for non images
+      // Make the checkbox hidden for non images.
       if (!$is_image || $is_folder) {
         $form[$this->options['id']][$row_index]['#type'] = 'hidden';
         $form[$this->options['id']][$row_index]['#disabled'] = TRUE;

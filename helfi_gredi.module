@@ -315,6 +315,7 @@ function helfi_gredi_form_alter(array &$form, FormStateInterface $form_state, $f
         '#type' => 'link',
         '#title' => t('Search in root folder'),
         '#url' => Url::fromRoute('<front>'),
+        '#prefix' => '| ',
         '#attributes' => [
           'class' => ['gredi-reset-link'],
         ],
