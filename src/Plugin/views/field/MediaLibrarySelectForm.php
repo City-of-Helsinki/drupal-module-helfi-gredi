@@ -193,6 +193,13 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
         $form[$this->options['id']][$row_index]['#attributes']['class'][] = 'gredi-folder-id-input-selection';
         $form[$this->options['id']][$row_index]['#attributes']['data-gredi-parent-id'] = $assetsData[$externalId]['parentId'];
       }
+      if (!isset($row->mimeGroup) || ($row->mimeGroup != 'picture')) {
+        $form[$this->options['id']][$row_index]['#type'] = 'hidden';
+        $form[$this->options['id']][$row_index]['#attributes']['class'][] = 'mime-group-other';
+        if (!empty($row->folder)) {
+          $form[$this->options['id']][$row_index]['#attributes']['class'][] = 'gredi-folder-id-input-selection';
+        }
+      }
 
     }
     // Setting the api result so that we don't have to
