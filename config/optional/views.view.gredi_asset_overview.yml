@@ -1,4 +1,3 @@
-uuid: 89afcb73-02b8-4f4a-bc53-76096ab75aff
 langcode: en
 status: true
 dependencies:
@@ -11,6 +10,8 @@ dependencies:
     - image
     - media
     - user
+_core:
+  default_config_hash: A5kGjL7FvPzchtti97aD52M4GvMQIAm9eP-lw4jDbOI
 id: gredi_asset_overview
 label: 'Gredi Asset Overview'
 module: views
@@ -616,7 +617,18 @@ display:
       cache:
         type: tag
         options: {  }
-      empty: {  }
+      empty:
+        area_text_custom:
+          id: area_text_custom
+          table: views
+          field: area_text_custom
+          relationship: none
+          group_type: group
+          admin_label: ''
+          plugin_id: text_custom
+          empty: true
+          content: 'No Gredi Asset available.'
+          tokenize: false
       sorts:
         created:
           id: created
