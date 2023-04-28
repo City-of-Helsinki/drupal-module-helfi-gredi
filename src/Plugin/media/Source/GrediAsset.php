@@ -232,6 +232,32 @@ class GrediAsset extends Image {
       'thumbnail_uri',
       'gredi_asset_id',
     ];
+    if (!empty($media->gredi_folder)) {
+      switch ($attribute_name) {
+        case 'gredi_asset_id':
+          return $media->get('gredi_asset_id')->value;
+
+        case 'name':
+          if (!empty($this->assetData['name'])) {
+            return $this->assetData['name'];
+          }
+          return parent::getMetadata($media, 'default_name');
+
+        case 'default_name':
+          return parent::getMetadata($media, 'default_name');
+
+        case 'thumbnail_uri':
+          if (!$media->isNew()) {
+            return parent::getMetadata($media, $attribute_name);
+          }
+
+          $icons_path = \Drupal::service('module_handler')->getModule('helfi_gredi')->getPath();
+          $default_thumbnail_filename = $icons_path . '/icons/folder_icon.png';
+
+          return $default_thumbnail_filename;
+      }
+      return NULL;
+    }
     $is_gredi_attr = !in_array($attribute_name, $attr_with_fallback);
     $removed_from_gredi = !empty($media->get('gredi_removed')->value);
     if ($is_gredi_attr && $removed_from_gredi) {

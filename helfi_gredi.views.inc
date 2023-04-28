@@ -27,6 +27,23 @@ function helfi_gredi_views_data(): array {
       'id' => 'gredi_media_library_select_form',
     ],
   ];
+  $data['gredi_asset']['gredi_folder_id'] = [
+    'title' => t('Folder id filter'),
+    'help' => t('Used for folder id filter'),
+    'real field' => 'gredi_folder_id',
+    'filter' => [
+      'id' => 'gredi_folder_id',
+    ],
+  ];
+
+  $data['gredi_asset']['gredi_parent_ids'] = [
+    'title' => t('Parent ids navigation history'),
+    'help' => t('Used for parent folder id navigation'),
+    'real field' => 'gredi_parent_ids',
+    'filter' => [
+      'id' => 'gredi_folder_id',
+    ],
+  ];
 
   $data['media_field_data']['gredi_removed'] = [
     'title' => t('Asset exists in Gredi'),
