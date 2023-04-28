@@ -131,6 +131,14 @@ class GrediConfigForm extends ConfigFormBase {
       '#required' => TRUE,
     ];
 
+    $form['auth']['root_folder_id'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Root folder ID'),
+      '#default_value' => $config->get('root_folder_id'),
+      '#description' => $this->t('The Gredi root folder ID. Can be defined with env var GREDI_ROOT_FOLDER_ID.'),
+      '#required' => TRUE,
+    ];
+
     $form['actions']['#type'] = 'actions';
     $form['actions']['submit'] = [
       '#type' => 'submit',

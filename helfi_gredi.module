@@ -291,6 +291,37 @@ function helfi_gredi_form_alter(array &$form, FormStateInterface $form_state, $f
   // filters submit button is not moved to the modal dialog's button area.
   if ($form_id === 'views_exposed_form' && strpos($form['#id'], 'views-exposed-form-gredi-asset-library-widget') === 0) {
     $form['#after_build'][] = '_media_library_views_form_media_library_after_build';
+
+    if (!empty($form_state->getUserInput()['gredi_parent_ids'])) {
+      // @todo should we add a reset button to clear form elements?
+      $form['gredi_actions'] = [
+        '#type' => 'container',
+        '#attributes' => [
+          'class' => ['gredi-actions-wrapper'],
+          'style' => ['flex-basis: 100%; height: 1.5rem;'],
+        ],
+        '#weight' => 100,
+      ];
+      $form['gredi_actions']['gredi_parent_folder'] = [
+        '#type' => 'link',
+        '#title' => t('Go back to parent folder'),
+        '#url' => Url::fromRoute('<front>'),
+        '#attributes' => [
+          'class' => ['gredi-parent-folder-back-link'],
+        ],
+        '#weight' => 1,
+      ];
+      $form['gredi_actions']['gredi_reset'] = [
+        '#type' => 'link',
+        '#title' => t('Search in root folder'),
+        '#url' => Url::fromRoute('<front>'),
+        '#prefix' => '| ',
+        '#attributes' => [
+          'class' => ['gredi-reset-link'],
+        ],
+        '#weight' => 2,
+      ];
+    }
   }
 }
 

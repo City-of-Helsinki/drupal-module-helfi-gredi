@@ -4,6 +4,7 @@ password: ''
 customer: ''
 upload_folder_id: ''
 customer_id: null
+root_folder_id: ''
 sync:
   cron_interval: 86400
   enabled: 1
