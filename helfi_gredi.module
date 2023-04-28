@@ -203,7 +203,7 @@ function helfi_gredi_views_pre_view(ViewExecutable $view, $display_id, array &$a
     $media_ids = $query->execute();
 
     // Check if asset still exists in Gredi.
-    foreach($media_ids as $id) {
+    foreach ($media_ids as $id) {
       $asset = Media::load($id);
       $asset->getSource()->getMetadata($asset, 'modified');
     }

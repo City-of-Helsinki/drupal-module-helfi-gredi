@@ -17,6 +17,7 @@ use Drupal\media_library\Form\FileUploadForm;
 use Drupal\media_library\MediaLibraryUiBuilder;
 use Drupal\media_library\OpenerResolverInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * Creates a form to create media entities from uploaded files.
@@ -135,6 +136,10 @@ class GrediFileUploadForm extends FileUploadForm {
    * {@inheritdoc}
    */
   protected function validateMediaEntity(MediaInterface $media, array $form, FormStateInterface $form_state, $delta) {
+    $user = \Drupal::currentUser();
+    if (!$user->hasPermission('upload to gredi')) {
+      throw new AccessDeniedHttpException();
+    }
     $mediaCloned = clone $media;
     $field_map = $media->getSource()->getMetaFieldsMapping($media);
     foreach ($field_map as $field) {

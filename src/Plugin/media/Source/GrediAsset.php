@@ -379,10 +379,10 @@ class GrediAsset extends Image {
         return array_intersect($lang_codes, $site_lang_codes);
 
       case 'translated_lang_codes':
-        $metaFields= $this->getMetaFieldsMapping($media);
+        $metaFields = $this->getMetaFieldsMapping($media);
         $meta_translations_langcodes = [];
-        foreach($this->assetData['metaById'] as $meta_name => $meta_value) {
-          foreach($metaFields as $field_id => $field_name) {
+        foreach ($this->assetData['metaById'] as $meta_name => $meta_value) {
+          foreach ($metaFields as $field_id => $field_name) {
             $parts = [];
             if (str_contains($meta_name, $field_id)) {
               $parts = explode('_', $meta_name);

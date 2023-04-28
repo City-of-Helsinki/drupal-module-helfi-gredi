@@ -12,6 +12,7 @@ use Drupal\media_library\MediaLibraryState;
 use Drupal\media_library\Plugin\views\field\MediaLibrarySelectForm as MediaEntityMediaLibrarySelectForm;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * Media selection field for asset media type.
@@ -68,6 +69,10 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
    *   A command to send the selection to the current field widget.
    */
   public static function updateWidget(array &$form, FormStateInterface $form_state, Request $request) {
+    $user = \Drupal::currentUser();
+    if (!$user->hasPermission('sync from gredi')) {
+      throw new AccessDeniedHttpException();
+    }
     $selected_ids = $form_state->getValue('media_library_select_form');
     $selected_ids = $selected_ids ? array_filter($selected_ids) : [];
 

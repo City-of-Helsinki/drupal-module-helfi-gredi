@@ -13,6 +13,7 @@ use Drupal\Core\Queue\QueueWorkerManager;
 use Drupal\helfi_gredi\GrediClient;
 use Drupal\media\Entity\Media;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * Sync class for synchronizing Gredi Asset with Gredi API.
@@ -219,6 +220,10 @@ class GrediMediaSyncForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
+    $user = \Drupal::currentUser();
+    if (!$user->hasPermission('sync from gredi')) {
+      throw new AccessDeniedHttpException();
+    }
     $media_id = $form_state->get('media_id');
     try {
       $media = Media::load($media_id);
@@ -247,6 +252,12 @@ class GrediMediaSyncForm extends FormBase {
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public function syncAssetToGredi(array &$form, FormStateInterface $form_state) {
+
+    $user = \Drupal::currentUser();
+    if (!$user->hasPermission('sync to gredi')) {
+      throw new AccessDeniedHttpException();
+    }
+
     /** @var \Drupal\media\MediaInterface $media */
     $media = Media::load($form_state->getStorage()['media_id']);
 
