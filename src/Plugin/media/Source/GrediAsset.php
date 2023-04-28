@@ -251,7 +251,6 @@ class GrediAsset extends Image {
             return parent::getMetadata($media, $attribute_name);
           }
 
-          // @todo return a folder icon from the module maybe? instead of media default thumnail.
           $icons_path = \Drupal::service('module_handler')->getModule('helfi_gredi')->getPath();
           $default_thumbnail_filename = $icons_path . '/icons/folder_icon.png';
 
