@@ -13,7 +13,6 @@ use Drupal\Core\Queue\QueueWorkerManager;
 use Drupal\helfi_gredi\GrediClient;
 use Drupal\media\Entity\Media;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * Sync class for synchronizing Gredi Asset with Gredi API.

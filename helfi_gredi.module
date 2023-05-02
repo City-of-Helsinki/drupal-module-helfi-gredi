@@ -336,7 +336,8 @@ function helfi_gredi_form_alter(array &$form, FormStateInterface $form_state, $f
         ],
         '#weight' => 1,
       ];
-      // Reset button will not reset pager - see https://www.drupal.org/project/drupal/issues/3308719
+      // Reset button will not reset pager
+      // - see https://www.drupal.org/project/drupal/issues/3308719
       $form['gredi_actions']['gredi_reset'] = [
         '#type' => 'link',
         '#title' => t('Search in root folder'),

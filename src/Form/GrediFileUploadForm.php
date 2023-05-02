@@ -17,7 +17,6 @@ use Drupal\media_library\Form\FileUploadForm;
 use Drupal\media_library\MediaLibraryUiBuilder;
 use Drupal\media_library\OpenerResolverInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * Creates a form to create media entities from uploaded files.
