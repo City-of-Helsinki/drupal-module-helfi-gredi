@@ -45,6 +45,14 @@ function helfi_gredi_views_data(): array {
     ],
   ];
 
+  $data['media_field_data']['gredi_removed'] = [
+    'title' => t('Asset exists in Gredi'),
+    'help' => t('Whether or not the asset still exists in the Gredi API.'),
+    'field' => [
+      'id' => 'boolean',
+    ],
+  ];
+
   return $data;
 
 }

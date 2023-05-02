@@ -4,7 +4,7 @@ helfi_gredi.config:
     _form: '\Drupal\helfi_gredi\Form\GrediConfigForm'
     _title: 'Gredi API Configuration'
   requirements:
-    _permission: 'administer site configuration'
+    _permission: 'configure gredi api'
 
 helfi_gredi.sync:
   path: '/media/{media}/gredi'
@@ -26,5 +26,5 @@ helfi_gredi.sync_config:
   options:
     _admin_route: TRUE
   requirements:
-    _permission: 'administer site configuration'
+    _permission: 'configure gredi sync'
 

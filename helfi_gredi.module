@@ -13,6 +13,7 @@ use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Url;
+use Drupal\media\Entity\Media;
 use Drupal\media\MediaTypeInterface;
 use Drupal\media\MediaInterface;
 use Drupal\helfi_gredi\Plugin\media\Source\GrediAsset;
@@ -25,6 +26,12 @@ use Drupal\views\ViewExecutable;
  * Implements hook_form_FORM_ID_alter().
  */
 function helfi_gredi_form_media_gredi_asset_add_form_alter(&$form, FormStateInterface $form_state) {
+  $user = \Drupal::currentUser();
+  if (!$user->hasPermission('upload to gredi')) {
+    \Drupal::messenger()->addWarning(t('You do not have permission to upload to Gredi'));
+    $form['actions']['submit']['#access'] = FALSE;
+  }
+
   $form['actions']['submit']['#validate'][] = '_helfi_gredi_media_save_validate';
 }
 
@@ -191,6 +198,25 @@ function helfi_gredi_entity_bundle_field_info(EntityTypeInterface $entity_type, 
 }
 
 /**
+ * Implements hook_views_pre_view().
+ */
+function helfi_gredi_views_pre_view(ViewExecutable $view, $display_id, array &$args) {
+  if ($view->id() === 'gredi_asset_overview') {
+    $media_storage = \Drupal::entityTypeManager()->getStorage('media');
+    $query = $media_storage->getQuery();
+    $query->condition('bundle', 'gredi_asset');
+    $query->condition('gredi_removed', 0);
+    $media_ids = $query->execute();
+
+    // Check if asset still exists in Gredi.
+    foreach ($media_ids as $id) {
+      $asset = Media::load($id);
+      $asset->getSource()->getMetadata($asset, 'modified');
+    }
+  }
+}
+
+/**
  * Implements hook_cron().
  */
 function helfi_gredi_cron() {
@@ -210,7 +236,7 @@ function helfi_gredi_cron() {
     /** @var \Drupal\Core\Entity\Query\QueryInterface $query */
     $query = \Drupal::entityQuery('media')
       ->condition('bundle', 'gredi_asset')
-      ->condition('gredi_autosync', 1);
+      ->condition('gredi_removed', 0);
     /** @var array $results */
     $results = $query->execute();
     $queue = \Drupal::queue('gredi_asset_update');
@@ -293,7 +319,6 @@ function helfi_gredi_form_alter(array &$form, FormStateInterface $form_state, $f
     $form['#after_build'][] = '_media_library_views_form_media_library_after_build';
 
     if (!empty($form_state->getUserInput()['gredi_parent_ids'])) {
-      // @todo should we add a reset button to clear form elements?
       $form['gredi_actions'] = [
         '#type' => 'container',
         '#attributes' => [
@@ -311,11 +336,13 @@ function helfi_gredi_form_alter(array &$form, FormStateInterface $form_state, $f
         ],
         '#weight' => 1,
       ];
+      // Reset button will not reset pager
+      // - see https://www.drupal.org/project/drupal/issues/3308719
       $form['gredi_actions']['gredi_reset'] = [
         '#type' => 'link',
         '#title' => t('Search in root folder'),
         '#url' => Url::fromRoute('<front>'),
-        '#prefix' => '| ',
+        '#prefix' => ' | ',
         '#attributes' => [
           'class' => ['gredi-reset-link'],
         ],

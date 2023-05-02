@@ -378,6 +378,24 @@ class GrediAsset extends Image {
         $site_lang_codes = array_keys($languages);
         return array_intersect($lang_codes, $site_lang_codes);
 
+      case 'translated_lang_codes':
+        $metaFields = $this->getMetaFieldsMapping($media);
+        $meta_translations_langcodes = [];
+        foreach ($this->assetData['metaById'] as $meta_name => $meta_value) {
+          foreach ($metaFields as $field_id => $field_name) {
+            $parts = [];
+            if (str_contains($meta_name, $field_id)) {
+              $parts = explode('_', $meta_name);
+              $lang_code = end($parts);
+              if (isset($this->langMappingsCorrection[$lang_code])) {
+                $lang_code = $this->langMappingsCorrection[$lang_code];
+              }
+              $meta_translations_langcodes[] = $lang_code;
+            }
+          }
+        }
+        return $meta_translations_langcodes;
+
       // @todo should we get other fields like description?
       default:
         $metaAttributes = $this->getMetadataAttributes();
@@ -390,13 +408,7 @@ class GrediAsset extends Image {
         if (!isset($this->assetData['metaById'])) {
           return NULL;
         }
-        // @todo figure out a way that when creating a new translation in drupal
-        // the Gredi value, from the table from
-        // Gredi Asset tab to display correct value
-        // as it is now it follows the source values
-        // if the language is not avaialable in gredi.
         $lang_code = $media->language()->getId();
-        $fallbackLangCode = $this->languageManager->getDefaultLanguage()->getId();
 
         // Trying to find the attr id in the metaById,
         // as they come as custom:meta-field-1285_fi.
@@ -414,19 +426,12 @@ class GrediAsset extends Image {
           if ($attr_id != $attribute_name) {
             continue;
           }
-          if ($attr_lang_code == $fallbackLangCode) {
-            // @todo decide if we want to return default lang value for empty translations.
-            $fallbackValue = $value;
-          }
           if ($attr_lang_code != $lang_code) {
             continue;
           }
 
           return $value;
         }
-
-        // @todo decide if we want to return default lang value for empty translations.
-        // return $fallbackValue;
         return NULL;
     }
   }
@@ -551,25 +556,32 @@ class GrediAsset extends Image {
         $translation = $media->getTranslation($apiLangCode);
       }
       catch (\Exception $e) {
-        $translation = $media->addTranslation($apiLangCode);
-        $source_field_name = $media->getSource()
-          ->getConfiguration()['source_field'];
-        if ($translation->get($source_field_name)
-          ->getFieldDefinition()
-          ->isTranslatable()) {
-          $translation->set($source_field_name, $media->get($source_field_name)->getValue());
+        // We check if alt text field has translations values.
+        // If so, we create translations for the media.
+        $translations_values_langcode = $media->getSource()->getMetadata($media, 'translated_lang_codes');
+        if (in_array($apiLangCode, $translations_values_langcode)) {
+          $translation = $media->addTranslation($apiLangCode);
+          $source_field_name = $media->getSource()
+            ->getConfiguration()['source_field'];
+          if ($translation->get($source_field_name)
+            ->getFieldDefinition()
+            ->isTranslatable()) {
+            $translation->set($source_field_name, $media->get($source_field_name)->getValue());
+          }
         }
       }
 
       $name = $media->getSource()->getMetadata($media, 'name');
       // @todo if name changes, should we rename the file also?
-      $translation->set('name', $name);
-      // Set fields that needs to be updated NULL to let Media::prepareSave()
-      // fill up the fields with the newest fetched data.
-      foreach ($field_map as $key => $field) {
-        $translation->set($field, NULL);
+      if ($translation) {
+        $translation->set('name', $name);
+        // Set fields that needs to be updated NULL to let Media::prepareSave()
+        // fill up the fields with the newest fetched data.
+        foreach ($field_map as $key => $field) {
+          $translation->set($field, NULL);
+        }
+        $translation->save();
       }
-      $translation->save();
     }
     $this->logger->notice($this->t('Synced metadata for Gredi asset id @id', ['@id' => $media->id()]));
 

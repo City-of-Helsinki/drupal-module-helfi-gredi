@@ -191,15 +191,18 @@ class GrediMediaSyncForm extends FormBase {
       '#rows' => $table_rows,
     ];
 
+    $user = \Drupal::currentUser();
     $form['asset']['asset_pull'] = [
       '#type' => 'submit',
       '#value' => $this->t('Sync asset from Gredi'),
+      '#access' => $user->hasPermission('sync from gredi'),
     ];
 
     $form['asset']['asset_push'] = [
       '#type' => 'submit',
       '#value' => $this->t('Sync asset into Gredi'),
       '#submit' => ['::syncAssetToGredi'],
+      '#access' => $user->hasPermission('sync to gredi'),
     ];
 
     if ($media->get('gredi_removed')->value) {
@@ -222,6 +225,7 @@ class GrediMediaSyncForm extends FormBase {
     $media_id = $form_state->get('media_id');
     try {
       $media = Media::load($media_id);
+      // @todo Should add try catch because in case of catch in getMetadata we will still print the message.
       if ($media->getSource()->syncMediaFromGredi($media)) {
         $this->messenger()->addStatus($this->t('All field translations were synced from Gredi.'));
       }

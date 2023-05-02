@@ -12,6 +12,7 @@ use Drupal\media_library\MediaLibraryState;
 use Drupal\media_library\Plugin\views\field\MediaLibrarySelectForm as MediaEntityMediaLibrarySelectForm;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
  * Media selection field for asset media type.
@@ -68,6 +69,10 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
    *   A command to send the selection to the current field widget.
    */
   public static function updateWidget(array &$form, FormStateInterface $form_state, Request $request) {
+    $user = \Drupal::currentUser();
+    if (!$user->hasPermission('sync from gredi')) {
+      throw new AccessDeniedHttpException();
+    }
     $selected_ids = $form_state->getValue('media_library_select_form');
     $selected_ids = $selected_ids ? array_filter($selected_ids) : [];
 
@@ -171,6 +176,15 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
     parent::viewsForm($form, $form_state);
 
     $form['#attached']['library'][] = 'helfi_gredi/media_library_selection';
+
+    // We have observed that error messages
+    // are not displayed when form comes back from ajax,
+    // so doing it here, but it's not the nice way to do it.
+    $form['messages'] = [
+      '#theme' => 'status_messages',
+      '#message_list' => \Drupal::messenger()->all(),
+      '#weight' => -1,
+    ];
 
     $assetsData = [];
     foreach ($this->view->result as $row_index => $row) {

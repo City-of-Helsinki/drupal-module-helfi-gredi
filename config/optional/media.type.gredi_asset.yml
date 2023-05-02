@@ -17,6 +17,5 @@ new_revision: false
 source_configuration:
   source_field: field_media_image
 field_map:
-  257: field_keywords
   1410: field_alt_text
   original_file: field_media_image

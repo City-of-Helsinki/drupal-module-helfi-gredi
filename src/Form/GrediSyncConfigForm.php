@@ -149,7 +149,6 @@ class GrediSyncConfigForm extends ConfigFormBase {
       \Drupal::messenger()->addStatus($this->t('Successfully synced @count assets'), [
         '@count' => $count,
       ]);
-
       // Store the last sync time to use it at cron.
       \Drupal::state()->set('helfi_gredi.last_run', \Drupal::time()->getCurrentTime());
     }

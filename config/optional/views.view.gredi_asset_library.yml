@@ -161,16 +161,7 @@ display:
       cache:
         type: none
         options: {  }
-      empty:
-        messages:
-          id: messages
-          table: views
-          field: messages
-          relationship: none
-          group_type: group
-          admin_label: ''
-          plugin_id: messages
-          empty: true
+      empty: {  }
       sorts:
         property:
           id: property

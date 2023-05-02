@@ -1,0 +1,20 @@
+sync from gredi:
+  title: 'Sync from Gredi'
+  description: 'Synchronize media Gredi Image media fields with the field values from external Gredi API.'
+
+sync to gredi:
+  title: 'Sync to Gredi'
+  description: 'Synchronize external Gredi API field values with the Gredi Image media field values.'
+
+configure gredi api:
+  title: 'Configure Gredi API'
+  description: 'Allow to configure Gredi API credentials.'
+
+configure gredi sync:
+  title: 'Configure Gredi sync'
+  description: 'Allow to configure Gredi sync interval.'
+
+upload to gredi:
+  title: 'Upload to Gredi'
+  description: 'Allow to upload media Gredi Image to external Gredi API.'
+

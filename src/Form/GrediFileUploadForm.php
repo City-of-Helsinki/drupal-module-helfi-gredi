@@ -134,6 +134,19 @@ class GrediFileUploadForm extends FileUploadForm {
   /**
    * {@inheritdoc}
    */
+  protected function buildInputElement(array $form, FormStateInterface $form_state) {
+    $user = \Drupal::currentUser();
+    if ($user->hasPermission('upload to gredi')) {
+      return parent::buildInputElement($form, $form_state);
+    }
+    else {
+      return $form;
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   protected function validateMediaEntity(MediaInterface $media, array $form, FormStateInterface $form_state, $delta) {
     $mediaCloned = clone $media;
     $field_map = $media->getSource()->getMetaFieldsMapping($media);

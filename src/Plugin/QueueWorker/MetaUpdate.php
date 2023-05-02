@@ -53,6 +53,9 @@ class MetaUpdate extends QueueWorkerBase implements ContainerFactoryPluginInterf
       ]));
       return;
     }
+    if ($media->get('gredi_autosync')->value === 0) {
+      return;
+    }
 
     if (is_null($external_field_modified)) {
       throw new \Exception('Failed to retrieve asset data');
