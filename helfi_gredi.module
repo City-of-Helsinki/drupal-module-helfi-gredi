@@ -122,7 +122,7 @@ function helfi_gredi_entity_field_storage_info(EntityTypeInterface $entity_type)
       ->setDefaultValue(FALSE)
       ->setTranslatable(FALSE)
       ->setDisplayOptions('form', [
-        'type' => 'checkbox',
+        'type' => 'boolean_checkbox',
       ])
       ->setDisplayOptions('view', [
         'type' => 'hidden',
@@ -177,7 +177,7 @@ function helfi_gredi_entity_bundle_field_info(EntityTypeInterface $entity_type, 
         ->setTranslatable(FALSE)
         ->setRevisionable(FALSE)
         ->setDisplayOptions('form', [
-          'type' => 'checkbox',
+          'type' => 'boolean_checkbox',
         ])
         ->setDescription(new TranslatableMarkup('Autosync this asset with Gredi API on cron run.'))
         ->setDefaultValue(FALSE)
