@@ -98,6 +98,10 @@ final class RemoteDataSubscriber implements EventSubscriberInterface {
       if (empty($search_value) && empty($folderId)) {
         $folderId = $this->client->getRootFolderId();
       }
+      else if (!empty($search_value) && $folderId == $this->client->getRootFolderId()) {
+        // Search in root folder should always be across all assets.
+        $folderId = NULL;
+      }
       $remote_data = $this->client->searchAssets($search_value, $folderId, $sortBy, $sortOrder, $event->getLimit(), $event->getOffset());
     }
     catch (\Exception $e) {

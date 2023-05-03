@@ -185,6 +185,7 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
       '#message_list' => \Drupal::messenger()->all(),
       '#weight' => -1,
     ];
+    \Drupal::messenger()->deleteAll();
 
     $assetsData = [];
     foreach ($this->view->result as $row_index => $row) {
