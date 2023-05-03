@@ -163,7 +163,12 @@ class GrediFileUploadForm extends FileUploadForm {
       $media->set('gredi_modified', $this->timeManager->getCurrentTime());
     }
     catch (\Exception $exception) {
-      $form_state->setError($form['media'], t('Failed to upload image. Please try again or check logs.'));
+      if ($exception->getCode() === '409') {
+        $form_state->setError($form['media'], t('Failed to upload image. Image already exists.'));
+      }
+      else {
+        $form_state->setError($form['media'], t('Failed to upload image. Please try again or check logs.'));
+      }
     }
     $form_display = EntityFormDisplay::collectRenderDisplay($media, 'media_library');
     $form_display->extractFormValues($media, $form['media'][$delta]['fields'], $form_state);
