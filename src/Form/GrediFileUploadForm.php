@@ -163,7 +163,7 @@ class GrediFileUploadForm extends FileUploadForm {
       $media->set('gredi_modified', $this->timeManager->getCurrentTime());
     }
     catch (\Exception $exception) {
-      if ($exception->getCode() === '409') {
+      if ($exception->getCode() == '409') {
         $form_state->setError($form['media'], t('Failed to upload image. Image already exists.'));
       }
       else {
