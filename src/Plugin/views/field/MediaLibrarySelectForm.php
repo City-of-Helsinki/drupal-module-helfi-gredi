@@ -238,6 +238,9 @@ final class MediaLibrarySelectForm extends MediaEntityMediaLibrarySelectForm {
     // Do nothing here.
     // However, the field alias needs to be set. This is used for click sorting
     // in the Table style and used by ::clickSort().
+    if (isset($_SESSION['_symfony_flashes'])) {
+      unset($_SESSION['_symfony_flashes']);
+    }
     $this->field_alias = $this->realField;
   }
 
