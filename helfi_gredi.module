@@ -86,7 +86,12 @@ function _helfi_gredi_media_save_validate(array &$form, FormStateInterface &$for
     $media->set('gredi_modified', \Drupal::time()->getCurrentTime());
   }
   catch (\Exception $exception) {
-    $form_state->setError($form[$source_field], 'Upload error.');
+    if ($exception->getCode() == '409') {
+      $form_state->setError($form[$source_field], 'Upload error. Image already exists.');
+    }
+    else {
+      $form_state->setError($form[$source_field], t('Failed to upload image. Please try again or check logs.'));
+    }
     $form_state->setRebuild();
   }
 }
